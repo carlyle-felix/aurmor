@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
-#include "install.h"
-#include "memory.h"
+#include "../include/install.h"
+#include "../include/memory.h"
 
 void install(char *pkgname) {
     

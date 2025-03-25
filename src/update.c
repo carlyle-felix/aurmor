@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <ctype.h>
-#include "buffer.h"
-#include "update.h"
-#include "install.h"
-#include "memory.h"
+#include "../include/buffer.h"
+#include "../include/update.h"
+#include "../include/install.h"
+#include "../include/memory.h"
 
 void update(void) {
 	

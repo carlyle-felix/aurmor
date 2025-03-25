@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "memory.h"
+#include "../include/buffer.h"
+#include "../include/memory.h"
 
 #define SIZE 1000
 

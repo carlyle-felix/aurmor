@@ -1,19 +1,23 @@
-CFLAGS = -Wall -g
+CFLAGS 		= -Wall -g
+INCLUDE		= ./include
+SRC			= ./src
 
 aurmgr: main.o buffer.o install.o update.o memory.o
-	gcc -o aurmgr main.c buffer.c install.c update.c memory.c
+	gcc -o aurmgr $(SRC)/main.c $(SRC)/buffer.c $(SRC)/install.c \
+			$(SRC)/update.c $(SRC)/memory.c
 
-main.o: main.c update.h
-	gcc -c main.c
+main.o: $(SRC)/main.c $(INCLUDE)/update.h
+	gcc -c $(SRC)/main.c
 
-buffer.o: buffer.c buffer.h memory.h
-	gcc -c buffer.c
+buffer.o: $(SRC)/buffer.c $(INCLUDE)/buffer.h $(INCLUDE)/memory.h
+	gcc -c $(SRC)/buffer.c
 
-install.o: install.c install.h memory.h
-	gcc -c install.c
+install.o: $(SRC)/install.c $(INCLUDE)/install.h $(INCLUDE)/memory.h
+	gcc -c $(SRC)/install.c
 
-update.o: update.c buffer.h update.h memory.h
-	gcc -c update.c
+update.o: $(SRC)/update.c $(INCLUDE)/buffer.h $(INCLUDE)/update.h \
+			$(INCLUDE)/memory.h
+	gcc -c $(SRC)/update.c
 
-memory.o: memory.c memory.h
-	gcc -c memory.c
+memory.o: $(SRC)/memory.c $(INCLUDE)/memory.h
+	gcc -c $(SRC)/memory.c

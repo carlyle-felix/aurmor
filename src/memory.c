@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "memory.h"
+#include "../include/memory.h"
 
 char *mem_malloc(char *var, int size) {
 	

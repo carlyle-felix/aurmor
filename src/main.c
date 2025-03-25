@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "install.h"
-#include "update.h"
-#include "memory.h"
+#include "../include/install.h"
+#include "../include/update.h"
+#include "../include/memory.h"
 
 int main(int argc, char *argv[]) {
 	
