@@ -1,5 +1,5 @@
 aurmgr
-bufffer.o
+buffer.o
 main.o
 memory.o
 update.o
