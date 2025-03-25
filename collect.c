@@ -18,7 +18,7 @@ void collect(const char *cmd, char **buffer_ptr) {
 	}
 	fgets(temp, SIZE, p);
 	
-	*buffer_ptr = memory(NULL, "malloc", "buffer_ptr", sizeof(temp));
+	*buffer_ptr = mem_malloc(VSTR(buffer_ptr), sizeof(temp));
 	strcpy(*buffer_ptr, temp);
 	
 	pclose(p);

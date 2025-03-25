@@ -11,17 +11,17 @@ int main(int argc, char *argv[]) {
 	char *home, *aur;
 	
 	home = getenv("HOME");
-	aur = memory(NULL, "malloc", "aur", strlen(home) + 6);
-	strcpy(aur, home);
-	strcat(aur, "/.aur");
+	aur = mem_malloc(VSTR(aur), strlen(home) + 6);
+	sprintf(aur, "%s/.aur", home);
 	chdir(aur);
 	
 	if (strcmp(argv[1], "-u") == 0) {
 		update();
 	} else if (strcmp(argv[1], "-i") == 0) { 
-		install();
+		//install();
 	} else if (argc == 1) {
         printf("-u              update\n");
+		printf("-i				install\n");
 	} 
 
 	free(aur);
