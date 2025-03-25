@@ -15,7 +15,7 @@ void install(char *pkgname) {
 
 void clone(char *url) {
 
-    char *cmd, pkgname[NAME_LEN];
+    char *cmd, pkgname[NAME_LEN] = {'\0'};
     register int i;
 
     cmd = mem_malloc(VSTR(cmd), strlen(url) + 11);
@@ -26,6 +26,7 @@ void clone(char *url) {
     while (*url != '/') {
         url--;
     }
+    url++;
     for (i = 0; *url != '.'; i++) {
         pkgname[i] = *url++;
     }
