@@ -13,7 +13,7 @@ void update(void) {
 	pkglist = mem_malloc(VSTR(pkglist), sizeof(char));
 	cmd = mem_malloc(VSTR(cmd), sizeof(char));
 
-	get_buffer("echo $(ls)", &pkgbuffer);
+	get_buffer("echo $(sudo pacman -Qm | cut -f 1 -d ' ')", &pkgbuffer);
 	placeholder = pkgbuffer;
 	while (*pkgbuffer != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
