@@ -38,24 +38,26 @@ void resolve(char *pkgname) {
 	char c, *cmd;
 	register int i;
 	
-		printf(":: View %s PKGBUILD in less? [Y/n/q] ", pkgname);
-		if ((c = tolower(getchar())) == 'y') {
-			cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 21);
-			sprintf(cmd, "cd %s && less PKGBUILD", pkgname);
-			system(cmd);
-			printf(":: Continue to install? [Y/n] ");
-			for(;;) {
-				c = tolower(getchar());
-				if (c == 'y') {
-					install(pkgname);
-					return;
-				} else if (c == 'n') {
-					return;
-				} 
-			} 
+    printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
+    for (;;) {
+        if ((c = tolower(getchar())) == 'y') {
+            cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 21);
+            sprintf(cmd, "cd %s && less PKGBUILD", pkgname);
+            system(cmd);
+            printf(":: Continue to install? [Y/n] ");
+            for(;;) {
+                c = tolower(getchar());
+                if (c == 'y') {
+                    install(pkgname);
+                    return;
+                } else if (c == 'n') {
+                    return;
+                } 
+            } 
             free(cmd);
-		} else if (c == 'n') {
-			install(pkgname);
-			return;
-		}
+        } else if (c == 'n') {
+            install(pkgname);
+            return;
+        }
+    }
 }
