@@ -2,6 +2,14 @@
 
 An Arch User Repository manager written in C.
 
+## MANUAL INSTALLATION
+
+```
+$ git clone https://github.com/carlyle-felix/aur-manager.git
+$ cd aurmgr
+# make install
+```
+
 ## USAGE
 
 | COMMAND | DESCRIPTION |
