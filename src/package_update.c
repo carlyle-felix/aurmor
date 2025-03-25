@@ -7,7 +7,7 @@
 
 void update(void) {
 	
-	char c, *placeholder, *placeholder_, *temp, *cmd, *pkgbuffer, *pkglist, *git, pkgname[NAME_LEN];
+	char c, *placeholder, *temp, *cmd, *pkgbuffer, *pkglist, *git, pkgname[NAME_LEN];
 	register int i;
 
 	pkglist = mem_malloc(VSTR(pkglist), sizeof(char));
