@@ -40,16 +40,7 @@ void update(void) {
 	}
 	free(placeholder);
 
-	placeholder = pkglist;
-	printf(":: Updates are available for...\n  ");
-	while (*pkglist != '\0') {
-		if (*pkglist == ' ') {
-			printf("\n  ");
-		} else {
-			printf("%c", *pkglist);
-		}
-		pkglist++;
-	}
+	printf(":: Updates are available for: %s", pkglist);
 	
 	free(placeholder);
 	free(cmd);
