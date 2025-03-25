@@ -46,20 +46,18 @@ void update(void) {
 			c = tolower(getchar());
 			if (c == 'y') {
 				while(*pkglist != '\0') {
-					if (c == 'y') {
-						for (i = 0; i < NAME_LEN; i++) {
-							pkgname[i] = '\0';
-						}
-						for (i = 0; *pkglist != '\n'; i++) {
-							if (*pkglist == ' ') {
-								pkglist++;
-								break;
-							}
-							pkgname[i] = *pkglist++;
-						}
-						getchar();
-						resolve(pkgname);
+					for (i = 0; i < NAME_LEN; i++) {
+						pkgname[i] = '\0';
 					}
+					for (i = 0; *pkglist != '\n'; i++) {
+						if (*pkglist == ' ') {
+							pkglist++;
+							break;
+						}
+						pkgname[i] = *pkglist++;
+					}
+					getchar();
+					resolve(pkgname);
 				}
 			} else if (c == 'n') {
 				break;
