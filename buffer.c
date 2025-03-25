@@ -1,19 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "collect.h"
+#include "buffer.h"
 #include "memory.h"
 
 #define SIZE 1000
 
-void collect(const char *cmd, char **buffer_ptr) {
+void get_buffer(const char *cmd, char **buffer_ptr) {
 	
 	char temp[SIZE] = {'\0'};
 	FILE *p;	
 	
 	p = popen(cmd, "r");
 	if (p == NULL) {
-		printf("ERROR: failed in collect().");
+		printf("ERROR: failed in buffer().");
 		exit(EXIT_FAILURE);
 	}
 	fgets(temp, SIZE, p);

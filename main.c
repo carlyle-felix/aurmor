@@ -1,10 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include "install.h"
 #include "update.h"
 #include "memory.h"
-#include "install.h"
 
 int main(int argc, char *argv[]) {
 	
@@ -18,10 +16,10 @@ int main(int argc, char *argv[]) {
 	if (strcmp(argv[1], "-u") == 0) {
 		update();
 	} else if (strcmp(argv[1], "-i") == 0) { 
-		//install();
-	} else if (argc == 1) {
-        printf("-u              update\n");
-		printf("-i				install\n");
+		clone(argv[2]);
+	} else if (argc == 1 || argv[1] == "-h") {
+        printf("-u              				update\n");
+		printf("-i [git clone URL]				install\n");
 	} 
 
 	free(aur);
