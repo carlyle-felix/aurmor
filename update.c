@@ -28,7 +28,7 @@ void update(void) {
 		sprintf(cmd, "cd %s && git pull", pkgname);
 
 		get_buffer(cmd , &git);
-		if (strcmp(git, "Already to date")) {
+		if (strcmp(git, "Already up to date.\n") != 0) {
 			pkglist = mem_realloc(pkglist, VSTR(pkglist), strlen(pkglist) + strlen(pkgname) + 2);
 			strcat(pkglist, pkgname);
 			strcat(pkglist, " ");
