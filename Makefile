@@ -24,9 +24,12 @@ package_update.o: $(SRC)/package_update.c $(INCLUDE)/buffer.h \
 memory.o: $(SRC)/memory.c $(INCLUDE)/memory.h
 	gcc -c $(SRC)/memory.c
 
-.PHONY: install clean
+.PHONY: install clean uninstall
 install:
 	install -m 0555 aurmgr $(BINDIR)
 
 clean:
 	rm aurmgr main.o buffer.o package_install.o package_update.o memory.o
+
+uninstall:
+	rm $(BINDIR)/aurmgr
