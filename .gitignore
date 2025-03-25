@@ -1,0 +1,6 @@
+aurmgr
+collect.o
+main.o
+memory.o
+update.o
+install.o
