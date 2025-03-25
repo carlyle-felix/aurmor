@@ -2,5 +2,5 @@ aurmgr
 buffer.o
 main.o
 memory.o
-update.o
-install.o
+package_update.o
+package_install.o
