@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 	chdir(aur);
 	
 	if (argc == 1 || argv[1] == "-h") {
-        printf("-u              				update\n");
+        	printf("-u						update\n");
 		printf("-i [git clone URL]				install\n");
 	} else if (strcmp(argv[1], "-u") == 0) {
 		update();
