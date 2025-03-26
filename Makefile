@@ -30,7 +30,7 @@ memory.o: $(SRC)/memory.c $(INCLUDE)/memory.h
 
 .PHONY: install clean uninstall
 install:
-	install -m 0555 aurmor $(BINDIR)
+	install -m 0755 aurmor $(BINDIR)
 
 clean:
 	rm aurmor main.o buffer.o package_install.o package_update.o memory.o \
