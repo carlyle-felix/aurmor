@@ -1,6 +1,6 @@
 CFLAGS 		= -Wall -g
 INCLUDE		= ./include
-SRC			= ./src
+SRC			= ./source
 BINDIR		= /usr/local/bin
 
 aurmor: main.o buffer.o package_install.o package_update.o package_uninstall.o \
