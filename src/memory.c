@@ -1,30 +1,24 @@
 #include <stdio.h>
 #include "../include/memory.h"
 
-char *mem_malloc(char *var, int size) {
+char mem_alloc(char **ptr, char *var, int size) {
 	
-	char *temp;
-
-	temp = malloc(size);
-	if (temp == NULL) {
-		printf("ERROR: Failed to allocate memory for %s", var);
-		exit(EXIT_FAILURE);
+	if (*ptr == NULL) {
+		*ptr = malloc(size);
+		if (*ptr == NULL) {
+			printf("ERROR: Failed to allocate memory for %s", var);
+			exit(EXIT_FAILURE);
+		} else {
+			*ptr[0] = '\0';
+		}
 	} else {
-		temp[0] = '\0';
+		char *temp;
+
+		temp = realloc(*ptr, size);
+		if (temp == NULL) {
+			printf("ERROR: Failed to allocate memory for %s", var);
+			exit(EXIT_FAILURE);
+		}
+		*ptr = temp;
 	}
-	
-	return temp;
-}  
-
-char *mem_realloc(char *p, char *var, int size) {
-
-	char *temp;
-
-	temp = realloc(p, size);
-	if (temp == NULL) {
-		printf("ERROR: Failed to allocate memory for %s", var);
-		exit(EXIT_FAILURE);
-	}
-	
-	return temp;
 }

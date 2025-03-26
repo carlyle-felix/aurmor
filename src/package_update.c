@@ -7,15 +7,14 @@
 
 void update(void) {
 	
-	char c, *placeholder, *cmd, *pkglist, pkgname[NAME_LEN];
+	char c, *temp, *cmd = NULL, *pkglist = NULL, pkgname[NAME_LEN];
 	register int i;
-	Buffer pacman_list, git;
+	Buffer pacman_list = NULL, git = NULL;
 
-	pkglist = mem_malloc(VSTR(pkglist), sizeof(char));
-	cmd = mem_malloc(VSTR(cmd), sizeof(char));
+	mem_alloc(&pkglist, VSTR(pkglist), sizeof(char));		// must malloc here in order to realloc later on with strlen()
 
 	get_buffer("echo $(sudo pacman -Qmq)", &pacman_list);
-	placeholder = pacman_list;
+	temp = pacman_list;
 	while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
 			pkgname[i] = '\0';
@@ -25,20 +24,20 @@ void update(void) {
 		}
 		pacman_list++;
 
-		cmd = mem_realloc(cmd, VSTR(cmd), strlen(pkgname) + 16);
+		mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 16);
 		sprintf(cmd, "cd %s && git pull", pkgname);
 
 		get_buffer(cmd , &git);
 		if (strcmp(git, "Already up to date.\n") != 0) {
-			pkglist = mem_realloc(pkglist, VSTR(pkglist), strlen(pkglist) + strlen(pkgname) + 2);
+			mem_alloc(&pkglist, VSTR(pkglist), strlen(pkglist) + strlen(pkgname) + 2);
 			strcat(pkglist, pkgname);
 			strcat(pkglist, " ");
 		}
 	}
 	free(git);
-	free(placeholder);
+	free(temp);
 	
-	placeholder = pkglist;
+	temp = pkglist;
 	if (*pkglist == '\0') {
 		printf(" Nothing to do.\n");
 	} else {
@@ -65,6 +64,6 @@ void update(void) {
 			}
 		}
 	}
-	free(placeholder);
+	free(temp);
 	free(cmd);
 }

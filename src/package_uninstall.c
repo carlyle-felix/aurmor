@@ -5,13 +5,13 @@
 
 void clean(void) {
 
-    char *temp1, *temp2, *cmd, pkgname[NAME_LEN], dirname[NAME_LEN];
-    Buffer pacman_list, aur_dir;
+    char *temp1, *temp2, *cmd = NULL, pkgname[NAME_LEN], dirname[NAME_LEN];
+    Buffer pacman_list = NULL, aur_dir = NULL;
     register int i;
 
     get_buffer("echo $(sudo pacman -Qmq)", &pacman_list);
     get_buffer("echo $(ls)", &aur_dir);
-	temp1 = pacman_list;
+    temp1 = pacman_list;
     temp2 = aur_dir;
     
     if (strcmp(pacman_list, aur_dir) == 0) {
@@ -21,7 +21,7 @@ void clean(void) {
         exit(EXIT_SUCCESS);
     }
 
-    cmd = mem_malloc(VSTR(cmd), sizeof(char));
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char));
 	while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
 			pkgname[i] = '\0';
@@ -43,7 +43,7 @@ void clean(void) {
                 break;
             } else {
                 printf(" deleting %s...\n", dirname); 
-                cmd = mem_realloc(cmd, VSTR(cmd), strlen(dirname) + 8);
+                mem_alloc(&cmd, VSTR(cmd), strlen(dirname) + 8);
                 sprintf(cmd, "rm -rf %s", dirname);
                 system(cmd);
             }

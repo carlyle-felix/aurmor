@@ -5,9 +5,9 @@
 
 void install(char *pkgname) {
     
-    char *cmd;
+    char *cmd = NULL;
 
-    cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 40);
+    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 40);
 	sprintf(cmd, "cd %s && makepkg -sirc && git clean -dfx", pkgname);
     system(cmd);
     free(cmd);
@@ -15,10 +15,10 @@ void install(char *pkgname) {
 
 void clone(char *url) {
 
-    char *cmd, pkgname[NAME_LEN] = {'\0'};
+    char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
     register int i;
 
-    cmd = mem_malloc(VSTR(cmd), strlen(url) + 11);
+    mem_alloc(&cmd, VSTR(cmd), strlen(url) + 11);
     sprintf(cmd, "git clone %s", url);
     system(cmd);
     free(cmd);
@@ -36,10 +36,10 @@ void clone(char *url) {
 
 void resolve(char *pkgname) {
 
-	char c, *cmd;
+	char c, *cmd = NULL;
 	register int i;
 	
-    cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 21);
+    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 21);
 
     printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
     for (;;) {

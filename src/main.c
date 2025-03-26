@@ -5,15 +5,11 @@
 #include "../include/uninstall.h"
 #include "../include/memory.h"
 
+void set_dir(void);
+
 int main(int argc, char *argv[]) {
-	
-	char *home, *aur = NULL;
-	
-	home = getenv("HOME");
-	aur = mem_malloc(VSTR(aur), strlen(home) + 6);
-	sprintf(aur, "%s/.aur", home);
-	chdir(aur);
-	free(aur);
+
+	set_dir();
 
 	if (argc == 1 || argv[1] == "-h") {
         printf("-u						update\n");
@@ -28,4 +24,15 @@ int main(int argc, char *argv[]) {
 	} 
 
 	return 0;
+}
+
+void set_dir(void) {
+
+	char *home, *aur = NULL;
+
+	home = getenv("HOME");
+	mem_alloc(&aur, VSTR(aur), strlen(home) + 6);
+	sprintf(aur, "%s/.aur", home);
+	chdir(aur);
+	free(aur);
 }
