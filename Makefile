@@ -3,9 +3,9 @@ INCLUDE		= ./include
 SRC			= ./src
 BINDIR		= /usr/local/bin
 
-aurmgr: main.o buffer.o package_install.o package_update.o package_uninstall.o \
+aurmor: main.o buffer.o package_install.o package_update.o package_uninstall.o \
 		memory.o
-	gcc -o aurmgr $(SRC)/main.c $(SRC)/buffer.c $(SRC)/package_install.c \
+	gcc -o aurmor $(SRC)/main.c $(SRC)/buffer.c $(SRC)/package_install.c \
 		$(SRC)/package_update.c $(SRC)/package_uninstall.c $(SRC)/memory.c 
 
 main.o: $(SRC)/main.c $(INCLUDE)/update.h
@@ -30,11 +30,11 @@ memory.o: $(SRC)/memory.c $(INCLUDE)/memory.h
 
 .PHONY: install clean uninstall
 install:
-	install -m 0555 aurmgr $(BINDIR)
+	install -m 0555 aurmor $(BINDIR)
 
 clean:
-	rm aurmgr main.o buffer.o package_install.o package_update.o memory.o \
+	rm aurmor main.o buffer.o package_install.o package_update.o memory.o \
 		package_uninstall.o
 
 uninstall:
-	rm $(BINDIR)/aurmgr
+	rm $(BINDIR)/aurmor
