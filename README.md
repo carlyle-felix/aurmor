@@ -15,5 +15,13 @@ $ make
 
 | COMMAND | DESCRIPTION |
 | ------- | ----------- |
-|`aurmgr -u` | update |
-|`aurmgr -i [git clone URL]` | clone and install |
+|`aurmgr -u` | update all packages. |
+|`aurmgr -i [git clone URL]` | clone and install. |
+| `aurmgr -c` | delete directories found in ~/.aur directory but not found in pacman's list of installed AUR packages. |
+| `aurmgr -r [package name]` | uninstall specified package. caveat: name must match the one found in `pacman -Qmq` |
+| `aurmgr -h` | help |
+
+## NOTES
+
+- The uninstall function requires the name of the target package as it is found in the output of `# pacman -Qmq`.
+- Packages are built with `OPTIONS=-debug`.
