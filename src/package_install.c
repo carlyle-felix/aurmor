@@ -7,8 +7,8 @@ void install(char *pkgname) {
     
     char *cmd = NULL;
 
-    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 40);
-	sprintf(cmd, "cd %s && makepkg -sirc && git clean -dfx", pkgname);
+    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 55);
+	sprintf(cmd, "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx", pkgname); // don't build -debug packages for now.
     system(cmd);
     free(cmd);
 }
