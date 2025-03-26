@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 	set_dir();
 
 	if (argc == 1) {
-		printf(" No operation specified, use -h for help.");
+		printf(" No operation specified, use -h for help.\n");
 	} else if (strcmp(argv[1], "-h") == 0) {
 		printf("USAGE:\n\n");
         printf(" -u						update.\n");
