@@ -3,12 +3,12 @@
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
-void uninstall(char *pkgname) {
+void uninstall(const char *pkgname) {
 
     char *cmd = NULL;
     
-    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 18);
-    printf("CMD: %s", cmd);
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkgname) + 18));
+    sprintf(cmd, "sudo pacman -Rsc %s", pkgname);
     system(cmd);
     free(cmd);
     clean();
