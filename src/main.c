@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[]) {
 	
-	char *home, *aur;
+	char *home, *aur = NULL;
 	
 	home = getenv("HOME");
 	aur = mem_malloc(VSTR(aur), strlen(home) + 6);

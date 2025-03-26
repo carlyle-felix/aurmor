@@ -7,22 +7,23 @@
 
 void update(void) {
 	
-	char c, *placeholder, *temp, *cmd, *pkgbuffer, *pkglist, *git, pkgname[NAME_LEN];
+	char c, *placeholder, *temp, *cmd, *pkglist, pkgname[NAME_LEN];
 	register int i;
+	Buffer pacman_list, git;
 
 	pkglist = mem_malloc(VSTR(pkglist), sizeof(char));
 	cmd = mem_malloc(VSTR(cmd), sizeof(char));
 
-	get_buffer("echo $(sudo pacman -Qm | cut -f 1 -d ' ')", &pkgbuffer);
-	placeholder = pkgbuffer;
-	while (*pkgbuffer != '\0') {
+	get_buffer("echo $(sudo pacman -Qm | cut -f 1 -d ' ')", &pacman_list);
+	placeholder = pacman_list;
+	while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
 			pkgname[i] = '\0';
 		}
-		for (i = 0; *pkgbuffer != ' ' && *pkgbuffer != '\n'; i++) {
-			pkgname[i] = *pkgbuffer++;	
+		for (i = 0; *pacman_list != ' ' && *pacman_list != '\n'; i++) {
+			pkgname[i] = *pacman_list++;	
 		}
-		pkgbuffer++;
+		pacman_list++;
 
 		cmd = mem_realloc(cmd, VSTR(cmd), strlen(pkgname) + 16);
 		sprintf(cmd, "cd %s && git pull", pkgname);
