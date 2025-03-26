@@ -3,8 +3,6 @@
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
-#define MAX_BUFFER 1000
-
 void get_buffer(const char *cmd, char **buffer_ptr) {
 	
 	char *temp = NULL;

@@ -1,7 +1,7 @@
 #ifndef UNINSTALL_H
 #define UNINSTALL_H
 
-void uninstall(const char *pkgname);
+void uninstall(char *pkgnames);
 void clean(void);
 
 #endif

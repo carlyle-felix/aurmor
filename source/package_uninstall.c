@@ -3,13 +3,28 @@
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
-void uninstall(const char *pkgname) {
+void uninstall(char *pkgname) {
 
     char *cmd = NULL;
+    char *pkglist = NULL;
+
+    if (pkgname == NULL) {
+        mem_alloc(&pkglist, VSTR(pkglist), MAX_BUFFER);
+        printf(":: Fetching list of installed AUR packages...\n");
+        system("sudo pacman -Qmq");
+        printf(":: Enter package name(s) to uninstall: ");
+        fgets(pkglist, MAX_BUFFER, stdin);
+    } else {
+        pkglist = pkgname;
+    }
     
-    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkgname) + 18));
-    sprintf(cmd, "sudo pacman -Rsc %s", pkgname);
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkglist) + 18));
+    sprintf(cmd, "sudo pacman -Rsc %s", pkglist);
     system(cmd);
+
+    if (pkgname == NULL) {
+        free(pkglist);
+    }
     free(cmd);
     clean();
 }
