@@ -15,7 +15,7 @@ void clean(void) {
     temp2 = aur_dir;
     
     if (strcmp(pacman_list, aur_dir) == 0) {
-        printf(" Nothing to do.");
+        printf(" Nothing to do.\n");
         free(temp1);
         free(temp2);
         exit(EXIT_SUCCESS);
