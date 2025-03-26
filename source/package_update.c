@@ -43,19 +43,20 @@ void update(void) {
 	} else {
 		printf(":: Updates are available for: %s\n", pkglist);
 		printf(":: Proceed with installation? [Y/n] ");
-		for(;;) {
+		while(*pkglist != '\0') {
 			c = tolower(getchar());
 			if (c == 'y') {
-				while(*pkglist != '\0') {
+				while(*pkglist != '\n' && *pkglist != '\0') {
 					for (i = 0; i < NAME_LEN; i++) {
 						pkgname[i] = '\0';
 					}
 					for (i = 0; *pkglist != '\n'; i++) {
-						if (*pkglist == ' ') {
+						if (*pkglist != ' ' && *pkglist != '\n') {
+							pkgname[i] = *pkglist++;
+						} else {
 							pkglist++;
 							break;
 						}
-						pkgname[i] = *pkglist++;
 					}
 					resolve(pkgname);
 				}

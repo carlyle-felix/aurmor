@@ -1,7 +1,7 @@
 # Maintainer: carlyle
 
 pkgname=aurmor
-pkgver=20250326
+pkgver=20250327
 pkgrel=1
 pkgdesc="An AUR helper written in C."
 arch=('x86_64')
