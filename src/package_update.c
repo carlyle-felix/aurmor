@@ -7,14 +7,14 @@
 
 void update(void) {
 	
-	char c, *placeholder, *temp, *cmd, *pkglist, pkgname[NAME_LEN];
+	char c, *placeholder, *cmd, *pkglist, pkgname[NAME_LEN];
 	register int i;
 	Buffer pacman_list, git;
 
 	pkglist = mem_malloc(VSTR(pkglist), sizeof(char));
 	cmd = mem_malloc(VSTR(cmd), sizeof(char));
 
-	get_buffer("echo $(sudo pacman -Qm | cut -f 1 -d ' ')", &pacman_list);
+	get_buffer("echo $(sudo pacman -Qmq)", &pacman_list);
 	placeholder = pacman_list;
 	while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
@@ -35,6 +35,7 @@ void update(void) {
 			strcat(pkglist, " ");
 		}
 	}
+	free(git);
 	free(placeholder);
 	
 	placeholder = pkglist;
@@ -57,7 +58,6 @@ void update(void) {
 						}
 						pkgname[i] = *pkglist++;
 					}
-					getchar();
 					resolve(pkgname);
 				}
 			} else if (c == 'n') {
@@ -65,8 +65,6 @@ void update(void) {
 			}
 		}
 	}
-	
 	free(placeholder);
 	free(cmd);
-	free(git);
 }

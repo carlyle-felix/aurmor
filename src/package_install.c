@@ -21,7 +21,7 @@ void clone(char *url) {
     cmd = mem_malloc(VSTR(cmd), strlen(url) + 11);
     sprintf(cmd, "git clone %s", url);
     system(cmd);
-
+    free(cmd);
     while (*url++ != '\0');
     while (*url != '/') {
         url--;
@@ -39,12 +39,14 @@ void resolve(char *pkgname) {
 	char c, *cmd;
 	register int i;
 	
+    cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 21);
+
     printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
     for (;;) {
         if ((c = tolower(getchar())) == 'y') {
-            cmd = mem_malloc(VSTR(cmd), strlen(pkgname) + 21);
             sprintf(cmd, "cd %s && less PKGBUILD", pkgname);
             system(cmd);
+            free(cmd);
             printf(":: Continue to install? [Y/n] ");
             for(;;) {
                 c = tolower(getchar());
@@ -55,8 +57,8 @@ void resolve(char *pkgname) {
                     return;
                 } 
             } 
-            free(cmd);
         } else if (c == 'n') {
+            free(cmd);
             install(pkgname);
             return;
         }

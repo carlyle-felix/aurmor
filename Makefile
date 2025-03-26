@@ -3,9 +3,10 @@ INCLUDE		= ./include
 SRC			= ./src
 BINDIR		= /usr/local/bin
 
-aurmgr: main.o buffer.o package_install.o package_update.o memory.o
+aurmgr: main.o buffer.o package_install.o package_update.o package_uninstall.o \
+			memory.o
 	gcc -o aurmgr $(SRC)/main.c $(SRC)/buffer.c $(SRC)/package_install.c \
-			$(SRC)/package_update.c $(SRC)/memory.c
+			$(SRC)/package_update.c $(SRC)/package_uninstall.c $(SRC)/memory.c 
 
 main.o: $(SRC)/main.c $(INCLUDE)/update.h
 	gcc -c $(SRC)/main.c
@@ -20,6 +21,9 @@ package_install.o: $(SRC)/package_install.c $(INCLUDE)/install.h \
 package_update.o: $(SRC)/package_update.c $(INCLUDE)/buffer.h \
 			$(INCLUDE)/update.h $(INCLUDE)/memory.h
 	gcc -c $(SRC)/package_update.c
+
+package_uninstall.o: $(SRC)/package_uninstall.c $(INCLUDE)/uninstall.h
+	gcc -c $(SRC)/package_uninstall.c
 
 memory.o: $(SRC)/memory.c $(INCLUDE)/memory.h
 	gcc -c $(SRC)/memory.c

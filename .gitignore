@@ -4,3 +4,4 @@ main.o
 memory.o
 package_update.o
 package_install.o
+package_uninstall.o
