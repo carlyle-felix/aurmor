@@ -1,8 +1,8 @@
 #ifndef INSTALL_H
 #define INSTALL_H
 
-void install(char *pkgname);
-void clone(char *url);
-void resolve(char *pkglist);
+void install(const char *pkgname);
+void clone(const char *url);
+void resolve(const char *pkglist);
 
 #endif

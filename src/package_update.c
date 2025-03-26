@@ -24,12 +24,12 @@ void update(void) {
 		}
 		pacman_list++;
 
-		mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 16);
+		mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkgname) + 16));
 		sprintf(cmd, "cd %s && git pull", pkgname);
 
 		get_buffer(cmd , &git);
 		if (strcmp(git, "Already up to date.\n") != 0) {
-			mem_alloc(&pkglist, VSTR(pkglist), strlen(pkglist) + strlen(pkgname) + 2);
+			mem_alloc(&pkglist, VSTR(pkglist), sizeof(char) * (strlen(pkglist) + strlen(pkgname) + 2));
 			strcat(pkglist, pkgname);
 			strcat(pkglist, " ");
 		}

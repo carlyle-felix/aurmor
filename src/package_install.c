@@ -3,22 +3,22 @@
 #include "../include/install.h"
 #include "../include/memory.h"
 
-void install(char *pkgname) {
+void install(const char *pkgname) {
     
     char *cmd = NULL;
 
-    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 55);
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkgname) + 55));
 	sprintf(cmd, "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx", pkgname); // don't build -debug packages for now.
     system(cmd);
     free(cmd);
 }
 
-void clone(char *url) {
+void clone(const char *url) {
 
     char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
     register int i;
 
-    mem_alloc(&cmd, VSTR(cmd), strlen(url) + 11);
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(url) + 11));
     sprintf(cmd, "git clone %s", url);
     system(cmd);
     free(cmd);
@@ -34,12 +34,12 @@ void clone(char *url) {
     resolve(pkgname);
 }
 
-void resolve(char *pkgname) {
+void resolve(const char *pkgname) {
 
 	char c, *cmd = NULL;
 	register int i;
 	
-    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 21);
+    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkgname) + 21));
 
     printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
     for (;;) {

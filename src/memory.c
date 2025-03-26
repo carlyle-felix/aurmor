@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "../include/memory.h"
 
-char mem_alloc(char **ptr, char *var, int size) {
+char mem_alloc(char **ptr, const char *var, int size) {
 	
 	if (*ptr == NULL) {
-		*ptr = malloc(size);
+		*ptr = malloc(sizeof(char) * size);
 		if (*ptr == NULL) {
 			printf("ERROR: Failed to allocate memory for %s", var);
 			exit(EXIT_FAILURE);
@@ -14,7 +14,7 @@ char mem_alloc(char **ptr, char *var, int size) {
 	} else {
 		char *temp;
 
-		temp = realloc(*ptr, size);
+		temp = realloc(*ptr, sizeof(char) * size);
 		if (temp == NULL) {
 			printf("ERROR: Failed to allocate memory for %s", var);
 			exit(EXIT_FAILURE);

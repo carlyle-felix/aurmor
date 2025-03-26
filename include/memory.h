@@ -7,6 +7,6 @@
 #define VSTR(s) #s
 #define NAME_LEN 100
 
-char mem_alloc(char **ptr, char *var, int size);
+char mem_alloc(char **ptr, const char *var, int size);
 
 #endif
