@@ -3,6 +3,17 @@
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
+void uninstall(char *pkgname) {
+
+    char *cmd = NULL;
+    
+    mem_alloc(&cmd, VSTR(cmd), strlen(pkgname) + 18);
+    printf("CMD: %s", cmd);
+    system(cmd);
+    free(cmd);
+    clean();
+}
+
 void clean(void) {
 
     char *temp1, *temp2, *cmd = NULL, pkgname[NAME_LEN], dirname[NAME_LEN];
@@ -42,7 +53,7 @@ void clean(void) {
             if (strcmp(pkgname, dirname) == 0) {
                 break;
             } else {
-                printf(" deleting %s...\n", dirname); 
+                printf(" Removing %s from AUR directory...\n", dirname); 
                 mem_alloc(&cmd, VSTR(cmd), strlen(dirname) + 8);
                 sprintf(cmd, "rm -rf %s", dirname);
                 system(cmd);

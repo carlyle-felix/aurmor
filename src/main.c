@@ -15,13 +15,16 @@ int main(int argc, char *argv[]) {
         printf("-u						update\n");
 		printf("-i [git clone URL]				install\n");
 		printf("-c						clean AUR dir\n");
+		printf("-r						uninstall (remove)\n");
 	} else if (strcmp(argv[1], "-u") == 0) {
 		update();
 	} else if (strcmp(argv[1], "-i") == 0) { 
 		clone(argv[2]);
 	} else if (strcmp(argv[1], "-c") == 0) { 
 		clean();
-	} 
+	} else if (strcmp(argv[1], "-r") == 0) {
+		uninstall(argv[2]);
+	}
 
 	return 0;
 }
