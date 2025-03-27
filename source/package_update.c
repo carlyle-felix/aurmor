@@ -90,7 +90,7 @@ void update(void) {
 	free(cmd);
 
 	if (update_list[0] == '\0') {
-		printf(" Nothing to do.");
+		printf(" Nothing to do.\n");
 		free(update_list);
 		clear_list(pkglist);
 		exit(EXIT_SUCCESS);
