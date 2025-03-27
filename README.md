@@ -1,6 +1,6 @@
 # AURMOR
 
-An Arch User Repository manager written in C.
+An AUR helper written in C.
 
 ## MANUAL INSTALLATION
 
