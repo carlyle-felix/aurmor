@@ -2,6 +2,7 @@ aurmor
 buffer.o
 main.o
 memory.o
+package_list.o
 package_update.o
 package_install.o
 package_uninstall.o

@@ -3,6 +3,6 @@
 
 void install(const char *pkgname);
 void clone(const char *url);
-void resolve(const char *pkglist);
+void resolve(const char *pkgname);
 
 #endif

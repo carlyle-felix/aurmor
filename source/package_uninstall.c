@@ -11,14 +11,14 @@ void uninstall(char *pkgname) {
     if (pkgname == NULL) {
         mem_alloc(&pkglist, VSTR(pkglist), MAX_BUFFER);
         printf(":: Fetching list of installed AUR packages...\n");
-        system("sudo pacman -Qmq");
+        system("pacman -Qmq");
         printf(":: Enter package name(s) to uninstall: ");
         fgets(pkglist, MAX_BUFFER, stdin);
     } else {
         pkglist = pkgname;
     }
     
-    mem_alloc(&cmd, VSTR(cmd), sizeof(char) * (strlen(pkglist) + 18));
+    mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist) + 18));
     sprintf(cmd, "sudo pacman -Rsc %s", pkglist);
     system(cmd);
 

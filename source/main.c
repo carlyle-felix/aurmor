@@ -50,7 +50,7 @@ void set_dir(void) {
 	char *home, *aur = NULL;
 
 	home = getenv("HOME");
-	mem_alloc(&aur, VSTR(aur), sizeof(char) * (strlen(home) + 6));
+	mem_alloc(&aur, VSTR(aur), (strlen(home) + 6));
 	sprintf(aur, "%s/.aur", home);
 	chdir(aur);
 	free(aur);

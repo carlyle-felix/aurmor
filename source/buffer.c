@@ -8,7 +8,7 @@ void get_buffer(const char *cmd, char **buffer_ptr) {
 	char *temp = NULL;
 	FILE *p;	
 	
-	mem_alloc(&temp, VSTR(temp), sizeof(char) * MAX_BUFFER);
+	mem_alloc(&temp, VSTR(temp), MAX_BUFFER);
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
@@ -16,8 +16,7 @@ void get_buffer(const char *cmd, char **buffer_ptr) {
 		exit(EXIT_FAILURE);
 	}
 	fgets(temp, MAX_BUFFER, p);
-	
-	mem_alloc(buffer_ptr, VSTR(buffer_ptr), sizeof(char) * (strlen(temp) + 1));
+	mem_alloc(buffer_ptr, VSTR(buffer_ptr), (strlen(temp) + 1));
 	strcpy(*buffer_ptr, temp);
 	free(temp);
 
