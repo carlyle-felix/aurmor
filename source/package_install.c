@@ -43,13 +43,16 @@ void resolve(const char *pkgname) {
 
     printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
     for (;;) {
-        if ((c = tolower(getchar())) == 'y') {
+        c = tolower(getchar());
+        while(getchar() != '\n');
+        if (c == 'y' || c == '\n') {
             sprintf(cmd, "cd %s && less PKGBUILD", pkgname);
             system(cmd);
             free(cmd);
             printf(":: Continue to install? [Y/n] ");
             for(;;) {
                 c = tolower(getchar());
+                while(getchar() != '\n');
                 if (c == 'y') {
                     install(pkgname);
                     return;

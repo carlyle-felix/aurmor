@@ -28,7 +28,7 @@ void update(void) {
 		sprintf(cmd, "cd %s && git pull", pkgname);
 
 		get_buffer(cmd , &git);
-		if (strcmp(git, "Already up to date.\n") != 0) {
+		if (strcmp(git, "Already up to date\n") != 0) {  //test
 			mem_alloc(&pkglist, VSTR(pkglist), sizeof(char) * (strlen(pkglist) + strlen(pkgname) + 2));
 			strcat(pkglist, pkgname);
 			strcat(pkglist, " ");
@@ -38,6 +38,9 @@ void update(void) {
 	free(temp);
 	
 	temp = pkglist;
+
+	/*Fix this section, it looks like if i choose to not proceed with installation right now, 
+	  I won't be prompted to update my out of date packages next time.*/
 	if (*pkglist == '\0') {
 		printf(" Nothing to do.\n");
 	} else {
@@ -45,7 +48,8 @@ void update(void) {
 		printf(":: Proceed with installation? [Y/n] ");
 		while(*pkglist != '\0') {
 			c = tolower(getchar());
-			if (c == 'y') {
+			while(getchar() != '\n');
+			if (c == 'y' || c == '\n') {
 				while(*pkglist != '\n' && *pkglist != '\0') {
 					for (i = 0; i < NAME_LEN; i++) {
 						pkgname[i] = '\0';
