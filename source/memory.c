@@ -24,7 +24,7 @@ void mem_alloc(char **ptr, const char *var, int size) {
 	}
 }
 
-List *struct_malloc() {
+List *struct_malloc(void) {
 
 	List *temp = malloc(sizeof(List));
 	if (temp == NULL) {

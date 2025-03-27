@@ -10,7 +10,7 @@ typedef struct node {
     struct node *next;
 } List;
 
-List *struct_malloc();
+List *struct_malloc(void);
 List *add_pkg(List *pkglist, char *pkgname, char *pkgver);
 List *remove_pkg(List *pkglist, char *pkgname);
 List *find_pkg(List *pkglist, char *pkgname);

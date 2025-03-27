@@ -4,7 +4,7 @@
 
 List *add_pkg(List *pkglist, char *pkgname, char *pkgver) {
 
-    List *temp = struct_malloc(sizeof(List));
+    List *temp = struct_malloc();
     mem_alloc(&temp->pkgname, VSTR(temp->pkgname), ((strlen(pkgname) + 1)));
     mem_alloc(&temp->pkgver, VSTR(temp->pkgver), ((strlen(pkgver) + 1)));
     strcpy(temp->pkgname, pkgname);

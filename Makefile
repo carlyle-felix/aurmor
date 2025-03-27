@@ -38,7 +38,7 @@ install:
 
 clean:
 	rm aurmor main.o buffer.o package_install.o package_update.o memory.o \
-		package_uninstall.o
+		package_uninstall.o package_list.o
 
 uninstall:
 	rm $(BINDIR)/aurmor
