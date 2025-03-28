@@ -65,3 +65,17 @@ void clear_list(List *pkglist) {
         free(temp);
     }
 }
+
+void sort_list(List **pkglist) {
+    
+    List *cur, *prev, *next;
+    prev = struct_malloc();
+    cur = *pkglist;
+    while (cur != NULL) {
+        next = cur->next;
+        cur->next = prev;
+        prev = cur;
+        cur = next;
+    }
+    *pkglist = prev;
+}

@@ -106,6 +106,7 @@ void update(void) {
 			while (getchar() != '\n');
 		}
 		if (c == 'y' || c == '\n') {
+			sort_list(&pkglist);
 			List *temp = pkglist;
 			while (pkglist != NULL) {
 				if (pkglist->update == true) {
