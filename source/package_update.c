@@ -48,7 +48,7 @@ void update(void) {
 			sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
 		}
 		
-		if (strcmp(pkglist->pkgver, full_ver) == 0) {
+		if (strcmp(pkglist->pkgver, full_ver) != 0) {
 			pkglist->update = true;
 			mem_alloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 37));
 			sprintf(cmd, "	%-30s%s -> %s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
