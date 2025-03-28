@@ -44,7 +44,9 @@ void resolve(const char *pkgname) {
     printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
     for (;;) {
         c = tolower(getchar());
-        while (getchar() != '\n');
+        if (c != '\n') {
+			while (getchar() != '\n');
+		}
         if (c == 'y' || c == '\n') {
             sprintf(cmd, "cd %s && less PKGBUILD", pkgname);
             system(cmd);
@@ -52,7 +54,9 @@ void resolve(const char *pkgname) {
             printf(":: Continue to install? [Y/n] ");
             for(;;) {
                 c = tolower(getchar());
-                while (getchar() != '\n');
+                if (c != '\n') {
+                    while (getchar() != '\n');
+                }
                 if (c == 'y' || c == '\n') {
                     install(pkgname);
                     return;
