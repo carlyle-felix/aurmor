@@ -78,7 +78,7 @@ void sort_list(List **pkglist) {
         prev = cur;
         cur = next;
     }
-    *pkglist = prev->next;
+    *pkglist = prev->next; // This shouldn't need to be prev->next, it should be prev but then the list includes a null pkgname further downstream.
     free(prev);
 }
 
