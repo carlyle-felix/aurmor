@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../include/memory.h"
 #include "../include/list.h"
+#include "../include/buffer.h"
 
 List *add_pkg(List *pkglist, char *pkgname, char *pkgver) {
 
@@ -77,5 +78,41 @@ void sort_list(List **pkglist) {
         prev = cur;
         cur = next;
     }
-    *pkglist = prev;
+    *pkglist = prev->next;
+    free(prev);
+}
+
+void get_pkglist(List **pkglist) {
+
+    char pkgname[NAME_LEN], *pkgver = NULL;
+    Buffer pacman_list = NULL, cmd = NULL, temp = NULL;
+    register int i;
+
+    *pkglist = struct_malloc();
+    
+    // get pkgname and pkgver of installed packages and store in pkglist
+	get_buffer("echo -n $(pacman -Qmq)", &pacman_list);
+    temp = pacman_list;
+    while (*pacman_list != '\0') {
+		for (i = 0; i < NAME_LEN; i++) {
+			pkgname[i] = '\0';
+		}
+		for (i = 0; *pacman_list != ' ' && *pacman_list != '\0'; i++) {
+			pkgname[i] = *pacman_list++;	
+		}
+		if (*pacman_list != '\0') {
+			pacman_list++;
+		}
+		
+		// add pkgname and pkgver to pkglist
+		mem_alloc(&cmd, VSTR(cmd), (sizeof(char) * (strlen(pkgname) + 47)));
+		sprintf(cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", pkgname);
+		get_buffer(cmd, &pkgver);
+		*pkglist = add_pkg(*pkglist, pkgname, pkgver);
+    }
+    free(temp);
+    free(cmd);
+    free(pkgver);
+
+    sort_list(pkglist);
 }
