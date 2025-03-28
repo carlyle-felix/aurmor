@@ -9,7 +9,7 @@ void uninstall(char *pkgname) {
     char *pkglist = NULL;
 
     if (pkgname == NULL) {
-        mem_alloc(&pkglist, VSTR(pkglist), MAX_BUFFER);
+        mem_alloc(&pkglist, MAX_BUFFER);
         printf(":: Fetching list of installed AUR packages...\n");
         system("pacman -Qmq");
         printf(":: Enter package name(s) to uninstall: ");
@@ -18,25 +18,27 @@ void uninstall(char *pkgname) {
         pkglist = pkgname;
     }
     
-    mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist) + 18));
-    sprintf(cmd, "sudo pacman -Rsc %s", pkglist);
+    get_cmd(&cmd, "sudo pacman -Rsc %s", pkglist);
     system(cmd);
 
     if (pkgname == NULL) {
         free(pkglist);
     }
     free(cmd);
+
+    //ask before cleaning...
     clean();
 }
 
+// rewrite to use linked lists.
 void clean(void) {
 
     char *temp1, *temp2, *cmd = NULL, pkgname[NAME_LEN], dirname[NAME_LEN];
     Buffer pacman_list = NULL, aur_dir = NULL;
     register int i;
 
-    get_buffer("echo $(sudo pacman -Qmq)", &pacman_list);
-    get_buffer("echo $(ls)", &aur_dir);
+    retrieve("echo $(sudo pacman -Qmq)", &pacman_list);
+    retrieve("echo $(ls)", &aur_dir);
     temp1 = pacman_list;
     temp2 = aur_dir;
     
@@ -47,7 +49,7 @@ void clean(void) {
         exit(EXIT_SUCCESS);
     }
 
-    mem_alloc(&cmd, VSTR(cmd), sizeof(char));
+    mem_alloc(&cmd, sizeof(char));
 	while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
 			pkgname[i] = '\0';
@@ -66,11 +68,12 @@ void clean(void) {
             }
             aur_dir++;
             if (strcmp(pkgname, dirname) == 0) {
+                get_cmd(&cmd, "cd %s && git clean -dfx", dirname);
+                system(cmd);    // won't run if pkglist == aurdir
                 break;
             } else {
                 printf(" Removing %s from AUR directory...\n", dirname); 
-                mem_alloc(&cmd, VSTR(cmd), strlen(dirname) + 8);
-                sprintf(cmd, "rm -rf %s", dirname);
+                get_cmd(&cmd, "rm -rf %s", dirname);
                 system(cmd);
             }
 		}       

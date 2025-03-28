@@ -2,12 +2,12 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
-void mem_alloc(char **ptr, const char *var, int size) {
+void mem_alloc(char **ptr, int size) {
 	
 	if (*ptr == NULL) {
 		*ptr = malloc(size);
 		if (*ptr == NULL) {
-			printf("ERROR: Failed to allocate memory for %s", var);
+			printf("ERROR: Failed to allocate memory.");
 			exit(EXIT_FAILURE);
 		} else {
 				*ptr[0] = '\0';
@@ -17,7 +17,7 @@ void mem_alloc(char **ptr, const char *var, int size) {
 
 		temp = realloc(*ptr, size);
 		if (temp == NULL) {
-			printf("ERROR: Failed to allocate memory for %s", var);
+			printf("ERROR: Failed to reallocate memory.");
 			exit(EXIT_FAILURE);
 		}
 		*ptr = temp;

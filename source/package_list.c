@@ -1,13 +1,13 @@
 #include <stdio.h>
-#include "../include/memory.h"
 #include "../include/list.h"
+#include "../include/memory.h"
 #include "../include/buffer.h"
 
 List *add_pkg(List *pkglist, char *pkgname, char *pkgver) {
 
     List *temp = struct_malloc();
-    mem_alloc(&temp->pkgname, VSTR(temp->pkgname), ((strlen(pkgname) + 1)));
-    mem_alloc(&temp->pkgver, VSTR(temp->pkgver), ((strlen(pkgver) + 1)));
+    mem_alloc(&temp->pkgname, ((strlen(pkgname) + 1)));
+    mem_alloc(&temp->pkgver, ((strlen(pkgver) + 1)));
     strcpy(temp->pkgname, pkgname);
     strcpy(temp->pkgver, pkgver);
     temp->update = false;
@@ -91,7 +91,7 @@ void get_pkglist(List **pkglist) {
     *pkglist = struct_malloc();
     
     // get pkgname and pkgver of installed packages and store in pkglist
-	get_buffer("echo -n $(pacman -Qmq)", &pacman_list);
+	retrieve("echo -n $(pacman -Qmq)", &pacman_list);
     temp = pacman_list;
     while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
@@ -105,9 +105,8 @@ void get_pkglist(List **pkglist) {
 		}
 		
 		// add pkgname and pkgver to pkglist
-		mem_alloc(&cmd, VSTR(cmd), (sizeof(char) * (strlen(pkgname) + 47)));
-		sprintf(cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", pkgname);
-		get_buffer(cmd, &pkgver);
+		get_cmd(&cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", pkgname);
+		retrieve(cmd, &pkgver);
 		*pkglist = add_pkg(*pkglist, pkgname, pkgver);
     }
     free(temp);

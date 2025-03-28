@@ -4,9 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define VSTR(s) #s
 #define NAME_LEN 100
 
-void mem_alloc(char **ptr, const char *var, int size);
+void mem_alloc(char **ptr, int size);
 
 #endif

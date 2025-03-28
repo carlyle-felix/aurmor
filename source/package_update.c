@@ -6,6 +6,8 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
+#define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " #item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
+
 void update(void) {
 	
 	char c, *cmd = NULL, *update_list = NULL, *full_ver = NULL;
@@ -13,33 +15,29 @@ void update(void) {
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;  // All from source folder PKGBUILD
 	List *pkglist, *temp;
 
-	mem_alloc(&update_list, VSTR(update_list), sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
+	mem_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 	
 	get_pkglist(&pkglist);
 	for (temp = pkglist; pkglist->next != NULL; pkglist = pkglist->next) {
 	
 		// update pkgname source folder in ~/.aur
-		mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist->pkgname) + 29));
-		sprintf(cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
+		get_cmd(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
 		system(cmd);
 
 		// get epoch for current pkgname from pkgbuild
-		mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist->pkgname) + 85));
-		sprintf(cmd, "echo -n $(cd %s && echo $(less PKGBUILD | grep epoch= | cut -f2 -d '=') | tr -d \"'\\\"\")", pkglist->pkgname);
-		get_buffer(cmd, &epoch);
-	
+		get_cmd(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
+		retrieve(cmd, &epoch);
+
 		// get pkgver for current pkgname from pkgbuild
-		mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist->pkgname) + 86));
-		sprintf(cmd, "echo -n $(cd %s && echo $(less PKGBUILD | grep pkgver= | cut -f2 -d '=') | tr -d \"'\\\"\")", pkglist->pkgname);
-		get_buffer(cmd, &pkgver);
-	
+		get_cmd(&cmd, PKGBUILD_CMD(pkgver), pkglist->pkgname);
+		retrieve(cmd, &pkgver);
+
 		// get pkgrel for current pkgname from pkgbuild
-		mem_alloc(&cmd, VSTR(cmd), (strlen(pkglist->pkgname) + 86));
-		sprintf(cmd, "echo -n $(cd %s && echo $(less PKGBUILD | grep pkgrel= | cut -f2 -d '=') | tr -d \"'\\\"\")", pkglist->pkgname);
-		get_buffer(cmd, &pkgrel);
-	
+		get_cmd(&cmd, PKGBUILD_CMD(pkgrel), pkglist->pkgname);
+		retrieve(cmd, &pkgrel);
+
 		// copy pkgver-pkgrel into full_ver
-		mem_alloc(&full_ver, VSTR(pkgver), (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
+		mem_alloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
 		if (epoch[0] == '\0') {
 			sprintf(full_ver, "%s-%s", pkgver, pkgrel);
 		} else if (pkgrel[0] == '\0') {
@@ -52,14 +50,12 @@ void update(void) {
 		
 		if (strcmp(pkglist->pkgver, full_ver) == 0) {
 			pkglist->update = true;
-			mem_alloc(&cmd, VSTR(update_list), (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 37));
+			mem_alloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 37));
 			sprintf(cmd, "	%-30s%s -> %s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
-			mem_alloc(&update_list, VSTR(update_list), (strlen(update_list) + strlen(cmd) + 1));
+			mem_alloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
-
 	}
-
 	free(epoch);
 	free(pkgver);
 	free(pkgrel);
