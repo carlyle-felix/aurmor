@@ -24,7 +24,7 @@ void update(void) {
 		get_cmd(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
 		system(cmd);
 
-		// get epoch for current pkgname from pkgbuild
+		// get epoch for current pkgname from pkgbuild (this only works if there was previously an epoch number, it probably fails if there was no epoch number previously and one is added.)
 		get_cmd(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
 		retrieve(cmd, &epoch);
 
