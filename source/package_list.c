@@ -4,13 +4,21 @@
 #include "../include/buffer.h"
 
 List *add_pkg(List *pkglist, char *pkgname, char *pkgver) {
-
+    
     List *temp = struct_malloc();
     mem_alloc(&temp->pkgname, ((strlen(pkgname) + 1)));
     mem_alloc(&temp->pkgver, ((strlen(pkgver) + 1)));
     strcpy(temp->pkgname, pkgname);
     strcpy(temp->pkgver, pkgver);
     temp->update = false;
+
+    /*
+    temp_list = pkglist;
+    while (pkglist->next != NULL);  traverse to last node.
+    pkglist->next = temp_node;
+    temp_node->next = NULL;
+    return temp_node;
+    */
     
     temp->next = pkglist;
     pkglist = temp;
