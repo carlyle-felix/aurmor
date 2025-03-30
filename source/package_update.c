@@ -13,12 +13,13 @@ void update(void) {
 	char c, *cmd = NULL, *update_list = NULL, *full_ver = NULL;
 	register int i;
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;  // All from source folder PKGBUILD
-	List *pkglist, *temp;
+	List *pkglist, *temp, *test;
 
 	mem_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 	
-	get_pkglist(&pkglist);
-	for (temp = pkglist; pkglist->next != NULL; pkglist = pkglist->next) {
+	get_list(&pkglist, "echo -n $(pacman -Qmq)");
+	add_pkgver(pkglist);
+	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
 		// update pkgname source folder in ~/.aur
 		get_cmd(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);

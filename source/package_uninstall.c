@@ -2,6 +2,7 @@
 #include "../include/uninstall.h"
 #include "../include/buffer.h"
 #include "../include/memory.h"
+#include "../include/list.h"
 
 void uninstall(char *pkgname) {
 
@@ -33,52 +34,31 @@ void uninstall(char *pkgname) {
 // rewrite to use linked lists.
 void clean(void) {
 
-    char *temp1, *temp2, *cmd = NULL, pkgname[NAME_LEN], dirname[NAME_LEN];
-    Buffer pacman_list = NULL, aur_dir = NULL;
-    register int i;
+    char *cmd = NULL;
+    List *dir, *pacman, *temp1, *temp2;
 
-    retrieve("echo $(sudo pacman -Qmq)", &pacman_list);
-    retrieve("echo $(ls)", &aur_dir);
-    temp1 = pacman_list;
-    temp2 = aur_dir;
+    get_list(&pacman, "echo -n $(pacman -Qmq)");
+    get_list(&dir, "echo -n $(ls)");
+    temp1 = pacman;
+    temp2 = dir;
     
-    if (strcmp(pacman_list, aur_dir) == 0) {
-        printf(" Nothing to do.\n");
-        free(temp1);
-        free(temp2);
-        exit(EXIT_SUCCESS);
-    }
-
-    mem_alloc(&cmd, sizeof(char));
-	while (*pacman_list != '\0') {
-		for (i = 0; i < NAME_LEN; i++) {
-			pkgname[i] = '\0';
-		}
-		for (i = 0; *pacman_list != ' ' && *pacman_list != '\n'; i++) {
-			pkgname[i] = *pacman_list++;	
-		}
-		pacman_list++;
-
-        while (*aur_dir != '\0') {
-            for (i = 0; i < NAME_LEN; i++) {
-                dirname[i] = '\0';
+	temp1 = pacman;
+    temp2 = dir;
+    while (dir != NULL) {
+        printf("DIRNAME:%s\n", dir->pkgname);
+        if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
+            printf(" Removing %s from AUR directory...\n", dir->pkgname); 
+            get_cmd(&cmd, "rm -rf %s", dir->pkgname);
+            system(cmd);
+        } else {
+            get_cmd(&cmd, "cd %s && git clean -dfx", dir->pkgname);
+            printf("CMD:%s.\n", cmd);
+            system(cmd);
+            pacman = pacman->next;
             }
-			for (i = 0; *aur_dir != ' ' && *aur_dir != '\n'; i++) {
-                dirname[i] = *aur_dir++;
-            }
-            aur_dir++;
-            if (strcmp(pkgname, dirname) == 0) {
-                get_cmd(&cmd, "cd %s && git clean -dfx", dirname);
-                system(cmd);    // won't run if pkglist == aurdir
-                break;
-            } else {
-                printf(" Removing %s from AUR directory...\n", dirname); 
-                get_cmd(&cmd, "rm -rf %s", dirname);
-                system(cmd);
-            }
-		}       
+        dir = dir->next;
     }
     free(cmd);
-    free(temp1);
-    free(temp2);
+    clear_list(temp1);
+    clear_list(temp2);
 }

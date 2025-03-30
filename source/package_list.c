@@ -3,103 +3,15 @@
 #include "../include/memory.h"
 #include "../include/buffer.h"
 
-List *add_pkg(List *pkglist, char *pkgname, char *pkgver) {
-    
-    List *temp = struct_malloc();
-    mem_alloc(&temp->pkgname, ((strlen(pkgname) + 1)));
-    mem_alloc(&temp->pkgver, ((strlen(pkgver) + 1)));
-    strcpy(temp->pkgname, pkgname);
-    strcpy(temp->pkgver, pkgver);
-    temp->update = false;
+void get_list(List **list, char *cmd) {
 
-    /*
-    temp_list = pkglist;
-    while (pkglist->next != NULL);  traverse to last node.
-    pkglist->next = temp_node;
-    temp_node->next = NULL;
-    return temp_node;
-    */
-    
-    temp->next = pkglist;
-    pkglist = temp;
-    return temp;
-}
-
-List *remove_pkg(List *pkglist, char *pkgname) {
-
-    List *prev, *cur;
-    for (cur = pkglist, prev = NULL; cur != NULL; prev = cur, cur = cur->next) {
-        if (strcmp(cur->pkgname, pkgname) == 0) {
-            break;
-        } 
-    }
-    if (cur == NULL) {
-        printf("Package %s not found in pkglist", pkgname);
-        return pkglist;
-    } 
-    if (prev == NULL) {
-        pkglist = cur->next;
-    } else {
-        prev->next = cur->next;
-    }
-    
-    free(cur->pkgname);
-    free(cur->pkgver);
-    free(cur);
-
-    return pkglist;
-}
-
-List *find_pkg(List *pkglist, char *pkgname) {
-
-    List *temp;
-    for (temp = pkglist; temp != NULL; pkglist = temp, temp = temp->next) {
-        if (strcmp(temp->pkgname, pkgname) == 0) {
-            return temp;
-        }
-    }
-    printf("Package %s not found in pkglist", pkgname);
-    return NULL;
-}
-
-void clear_list(List *pkglist) {
-    
-    List *temp;
-
-    while (pkglist != NULL) {
-        temp = pkglist;
-        pkglist = pkglist->next;
-        free(temp->pkgname);
-        free(temp->pkgver);
-        free(temp);
-    }
-}
-
-void sort_list(List **pkglist) {
-    
-    List *cur, *prev, *next;
-    prev = struct_malloc();
-    cur = *pkglist;
-    while (cur != NULL) {
-        next = cur->next;
-        cur->next = prev;
-        prev = cur;
-        cur = next;
-    }
-    *pkglist = prev->next; // This shouldn't need to be prev->next, it should be prev but then the list includes a null pkgname further downstream.
-    free(prev);
-}
-
-void get_pkglist(List **pkglist) {
-
-    char pkgname[NAME_LEN], *pkgver = NULL;
-    Buffer pacman_list = NULL, cmd = NULL, temp = NULL;
+    char pkgname[NAME_LEN];
+    Buffer pacman_list = NULL, temp = NULL;
     register int i;
 
-    *pkglist = struct_malloc();
+    *list = struct_malloc();
     
-    // get pkgname and pkgver of installed packages and store in pkglist
-	retrieve("echo -n $(pacman -Qmq)", &pacman_list);
+	retrieve(cmd, &pacman_list);
     temp = pacman_list;
     while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
@@ -111,15 +23,66 @@ void get_pkglist(List **pkglist) {
 		if (*pacman_list != '\0') {
 			pacman_list++;
 		}
-		
-		// add pkgname and pkgver to pkglist
-		get_cmd(&cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", pkgname);
-		retrieve(cmd, &pkgver);
-		*pkglist = add_pkg(*pkglist, pkgname, pkgver);
+        //printf("GET_LIST: %s.\n", pkgname);
+		add_pkgname(*list, pkgname);
     }
     free(temp);
-    free(cmd);
-    free(pkgver);
+}
 
-    sort_list(pkglist);
+List *add_pkgname(List *list, char *pkgname) {
+    
+    if (list->pkgname == NULL) {
+        mem_alloc(&list->pkgname, ((strlen(pkgname) + 1)));
+        strcpy(list->pkgname, pkgname);  
+    } else {
+        List *cur, *prev, *temp;
+        
+        temp = struct_malloc();
+        mem_alloc(&temp->pkgname, ((strlen(pkgname) + 1)));
+        strcpy(temp->pkgname, pkgname);
+        for (cur = list, prev = NULL; cur != NULL; prev = cur, cur = cur->next);
+        if (prev != NULL) {
+            temp->next = NULL;
+            prev->next = temp;
+        }
+    }
+    
+    return list;
+}
+
+void add_pkgver(List *list) {
+    
+    char *cmd = NULL;
+
+    while (list != NULL) {
+       	get_cmd(&cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", list->pkgname);
+        retrieve(cmd, &list->pkgver);
+
+        list = list->next;
+    }
+    free(cmd);
+}
+
+List *find_pkg(List *pkglist, char *pkgname) {
+
+    List *temp;
+    for (temp = pkglist; temp != NULL; pkglist = temp, temp = temp->next) {
+        if (strcmp(temp->pkgname, pkgname) == 0) {
+            return temp;
+        }
+    }
+    return NULL;
+}
+
+void clear_list(List *list) {
+    
+    List *temp;
+
+    while (list != NULL) {
+        temp = list;
+        list = list->next;
+        free(temp->pkgname);
+        free(temp->pkgver);
+        free(temp);
+    }
 }
