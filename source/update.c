@@ -52,7 +52,7 @@ void update(void) {
 		if (strcmp(pkglist->pkgver, full_ver) != 0) {
 			pkglist->update = true;
 			mem_alloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 37));
-			sprintf(cmd, "	%-30s%s -> %s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
+			sprintf(cmd, "	%-25s%s\t->\t%s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
 			mem_alloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
