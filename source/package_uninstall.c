@@ -45,14 +45,12 @@ void clean(void) {
 	temp1 = pacman;
     temp2 = dir;
     while (dir != NULL) {
-        printf("DIRNAME:%s\n", dir->pkgname);
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
             printf(" Removing %s from AUR directory...\n", dir->pkgname); 
             get_cmd(&cmd, "rm -rf %s", dir->pkgname);
             system(cmd);
         } else {
             get_cmd(&cmd, "cd %s && git clean -dfx", dir->pkgname);
-            printf("CMD:%s.\n", cmd);
             system(cmd);
             pacman = pacman->next;
             }
