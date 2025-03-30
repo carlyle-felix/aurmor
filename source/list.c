@@ -23,7 +23,6 @@ void get_list(List **list, char *cmd) {
 		if (*pacman_list != '\0') {
 			pacman_list++;
 		}
-        //printf("GET_LIST: %s.\n", pkgname);
 		add_pkgname(*list, pkgname);
     }
     free(temp);
