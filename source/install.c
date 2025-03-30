@@ -30,10 +30,10 @@ void clone(const char *url) {
         pkgname[i] = *url++;
     }
 
-    resolve(pkgname);
+    less_prompt(pkgname);
 }
 
-void resolve(const char *pkgname) {
+void less_prompt(const char *pkgname) {
 
 	char c, *cmd = NULL;
 	register int i;

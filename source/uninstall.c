@@ -27,7 +27,6 @@ void uninstall(char *pkgname) {
     }
     free(cmd);
 
-    //ask before cleaning...
     clean();
 }
 

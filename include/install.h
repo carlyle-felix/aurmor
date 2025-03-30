@@ -3,6 +3,6 @@
 
 void install(const char *pkgname);
 void clone(const char *url);
-void resolve(const char *pkgname);
+void less_prompt(const char *pkgname);
 
 #endif
