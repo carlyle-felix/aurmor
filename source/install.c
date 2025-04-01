@@ -13,7 +13,7 @@ void install(const char *pkgname) {
     free(cmd);
 }
 
-void clone(const char *url) {
+void target_clone(const char *url) {
 
     char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
     register int i;
@@ -31,6 +31,18 @@ void clone(const char *url) {
     }
 
     less_prompt(pkgname);
+}
+
+void aur_clone(const char *pkgname) {
+
+    char *cmd = NULL;
+
+    get_cmd(&cmd, "git clone https://aur.archlinux.org/%s.git", pkgname);
+    system(cmd);
+
+    less_prompt(pkgname);
+
+    free(cmd);
 }
 
 void less_prompt(const char *pkgname) {

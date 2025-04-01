@@ -7,23 +7,12 @@
 void uninstall(char *pkgname) {
 
     char *cmd = NULL;
-    char *pkglist = NULL;
-
-    if (pkgname == NULL) {
-        mem_alloc(&pkglist, MAX_BUFFER);
-        printf(":: Fetching list of installed AUR packages...\n");
-        system("pacman -Qmq");
-        printf(":: Enter package name(s) to uninstall: ");
-        fgets(pkglist, MAX_BUFFER, stdin);
-    } else {
-        pkglist = pkgname;
-    }
     
-    get_cmd(&cmd, "sudo pacman -Rsc %s", pkglist);
+    get_cmd(&cmd, "sudo pacman -Rsc %s", pkgname);
     system(cmd);
 
     if (pkgname == NULL) {
-        free(pkglist);
+        free(pkgname);
     }
     free(cmd);
 
@@ -44,7 +33,7 @@ void clean(void) {
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            printf(" Removing %s from AUR directory...\n", dir->pkgname); 
+            printf("Removing %s from AUR directory...\n", dir->pkgname); 
             get_cmd(&cmd, "rm -rf %s", dir->pkgname);
             system(cmd);
         } else {
@@ -57,4 +46,9 @@ void clean(void) {
     free(cmd);
     clear_list(temp1);
     clear_list(temp2);
+}
+
+void list_packages(void) {
+    
+    system("pacman -Qmq");
 }

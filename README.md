@@ -13,16 +13,19 @@ $ make
 
 ## USAGE
 
-| COMMAND | DESCRIPTION |
+| OPERATION | DESCRIPTION |
 | ------- | ----------- |
 | `aurmor -u` | update all packages. |
-| `aurmor -i [git clone URL]` | clone and install. |
+| `aurmor -U [package(s)]`| force update package(s)|
+| `aurmor -i [package(s)]` | install from [AUR](https://aur.archlinux.org/). |
+| `aurmor -x [git clone URL]` | clone and install from a specified git repo.|
+| `aumor -r [packages]` | uninstall package(s). |
 | `aurmor -c` | delete directories found in ~/.aur directory but not found in pacman's list of installed AUR packages. |
-| `aumor -r` | print a list of installed AUR packages before uninstall prompt. |
-| `aurmor -r [package name]` | uninstall specified package. caveat: name must match the one found in `pacman -Qmq` |
+| `aurmor -r [package(s)]` | uninstall specified packages. caveat: name must match the one found in `aurmor -q` |
+| `aurmor -q` | list installed AUR packages |
 | `aurmor -h` | help |
 
 ## NOTES
 
-- The uninstall function requires the name of the target package as it is found in the output of `# pacman -Qmq` (`aurmor -r` prints this list before the package(s) to uninstall prompt).
+- The uninstall function requires the name of the target package as it is found in the output of `aurmor -q`
 - Packages are built with `OPTIONS=-debug`.
