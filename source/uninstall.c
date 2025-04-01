@@ -30,7 +30,6 @@ void uninstall(char *pkgname) {
     clean();
 }
 
-// rewrite to use linked lists.
 void clean(void) {
 
     char *cmd = NULL;

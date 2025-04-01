@@ -6,7 +6,10 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
-#define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " #item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
+#define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " \
+							#item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
+
+bool epoch_update(List *node, char *epoch);
 
 void update(void) {
 	
@@ -21,11 +24,11 @@ void update(void) {
 	add_pkgver(pkglist);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
-		// update pkgname source folder in ~/.aur
+		// update pkgname source folder in ~/.config/aurmor
 		get_cmd(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
 		system(cmd);
 
-		// get epoch for current pkgname from pkgbuild (this only works if there was previously an epoch number, it probably fails if there was no epoch number previously and one is added.)
+		// get epoch for current pkgname from pkgbuild
 		get_cmd(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
 		retrieve(cmd, &epoch);
 
@@ -37,7 +40,7 @@ void update(void) {
 		get_cmd(&cmd, PKGBUILD_CMD(pkgrel), pkglist->pkgname);
 		retrieve(cmd, &pkgrel);
 
-		// copy pkgver-pkgrel into full_ver
+		// copy epoch:pkgver-pkgrel into full_ver
 		mem_alloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
 		if (epoch[0] == '\0') {
 			sprintf(full_ver, "%s-%s", pkgver, pkgrel);
@@ -49,7 +52,7 @@ void update(void) {
 			sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
 		}
 		
-		if (strcmp(pkglist->pkgver, full_ver) != 0) {
+		if (strcmp(pkglist->pkgver, full_ver) < 0 || epoch_update(pkglist, epoch)) {
 			pkglist->update = true;
 			mem_alloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 40));
 			sprintf(cmd, "\t%-30s%-20s->\t%s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
@@ -95,5 +98,20 @@ void update(void) {
 			clear_list(pkglist);
 			break;
 		}
+	}
+}
+
+bool epoch_update(List *node, char *epoch) {
+
+	char *pkgver = node->pkgver;
+
+	if (epoch[0] == '\0') {
+		return false;
+	} else {
+		while (*pkgver != ':' && *pkgver != '\0') {
+			*pkgver++;
+		}
+		
+		return *pkgver == '\0' ? true : false;
 	}
 }
