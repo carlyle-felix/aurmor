@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "../include/install.h"
-#include "../include/update.h"
-#include "../include/uninstall.h"
+#include "../include/operation.h"
 #include "../include/memory.h"
 #include "../include/rpc.h"
 #include "../include/list.h"

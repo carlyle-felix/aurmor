@@ -1,28 +1,13 @@
 #include <stdio.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
-#include "../include/memory.h"
 #include "../include/rpc.h"
+#include "../include/memory.h"
 #include "../include/list.h"
 #include "../include/buffer.h"
 
 size_t callback(char *data, size_t size, size_t nmemb, void *p);
 
-void print_search(char *pkgname) {
-
-    char *url = NULL;
-    List *rpc_pkglist, *temp;
-
-    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
-    rpc_pkglist = get_rpc_data(url);
-
-    for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
-        printf("%s %s\n", temp->pkgname, temp->pkgver);
-    }
-
-    free(url);
-    clear_list(rpc_pkglist);
-}
 List *get_rpc_data(char *url) {
 
     char *response;

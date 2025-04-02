@@ -1,17 +1,159 @@
 #include <stdio.h>
 #include <ctype.h>
-#include "../include/buffer.h"
-#include "../include/update.h"
-#include "../include/install.h"
+#include "../include/operation.h"
 #include "../include/memory.h"
+#include "../include/buffer.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
 
 #define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " \
-							#item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
+#item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
 
 bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
+void install(const char *pkgname);
+
+void target_clone(const char *url) {
+
+    char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
+    register int i;
+
+    get_str(&cmd, "git clone %s", url);
+    system(cmd);
+    free(cmd);
+    while (*url++ != '\0');
+    while (*url != '/') {
+        url--;
+    }
+    url++;
+    for (i = 0; *url != '.'; i++) {
+        pkgname[i] = *url++;
+    }
+
+    less_prompt(pkgname);
+}
+
+void aur_clone(const char *pkgname) {
+
+    char *cmd = NULL;
+
+    get_str(&cmd, "git clone https://aur.archlinux.org/%s.git", pkgname);
+    system(cmd);
+
+    less_prompt(pkgname);
+
+    free(cmd);
+}
+
+void less_prompt(const char *pkgname) {
+
+	char c, *cmd = NULL;
+	register int i;
+
+    printf("\033[1;34m:: \e[0;1mView %s PKGBUILD in less? [Y/n]\e[0m ", pkgname);
+    for (;;) {
+        c = tolower(getchar());
+        if (c != '\n') {
+			while (getchar() != '\n');
+		}
+        if (c == 'y' || c == '\n') {
+            get_str(&cmd, "cd %s && less PKGBUILD", pkgname);
+            system(cmd);
+            free(cmd);
+            printf("\033[1;34m:: \e[0;1mContinue to install? [Y/n]\e[0m ");
+            for(;;) {
+                c = tolower(getchar());
+                if (c != '\n') {
+                    while (getchar() != '\n');
+                }
+                if (c == 'y' || c == '\n') {
+                    install(pkgname);
+                    return;
+                } else if (c == 'n') {
+                    return;
+                } 
+            } 
+        } else if (c == 'n') {
+            free(cmd);
+            install(pkgname);
+            return;
+        }
+    }
+}
+
+void install(const char *pkgname) {
+    
+    char *cmd = NULL;
+
+    get_str(&cmd, "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx", pkgname); // don't build -debug packages for now.
+    system(cmd);
+    free(cmd);
+}
+
+void uninstall(char *pkgname) {
+
+    char *cmd = NULL;
+    
+    get_str(&cmd, "sudo pacman -Rsc %s", pkgname);
+    system(cmd);
+
+    if (pkgname == NULL) {
+        free(pkgname);
+    }
+    free(cmd);
+
+    clean();
+}
+
+void clean(void) {
+
+    char *cmd = NULL;
+    List *dir, *pacman, *temp1, *temp2;
+
+    get_list(&pacman, "echo -n $(pacman -Qmq)");
+    get_list(&dir, "echo -n $(ls)");
+    temp1 = pacman;
+    temp2 = dir;
+    
+	temp1 = pacman;
+    temp2 = dir;
+    while (dir != NULL) {
+        if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
+            printf("Removing %s from AUR directory...\n", dir->pkgname); 
+            get_str(&cmd, "rm -rf %s", dir->pkgname);
+            system(cmd);
+        } else {
+            get_str(&cmd, "cd %s && git clean -dfx", dir->pkgname);
+            system(cmd);
+            pacman = pacman->next;
+            }
+        dir = dir->next;
+    }
+    free(cmd);
+    clear_list(temp1);
+    clear_list(temp2);
+}
+
+void print_search(char *pkgname) {
+
+    char *url = NULL;
+    List *rpc_pkglist, *temp;
+
+    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
+    rpc_pkglist = get_rpc_data(url);
+
+    for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
+        printf("\e[1m%s \e[1;32m%s\e[0m\n", temp->pkgname, temp->pkgver);
+    }
+
+    free(url);
+    clear_list(rpc_pkglist);
+}
+
+void list_packages(void) {
+    
+    system("pacman -Qm");
+}
 
 void update(void) {
 	

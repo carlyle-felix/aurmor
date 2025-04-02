@@ -3,8 +3,6 @@ buffer.o
 main.o
 memory.o
 list.o
-update.o
-install.o
-uninstall.o
+operation.o
 rpc.o
 vgcore.*
