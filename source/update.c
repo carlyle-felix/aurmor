@@ -18,30 +18,30 @@ void update(void) {
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;  // All from source folder PKGBUILD
 	List *pkglist, *temp, *test;
 
-	mem_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
+	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 	
 	get_list(&pkglist, "echo -n $(pacman -Qmq)");
 	add_pkgver(pkglist);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
 		// update pkgname source folder in ~/.config/aurmor
-		get_cmd(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
+		get_str(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
 		system(cmd);
 
 		// get epoch for current pkgname from pkgbuild
-		get_cmd(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
+		get_str(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
 		retrieve(cmd, &epoch);
 
 		// get pkgver for current pkgname from pkgbuild
-		get_cmd(&cmd, PKGBUILD_CMD(pkgver), pkglist->pkgname);
+		get_str(&cmd, PKGBUILD_CMD(pkgver), pkglist->pkgname);
 		retrieve(cmd, &pkgver);
 
 		// get pkgrel for current pkgname from pkgbuild
-		get_cmd(&cmd, PKGBUILD_CMD(pkgrel), pkglist->pkgname);
+		get_str(&cmd, PKGBUILD_CMD(pkgrel), pkglist->pkgname);
 		retrieve(cmd, &pkgrel);
 
 		// copy epoch:pkgver-pkgrel into full_ver
-		mem_alloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
+		str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
 		if (epoch[0] == '\0') {
 			sprintf(full_ver, "%s-%s", pkgver, pkgrel);
 		} else if (pkgrel[0] == '\0') {
@@ -54,9 +54,9 @@ void update(void) {
 		
 		if (strcmp(pkglist->pkgver, full_ver) < 0 || epoch_update(pkglist, epoch)) {
 			pkglist->update = true;
-			mem_alloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 40));
+			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 40));
 			sprintf(cmd, "\t%-30s%-20s->\t%s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
-			mem_alloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
+			str_malloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
 	}

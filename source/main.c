@@ -4,6 +4,9 @@
 #include "../include/update.h"
 #include "../include/uninstall.h"
 #include "../include/memory.h"
+#include "../include/rpc.h"
+#include "../include/list.h"
+#include "../include/buffer.h"
 
 void set_dir(void);
 
@@ -22,6 +25,7 @@ int main(int argc, char *argv[]) {
 		printf(" -c\t\t\t\t\tclean ~/.cache/aurmor dir.\n");
 		printf(" -q\t\t\t\t\tlist installed packages.\n");
 		printf(" -r [package(s)]\t\t\tuninstall package(s).\n");
+		printf(" -s [package]\t\t\t\tsearch package on AUR.\n");
 	} else if (strcmp(argv[1], "-u") == 0) {
 		update();
 	}  else if (strcmp(argv[1], "-U") == 0) {		// Doesn't order updates alphabetically (would be nice).
@@ -58,6 +62,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
 		}
+	} else if (strcmp(argv[1], "-s") == 0) {
+		print_search(argv[2]);
 	}
 
 	return 0;
@@ -68,8 +74,7 @@ void set_dir(void) {
 	char *home, *aur = NULL;
 
 	home = getenv("HOME");
-	mem_alloc(&aur, (strlen(home) + 15));
-	sprintf(aur, "%s/.cache/aurmor", home);
+	get_str(&aur, "%s/.cache/aurmor", home);
 	chdir(aur);
 	free(aur);
 }

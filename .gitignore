@@ -6,4 +6,5 @@ list.o
 update.o
 install.o
 uninstall.o
+rpc.o
 vgcore.*

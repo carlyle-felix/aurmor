@@ -8,7 +8,7 @@ void uninstall(char *pkgname) {
 
     char *cmd = NULL;
     
-    get_cmd(&cmd, "sudo pacman -Rsc %s", pkgname);
+    get_str(&cmd, "sudo pacman -Rsc %s", pkgname);
     system(cmd);
 
     if (pkgname == NULL) {
@@ -34,10 +34,10 @@ void clean(void) {
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
             printf("Removing %s from AUR directory...\n", dir->pkgname); 
-            get_cmd(&cmd, "rm -rf %s", dir->pkgname);
+            get_str(&cmd, "rm -rf %s", dir->pkgname);
             system(cmd);
         } else {
-            get_cmd(&cmd, "cd %s && git clean -dfx", dir->pkgname);
+            get_str(&cmd, "cd %s && git clean -dfx", dir->pkgname);
             system(cmd);
             pacman = pacman->next;
             }

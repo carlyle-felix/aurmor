@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <curl/curl.h>
+#include <json-c/json.h>
+#include "../include/memory.h"
+#include "../include/rpc.h"
+#include "../include/list.h"
+#include "../include/buffer.h"
+
+size_t callback(char *data, size_t size, size_t nmemb, void *p);
+
+void print_search(char *pkgname) {
+
+    List *rpc_pkglist, *temp;
+
+    rpc_pkglist = get_rpc_data(pkgname);
+
+    for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
+        printf("%s %s\n", temp->pkgname, temp->pkgver);
+    }
+
+    clear_list(rpc_pkglist);
+}
+List *get_rpc_data(char *pkgname) {
+
+    char *url = NULL, *response;
+    List *rpc_pkglist;
+
+    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
+    response = curl(url);
+    rpc_pkglist = json(response);
+    
+    free(url);
+    free(response);
+    
+    return rpc_pkglist;
+} 
+
+char *curl(char *url) {
+
+    Json_buffer *buffer;
+    CURLcode res;
+    CURL *curl;
+    char *response = NULL;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    buffer = buffer_malloc();
+    
+    if(curl != NULL) {
+
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) buffer);
+
+        res = curl_easy_perform(curl);
+        get_str(&response, buffer->response, NULL);
+
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+    }
+    free(buffer->response);
+    free(buffer);
+
+    return response;
+}
+
+size_t callback(char *data, size_t size, size_t nmemb, void *p) {
+    
+    int len = size * nmemb;
+    Json_buffer *temp = (Json_buffer *)p;
+
+    str_malloc(&temp->response, temp->size + len + 1);
+    memcpy(&(temp->response[temp->size]), data, len);
+    temp->size += len;
+    temp->response[temp->size] = '\0';
+
+    return len;
+}
+
+List *json(char *response) {
+
+    register int i, n_results;
+    json_object *root, *results, *name, *pop, *version, *pkg;
+    
+    List *temp = list_malloc();
+    
+    root = json_tokener_parse(response);
+    results = json_object_object_get(root, "results");
+    n_results = json_object_array_length(results);
+
+    for (i = 0; i < n_results; i++) {
+        pkg = json_object_array_get_idx(results, i);
+        
+        name = json_object_object_get(pkg, "Name");
+        pop = json_object_object_get(pkg, "Popularity");
+        version = json_object_object_get(pkg, "Version");
+
+        temp = add_json_data(temp, json_object_get_string(name), json_object_get_string(version), json_object_get_int(pop));
+    }
+    json_object_put(root);
+    
+    return temp;
+}

@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include "../include/memory.h"
 #include "../include/list.h"
+#include "../include/rpc.h"
 
-void mem_alloc(char **ptr, int size) {
+void str_malloc(char **ptr, int size) {
 	
 	if (*ptr == NULL) {
 		*ptr = malloc(size);
 		if (*ptr == NULL) {
-			printf("ERROR: Failed to allocate memory.");
+			printf("ERROR: Failed to allocate memory for string.\n");
 			exit(EXIT_FAILURE);
 		} else {
 				*ptr[0] = '\0';
@@ -17,25 +18,41 @@ void mem_alloc(char **ptr, int size) {
 
 		temp = realloc(*ptr, size);
 		if (temp == NULL) {
-			printf("ERROR: Failed to reallocate memory.");
+			printf("ERROR: Failed to reallocate memory of string.\n");
 			exit(EXIT_FAILURE);
 		}
 		*ptr = temp;
 	}
 }
 
-List *struct_malloc(void) {
+List *list_malloc(void) {
 
 	List *temp = malloc(sizeof(List));
 	if (temp == NULL) {
-		printf("ERROR: Failed to allocate memory for new node.");
+		printf("ERROR: Failed to allocate memory for new node.\n");
 		exit(EXIT_FAILURE);
 	}
 
 	temp->pkgname = NULL;
 	temp->pkgver = NULL;
-	temp->next = NULL;
+	temp->pop = 0;
 	temp->update = false;
+	temp->next = NULL;
 	
+	return temp;
+}
+
+Json_buffer *buffer_malloc(void) {
+
+	Json_buffer *temp = malloc(sizeof(Json_buffer));
+	if (temp == NULL) {
+		printf("ERROR: Failed to allocate memory for JSON buffer.\n");
+		exit(EXIT_FAILURE);
+	}
+	temp->response = NULL;
+    str_malloc(&temp->response, sizeof(char *));
+    temp->response[0] = '\0';
+    temp->size = 0;
+
 	return temp;
 }

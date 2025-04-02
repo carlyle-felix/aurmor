@@ -24,6 +24,7 @@ $ make
 | `aurmor -r [package(s)]` | uninstall specified packages. caveat: name must match the one found in `aurmor -q` |
 | `aurmor -q` | list installed AUR packages |
 | `aurmor -h` | help |
+| `aurmor -s` | search package on [AUR](https://aur.archlinux.org/) |
 
 ## NOTES
 

@@ -6,6 +6,9 @@
 
 #define NAME_LEN 100
 
-void mem_alloc(char **ptr, int size);
+typedef struct node List;
+
+void str_malloc(char **ptr, int size);
+List *list_malloc(void);
 
 #endif
