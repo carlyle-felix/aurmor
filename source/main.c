@@ -47,6 +47,8 @@ int main(int argc, char *argv[]) {
 	} else if (strcmp(argv[1], "-x") == 0) {
 		if (argc == 3) {
 			target_clone(argv[2]);
+		} else if (argc > 3) {
+			printf("Please specify only one target URL, use -h for help.\n");
 		} else {
 			printf("Please specify a target URL, use -h for help.\n");
 		}
@@ -63,7 +65,14 @@ int main(int argc, char *argv[]) {
 			printf("Please specify package(s), use -h for help.\n");
 		}
 	} else if (strcmp(argv[1], "-s") == 0) {
-		print_search(argv[2]);
+		if (argc == 3) {
+			print_search(argv[2]);
+		} else if (argc > 3) {
+			printf("Please specify only one keyword, use -h for help.\n");
+		} else {
+			printf("Please specify a search keyword, use -h for help.\n");
+		}
+		
 	}
 
 	return 0;
