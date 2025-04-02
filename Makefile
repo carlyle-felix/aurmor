@@ -1,7 +1,6 @@
 CFLAGS 		= -Wall -g
-
 INCL		= ./include
-SRC		= ./source
+SRC			= ./source
 BINDIR		= /usr/local
 
 aurmor: main.o buffer.o install.o update.o uninstall.o \
@@ -41,7 +40,7 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 
 .PHONY: install clean uninstall
 install:
-	install -m 0755 aurmor $(BINDIR)
+	install -m 0755 aurmor $(BINDIR)/bin/
 
 clean:
 	rm aurmor main.o buffer.o install.o update.o memory.o \
