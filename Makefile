@@ -33,7 +33,7 @@ install:
 	install -m 0755 aurmor $(BINDIR)/bin/
 
 clean:
-	rm aurmor main.o buffer.o operation.o install.o list.o memory.o \
+	rm aurmor main.o buffer.o operation.o list.o memory.o \
 		rpc.o
 
 uninstall:
