@@ -19,7 +19,7 @@ $ make
 | `aurmor -U [package(s)]`| force update package(s)|
 | `aurmor -i [package(s)]` | install from [AUR](https://aur.archlinux.org/). |
 | `aurmor -x [git clone URL]` | clone and install from a specified git repo.|
-| `aumor -r [packages]` | uninstall package(s). |
+| `aumor -r [package(s)]` | uninstall package(s). |
 | `aurmor -c` | delete directories found in ~/.aur directory but not found in pacman's list of installed AUR packages. |
 | `aurmor -r [package(s)]` | uninstall specified packages. caveat: name must match the one found in `aurmor -q` |
 | `aurmor -q` | list installed AUR packages |

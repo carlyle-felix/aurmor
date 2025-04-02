@@ -68,7 +68,9 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
 
     if (pkgname == NULL) {
         return list;
-    } else if (list->pkgname == NULL) {
+    } 
+    
+    if (list->pkgname == NULL) {
         str_malloc(&list->pkgname, strlen(pkgname) + 1);
         strcpy(list->pkgname, pkgname);
         str_malloc(&list->pkgver, strlen(pkgver) + 1);
@@ -95,15 +97,20 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
     return list;
 }
 
-List *find_pkg(List *pkglist, char *pkgname) {
+List *find_pkg(List *list, char *pkgname) {
 
     List *temp;
-    for (temp = pkglist; temp != NULL; pkglist = temp, temp = temp->next) {
+
+    for (temp = list; temp != NULL; temp = temp->next) {
         if (strcmp(temp->pkgname, pkgname) == 0) {
-            return temp;
+            break;
         }
     }
-    return NULL;
+    if (temp == NULL) {
+        return NULL;
+    } else {
+        return temp;
+    }
 }
 
 void clear_list(List *list) {

@@ -50,5 +50,5 @@ void clean(void) {
 
 void list_packages(void) {
     
-    system("pacman -Qmq");
+    system("pacman -Qm");
 }

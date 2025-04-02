@@ -10,29 +10,29 @@ size_t callback(char *data, size_t size, size_t nmemb, void *p);
 
 void print_search(char *pkgname) {
 
+    char *url = NULL;
     List *rpc_pkglist, *temp;
 
-    rpc_pkglist = get_rpc_data(pkgname);
+    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
+    rpc_pkglist = get_rpc_data(url);
 
     for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
         printf("%s %s\n", temp->pkgname, temp->pkgver);
     }
 
+    free(url);
     clear_list(rpc_pkglist);
 }
-List *get_rpc_data(char *pkgname) {
+List *get_rpc_data(char *url) {
 
-    char *url = NULL, *response;
-    List *rpc_pkglist;
+    char *response;
+    List *temp;
 
-    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
     response = curl(url);
-    rpc_pkglist = json(response);
+    temp = json(response);
     
-    free(url);
     free(response);
-    
-    return rpc_pkglist;
+    return temp;
 } 
 
 char *curl(char *url) {

@@ -5,65 +5,48 @@
 #include "../include/install.h"
 #include "../include/memory.h"
 #include "../include/list.h"
+#include "../include/rpc.h"
 
 #define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " \
 							#item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
 
-bool epoch_update(List *node, char *epoch);
+bool epoch_update(List *pkg, char *pkgver);
+char *not_on_aur(char *pkgname);
 
 void update(void) {
 	
-	char c, *cmd = NULL, *update_list = NULL, *full_ver = NULL;
+	char c, *cmd = NULL, *update_list = NULL, *pkgver = NULL;
 	register int i;
-	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;  // All from source folder PKGBUILD
-	List *pkglist, *temp, *test;
+	List *pkglist, *rpc_pkg, *temp;
 
 	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
-	
+
 	get_list(&pkglist, "echo -n $(pacman -Qmq)");
 	add_pkgver(pkglist);
+
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
-		// update pkgname source folder in ~/.config/aurmor
-		get_str(&cmd, "cd %s && git pull &> /dev/null", pkglist->pkgname);
-		system(cmd);
-
-		// get epoch for current pkgname from pkgbuild
-		get_str(&cmd, PKGBUILD_CMD(epoch), pkglist->pkgname);
-		retrieve(cmd, &epoch);
-
-		// get pkgver for current pkgname from pkgbuild
-		get_str(&cmd, PKGBUILD_CMD(pkgver), pkglist->pkgname);
-		retrieve(cmd, &pkgver);
-
-		// get pkgrel for current pkgname from pkgbuild
-		get_str(&cmd, PKGBUILD_CMD(pkgrel), pkglist->pkgname);
-		retrieve(cmd, &pkgrel);
-
-		// copy epoch:pkgver-pkgrel into full_ver
-		str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
-		if (epoch[0] == '\0') {
-			sprintf(full_ver, "%s-%s", pkgver, pkgrel);
-		} else if (pkgrel[0] == '\0') {
-			sprintf(full_ver, "%s:%s", epoch, pkgver);
-		} else if (epoch[0] == '\0' && pkgrel[0] == '\0') {
-			sprintf(full_ver, "%s", pkgver);
+		get_str(&cmd, "https://aur.archlinux.org/rpc/v5/info?arg[]=%s" , pkglist->pkgname);
+		rpc_pkg = get_rpc_data(cmd);
+		if (rpc_pkg->pkgname != NULL) {
+			pkgver = rpc_pkg->pkgver;
 		} else {
-			sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
+			pkgver = not_on_aur(pkglist->pkgname);
 		}
 		
-		if (strcmp(pkglist->pkgver, full_ver) < 0 || epoch_update(pkglist, epoch)) {
+		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
 			pkglist->update = true;
-			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(full_ver) + 40));
-			sprintf(cmd, "\t%-30s%-20s->\t%s\n", pkglist->pkgname, pkglist->pkgver, full_ver);
+			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 40));
+			sprintf(cmd, "\t%-30s%-20s->\t%s\n", pkglist->pkgname, pkglist->pkgver, pkgver);
 			str_malloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
+
+		if (rpc_pkg->pkgname == NULL) {
+			free(pkgver);
+		}
+		clear_list(rpc_pkg);
 	}
-	free(epoch);
-	free(pkgver);
-	free(pkgrel);
-	free(full_ver); 
 	free(cmd);
 
 	pkglist = temp;
@@ -101,17 +84,63 @@ void update(void) {
 	}
 }
 
-bool epoch_update(List *node, char *epoch) {
+bool epoch_update(List *pkg, char *pkgver) {
 
-	char *pkgver = node->pkgver;
+	char *ins_pkgver, *upd_pkgver;
+	
+	ins_pkgver = pkg->pkgver;
+	upd_pkgver = pkgver;
 
-	if (epoch[0] == '\0') {
-		return false;
-	} else {
-		while (*pkgver != ':' && *pkgver != '\0') {
-			*pkgver++;
-		}
-		
-		return *pkgver == '\0' ? true : false;
+	while (*ins_pkgver != ':' && *ins_pkgver != '\0') {
+		ins_pkgver++;
 	}
+	while (*upd_pkgver != ':' && *upd_pkgver != '\0') {
+		upd_pkgver++;
+	}
+
+	if (*ins_pkgver == '\0' && *upd_pkgver == ':') {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+char *not_on_aur(char *pkgname) {
+
+	char *cmd = NULL, *full_ver = NULL;
+	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
+
+	// update pkgname source folder in ~/.config/aurmor
+	get_str(&cmd, "cd %s && git pull &> /dev/null", pkgname);
+	system(cmd);
+
+	// get epoch for current pkgname from pkgbuild
+	get_str(&cmd, PKGBUILD_CMD(epoch), pkgname);
+	retrieve(cmd, &epoch);
+
+	// get pkgver for current pkgname from pkgbuild
+	get_str(&cmd, PKGBUILD_CMD(pkgver), pkgname);
+	retrieve(cmd, &pkgver);
+
+	// get pkgrel for current pkgname from pkgbuild
+	get_str(&cmd, PKGBUILD_CMD(pkgrel), pkgname);
+	retrieve(cmd, &pkgrel);	
+
+	// copy epoch:pkgver-pkgrel into full_ver
+	str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
+	if (epoch[0] == '\0') {
+		sprintf(full_ver, "%s-%s", pkgver, pkgrel);
+	} else if (pkgrel[0] == '\0') {
+		sprintf(full_ver, "%s:%s", epoch, pkgver);
+	} else if (epoch[0] == '\0' && pkgrel[0] == '\0') {
+		sprintf(full_ver, "%s", pkgver);
+	} else {
+		sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
+	}
+	free(cmd);
+	free(epoch);
+	free(pkgver);
+	free(pkgrel);
+
+	return full_ver;
 }
