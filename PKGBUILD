@@ -2,7 +2,7 @@
 
 pkgname=aurmor
 pkgver=20250402
-pkgrel=4
+pkgrel=5
 pkgdesc="An AUR helper written in C."
 arch=('x86_64')
 url="https://github.com/carlyle-felix/aurmor"

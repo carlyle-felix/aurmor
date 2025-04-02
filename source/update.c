@@ -34,7 +34,7 @@ void update(void) {
 			pkgver = not_on_aur(pkglist->pkgname);
 		}
 		
-		if (strcmp(pkglist->pkgver, pkgver) == 0 || epoch_update(pkglist, pkgver)) {  
+		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
 			pkglist->update = true;
 			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
 			sprintf(cmd, "\e[0m\t%-30s\033[38;5;8m%-20s\e[0m->\t\e[1;32m%s\e[0m\n", pkglist->pkgname, pkglist->pkgver, pkgver);
