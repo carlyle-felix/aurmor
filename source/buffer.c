@@ -11,7 +11,7 @@ void retrieve(const char *cmd, char **buffer_ptr) {
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
-		printf("ERROR: failed in buffer().");
+		printf("\033[1;31mERROR: \e[0;1mFailed in buffer().\e[0m");
 		exit(EXIT_FAILURE);
 	}
 	fgets(temp, MAX_BUFFER, p);

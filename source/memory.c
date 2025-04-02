@@ -8,7 +8,7 @@ void str_malloc(char **ptr, int size) {
 	if (*ptr == NULL) {
 		*ptr = malloc(size);
 		if (*ptr == NULL) {
-			printf("ERROR: Failed to allocate memory for string.\n");
+			printf("\033[1;31mERROR: \e[0;1mFailed to allocate memory for string.\e[0m\n");
 			exit(EXIT_FAILURE);
 		} else {
 				*ptr[0] = '\0';
@@ -18,7 +18,7 @@ void str_malloc(char **ptr, int size) {
 
 		temp = realloc(*ptr, size);
 		if (temp == NULL) {
-			printf("ERROR: Failed to reallocate memory of string.\n");
+			printf("\033[1;31mERROR: \e[0;1mFailed to reallocate memory of string.\e[0m\n");
 			exit(EXIT_FAILURE);
 		}
 		*ptr = temp;
@@ -29,7 +29,7 @@ List *list_malloc(void) {
 
 	List *temp = malloc(sizeof(List));
 	if (temp == NULL) {
-		printf("ERROR: Failed to allocate memory for new node.\n");
+		printf("\033[1;31mERROR: \e[0;1mFailed to allocate memory for new node.\e[0m\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -46,7 +46,7 @@ Json_buffer *buffer_malloc(void) {
 
 	Json_buffer *temp = malloc(sizeof(Json_buffer));
 	if (temp == NULL) {
-		printf("ERROR: Failed to allocate memory for JSON buffer.\n");
+		printf("\033[1;31mERROR: \e[0;1mFailed to allocate memory for JSON buffer.\e[0m\n");
 		exit(EXIT_FAILURE);
 	}
 	temp->response = NULL;

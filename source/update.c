@@ -34,10 +34,10 @@ void update(void) {
 			pkgver = not_on_aur(pkglist->pkgname);
 		}
 		
-		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
+		if (strcmp(pkglist->pkgver, pkgver) == 0 || epoch_update(pkglist, pkgver)) {  
 			pkglist->update = true;
-			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 40));
-			sprintf(cmd, "\t%-30s%-20s->\t%s\n", pkglist->pkgname, pkglist->pkgver, pkgver);
+			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
+			sprintf(cmd, "\e[0m\t%-30s\033[38;5;8m%-20s\e[0m->\t\e[1;32m%s\e[0m\n", pkglist->pkgname, pkglist->pkgver, pkgver);
 			str_malloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
@@ -56,11 +56,11 @@ void update(void) {
 		clear_list(pkglist);
 		exit(EXIT_SUCCESS);
 	} else {
-		printf(":: Updates are available for:\n\n%s\n", update_list);
+		printf("\033[1;34m:: \e[0;1mUpdates are available for:\n\n%s\n", update_list);
 		free(update_list);
 	}
 
-	printf(":: Proceed with installation? [Y/n] ");
+	printf("\033[1;34m:: \e[0;1mProceed with installation? [Y/n]\e[0m ");
 	for(;;) {
 		c = tolower(getchar());
 		if (c != '\n') {

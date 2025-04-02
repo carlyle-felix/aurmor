@@ -50,7 +50,7 @@ void less_prompt(const char *pkgname) {
 	char c, *cmd = NULL;
 	register int i;
 
-    printf(":: View %s PKGBUILD in less? [Y/n] ", pkgname);
+    printf("\033[1;34m:: \e[0;1mView %s PKGBUILD in less? [Y/n]\e[0m ", pkgname);
     for (;;) {
         c = tolower(getchar());
         if (c != '\n') {
@@ -60,7 +60,7 @@ void less_prompt(const char *pkgname) {
             get_str(&cmd, "cd %s && less PKGBUILD", pkgname);
             system(cmd);
             free(cmd);
-            printf(":: Continue to install? [Y/n] ");
+            printf("\033[1;34m:: \e[0;1mContinue to install? [Y/n]\e[0m ");
             for(;;) {
                 c = tolower(getchar());
                 if (c != '\n') {
