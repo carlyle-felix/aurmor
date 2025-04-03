@@ -1,8 +1,8 @@
 CFLAGS 		= -Wall -Wextra -Wpedantic -g
 INCL		= ./include
 SRC			= ./source
-BINDIR		= /usr/local
-PREFIX	 	=
+PREFIX		= /usr/local
+DESTDIR	 	=
 
 aurx: main.o buffer.o operation.o memory.o list.o rpc.o
 	gcc -o aurx $(SRC)/main.c $(SRC)/buffer.c $(SRC)/operation.c \
