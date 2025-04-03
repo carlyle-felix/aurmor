@@ -5,24 +5,32 @@
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
-void get_buffer(const char *cmd, Buffer *buffer_ptr) {
+Buffer get_buffer(const char *cmd) {
 	
-	char *temp = NULL;
+	char *temp_buffer = NULL;
 	FILE *p;	
+	Buffer temp = NULL;
 	
-	str_malloc(&temp, MAX_BUFFER);
+	str_malloc(&temp_buffer, MAX_BUFFER);
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
 		printf(BRED"ERROR:"BOLD" Failed in buffer().\n"RESET);
 		exit(EXIT_FAILURE);
 	}
-	fgets(temp, MAX_BUFFER, p);
-	str_malloc(buffer_ptr, (strlen(temp) + 1));
-	strcpy(*buffer_ptr, temp);
-	free(temp);
-
+	fgets(temp_buffer, MAX_BUFFER, p);
 	pclose(p);
+
+	if (strlen(temp_buffer) == 0) {
+		free(temp_buffer);
+		return NULL;
+	}
+
+	str_malloc(&temp, (strlen(temp_buffer) + 1));
+	strcpy(temp, temp_buffer);
+	free(temp_buffer);
+
+	return temp;
 }
 
 void get_str(char **cmd, const char *str, const char *str_var) {

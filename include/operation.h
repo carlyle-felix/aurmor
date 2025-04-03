@@ -17,7 +17,7 @@
 #define DIR_LIST "echo -n $(ls)"
 #define UNINSTALL "sudo pacman -Rsc %s"
 #define RM_DIR "rm -rf %s"
-#define CLEAN "cd %s && git clean -dfx"
+#define GIT_CLEAN "cd %s && git clean -dfx"
 
 void target_clone(const char *url);
 void aur_clone(const char *pkgnmae);

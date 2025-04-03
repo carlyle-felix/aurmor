@@ -6,16 +6,20 @@
 #include "../include/memory.h"
 #include "../include/buffer.h"
 
-void get_list(List **list, char *cmd) {
+List *get_list(char *cmd) {
 
     char pkgname[NAME_LEN];
-    Buffer pacman_list = NULL, temp = NULL;
+    Buffer pacman_list = NULL, temp_list = NULL;
     register int i;
-
-    *list = list_malloc();
+    List *temp;
     
-	get_buffer(cmd, &pacman_list);
-    temp = pacman_list;
+	pacman_list = get_buffer(cmd);
+    if (pacman_list == NULL) {
+        return NULL;
+    }
+
+    temp = list_malloc();
+    temp_list = pacman_list;
     while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
 			pkgname[i] = '\0';
@@ -25,10 +29,12 @@ void get_list(List **list, char *cmd) {
 		}
 		if (*pacman_list != '\0') {
 			pacman_list++;
-		}
-		add_pkgname(*list, pkgname);
+		} 
+		add_pkgname(temp, pkgname);
     }
-    free(temp);
+    free(temp_list);
+
+    return temp;
 }
 
 // Add packages in reversed order
@@ -59,7 +65,7 @@ void add_pkgver(List *list) {
 
     while (list != NULL) {
        	get_str(&cmd, INSTALLED_PKGVER, list->pkgname);
-        get_buffer(cmd, &list->pkgver);
+        list->pkgver = get_buffer(cmd);
 
         list = list->next;
     }

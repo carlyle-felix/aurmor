@@ -3,7 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <sys/stat.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -15,6 +14,7 @@ bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
 bool is_dir(char *pkgname);
+bool file_exists(char *path);
 
 void target_clone(const char *url) {
 
@@ -32,11 +32,11 @@ void target_clone(const char *url) {
     for (i = 0; *url != '.'; i++) {
         pkgname[i] = *url++;
     }
-
-    less_prompt(pkgname);
+	
+	less_prompt(pkgname);
 }
 
-void aur_clone(const char *pkgname) {
+void aur_clone(const char *pkgname) {	// modify to check if package is installed first and inform user.
 
     char *cmd = NULL;
 
@@ -52,6 +52,13 @@ void less_prompt(const char *pkgname) {
 
 	char c, *cmd = NULL;
 	register int i;
+
+	get_str(&cmd, "%s/PKGBUILD", pkgname);
+	if (file_exists(cmd) != true) {
+		printf(BRED"ERROR:"BOLD" PKGBUILD for %s not found\n"RESET, pkgname);
+		free(cmd);
+		return;
+	}
 
     printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
     for (;;) {
@@ -88,9 +95,10 @@ void install(const char *pkgname) {
     
     char *cmd = NULL;
 
-    get_str(&cmd, MAKEPKG, pkgname); // don't build -debug packages for now.
+    get_str(&cmd, MAKEPKG, pkgname);	// don't build -debug packages for now.
     system(cmd);
     free(cmd);
+	clean();
 }
 
 void uninstall(char *pkgname) {
@@ -111,28 +119,41 @@ void uninstall(char *pkgname) {
 void clean(void) {
 
     char *cmd = NULL;
-    List *dir, *pacman, *temp1, *temp2;
+    List *dir, *pacman, *rpc_pkg, *temp1, *temp2;
 
-    get_list(&pacman, INSTALLED);
-    get_list(&dir, DIR_LIST);
-    temp1 = pacman;
-    temp2 = dir;
     
+    dir = get_list(DIR_LIST);
+	if (dir == NULL) {
+		printf("Nothing to do.\n");
+		return;
+	}
+
+	pacman = get_list(INSTALLED);
+	printf("Cleaning aurx cache dir...\n");
 	temp1 = pacman;
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            printf("Removing %s from AUR directory...\n", dir->pkgname); 
             get_str(&cmd, RM_DIR, dir->pkgname);
             system(cmd);
-        } else {
-            get_str(&cmd, CLEAN, dir->pkgname);
+        } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
+			get_str(&cmd, AUR_PKG, dir->pkgname);
+			rpc_pkg = get_rpc_data(cmd);
+			if (rpc_pkg->pkgname != NULL) {
+				get_str(&cmd, RM_DIR, dir->pkgname);
+            	system(cmd);
+			}
+			clear_list(rpc_pkg);
+		} else {
+            get_str(&cmd, GIT_CLEAN, dir->pkgname);
             system(cmd);
-            pacman = pacman->next;
-            }
+        }
         dir = dir->next;
+		if (pacman != NULL) {
+			pacman = pacman->next;
+		}
     }
-    free(cmd);
+	free(cmd);
     clear_list(temp1);
     clear_list(temp2);
 }
@@ -170,9 +191,9 @@ void update(void) {
 
 	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-	get_list(&pkglist, INSTALLED);
+	pkglist = get_list(INSTALLED);
 	add_pkgver(pkglist);
-
+	printf(BBLUE"::"BOLD" Searching for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
 		get_str(&cmd, AUR_PKG , pkglist->pkgname);
@@ -183,13 +204,11 @@ void update(void) {
 			pkgver = not_on_aur(pkglist->pkgname);
 		}
 		
-		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
+		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
 			if (is_dir(pkglist->pkgname) == true && rpc_pkg->pkgname != NULL) {
 				get_str(&cmd, GIT_PULL_NULL, pkglist->pkgname);
-			} else if (is_dir(pkglist->pkgname) == false && rpc_pkg->pkgname != NULL){
+			} else if (is_dir(pkglist->pkgname) == false && rpc_pkg->pkgname != NULL) {
 				get_str(&cmd, AUR_CLONE_NULL, pkglist->pkgname);
-			} else {
-				printf(BRED"ERROR:"RESET" Source directory for %s. not found.\n", pkglist->pkgname);
 			}
 			system(cmd);
 			pkglist->update = true;
@@ -273,15 +292,15 @@ char *not_on_aur(char *pkgname) {
 
 	// get epoch for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(epoch), pkgname);
-	get_buffer(cmd, &epoch);
+	epoch = get_buffer(cmd);
 
 	// get pkgver for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(pkgver), pkgname);
-	get_buffer(cmd, &pkgver);
+	pkgver = get_buffer(cmd);
 
 	// get pkgrel for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(pkgrel), pkgname);
-	get_buffer(cmd, &pkgrel);	
+	pkgrel = get_buffer(cmd);	
 
 	// copy epoch:pkgver-pkgrel into full_ver
 	str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
@@ -307,6 +326,20 @@ bool is_dir(char *pkgname) {
 	DIR* dir = opendir(pkgname);
 	if (dir) {
 		closedir(dir);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool file_exists(char *path) {
+	
+	FILE *f;
+	int result;
+
+	f = fopen(path, "r");
+	if (f != NULL) {
+		fclose(f);
 		return true;
 	} else {
 		return false;

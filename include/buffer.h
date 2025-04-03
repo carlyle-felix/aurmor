@@ -5,7 +5,7 @@
 
 typedef char *Buffer;
 
-void get_buffer(const char *cmd, char **buffer_ptr);
+Buffer get_buffer(const char *cmd);
 void get_str(char **cmd, const char *str, const char *str_var);
 
 #endif
