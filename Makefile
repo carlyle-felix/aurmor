@@ -31,7 +31,7 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 
 .PHONY: install clean uninstall
 install:
-	install -m 0755 aurx $(DESTDIR)$(PREFIX)/bin/
+	install -Dm755 aurx $(DESTDIR)$(PREFIX)/bin/
 
 clean:
 	rm aurx main.o buffer.o operation.o list.o memory.o \
