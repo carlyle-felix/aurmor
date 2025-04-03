@@ -1,13 +1,15 @@
-pkgbase = aurmor
+pkgbase = aurx
 	pkgdesc = An AUR helper written in C.
 	pkgver = 20250403
 	pkgrel = 1
-	url = https://github.com/carlyle-felix/aurmor
+	url = https://github.com/carlyle-felix/aurx
 	arch = x86_64
 	license = GPL-3.0-or-later
 	depends = base-devel
 	depends = git
-	source = aurmor::git+https://github.com/carlyle-felix/aurmor.git
+	depends = json-c
+	depends = libcurl-gnutls
+	source = aurx::git+https://github.com/carlyle-felix/aurx.git
 	sha256sums = SKIP
 
-pkgname = aurmor
+pkgname = aurx
