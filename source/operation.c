@@ -1,13 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
+
 #include "../include/operation.h"
 #include "../include/memory.h"
 #include "../include/buffer.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
-
-#define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " \
-#item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
 
 bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
@@ -18,7 +18,7 @@ void target_clone(const char *url) {
     char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
     register int i;
 
-    get_str(&cmd, "git clone %s", url);
+    get_str(&cmd, GIT_CLONE, url);
     system(cmd);
     free(cmd);
     while (*url++ != '\0');
@@ -37,7 +37,7 @@ void aur_clone(const char *pkgname) {
 
     char *cmd = NULL;
 
-    get_str(&cmd, "git clone https://aur.archlinux.org/%s.git", pkgname);
+    get_str(&cmd, AUR_CLONE, pkgname);
     system(cmd);
 
     less_prompt(pkgname);
@@ -50,17 +50,17 @@ void less_prompt(const char *pkgname) {
 	char c, *cmd = NULL;
 	register int i;
 
-    printf("\033[1;34m:: \e[0;1mView %s PKGBUILD in less? [Y/n]\e[0m ", pkgname);
+    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
     for (;;) {
         c = tolower(getchar());
         if (c != '\n') {
 			while (getchar() != '\n');
 		}
         if (c == 'y' || c == '\n') {
-            get_str(&cmd, "cd %s && less PKGBUILD", pkgname);
+            get_str(&cmd, LESS_PKGBUILD, pkgname);
             system(cmd);
             free(cmd);
-            printf("\033[1;34m:: \e[0;1mContinue to install? [Y/n]\e[0m ");
+            printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
             for(;;) {
                 c = tolower(getchar());
                 if (c != '\n') {
@@ -85,7 +85,7 @@ void install(const char *pkgname) {
     
     char *cmd = NULL;
 
-    get_str(&cmd, "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx", pkgname); // don't build -debug packages for now.
+    get_str(&cmd, MAKEPKG, pkgname); // don't build -debug packages for now.
     system(cmd);
     free(cmd);
 }
@@ -94,7 +94,7 @@ void uninstall(char *pkgname) {
 
     char *cmd = NULL;
     
-    get_str(&cmd, "sudo pacman -Rsc %s", pkgname);
+    get_str(&cmd, UNINSTALL, pkgname);
     system(cmd);
 
     if (pkgname == NULL) {
@@ -110,8 +110,8 @@ void clean(void) {
     char *cmd = NULL;
     List *dir, *pacman, *temp1, *temp2;
 
-    get_list(&pacman, "echo -n $(pacman -Qmq)");
-    get_list(&dir, "echo -n $(ls)");
+    get_list(&pacman, INSTALLED);
+    get_list(&dir, DIR_LIST);
     temp1 = pacman;
     temp2 = dir;
     
@@ -120,10 +120,10 @@ void clean(void) {
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
             printf("Removing %s from AUR directory...\n", dir->pkgname); 
-            get_str(&cmd, "rm -rf %s", dir->pkgname);
+            get_str(&cmd, RM_DIR, dir->pkgname);
             system(cmd);
         } else {
-            get_str(&cmd, "cd %s && git clean -dfx", dir->pkgname);
+            get_str(&cmd, CLEAN, dir->pkgname);
             system(cmd);
             pacman = pacman->next;
             }
@@ -139,12 +139,16 @@ void print_search(char *pkgname) {
     char *url = NULL;
     List *rpc_pkglist, *temp;
 
-    get_str(&url, "https://aur.archlinux.org//rpc/v5/search/%s?by=name", pkgname);
+    get_str(&url, AUR_SEARCH, pkgname);
     rpc_pkglist = get_rpc_data(url);
 
-    for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
-        printf("\e[1m%s \e[1;32m%s\e[0m\n", temp->pkgname, temp->pkgver);
-    }
+	if (rpc_pkglist->pkgname == NULL) {
+		printf("No results found for: %s.\n", pkgname);
+	} else {
+		for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
+			printf(BOLD"%s "BGREEN"%s\n"RESET, temp->pkgname, temp->pkgver);
+		}
+	} 
 
     free(url);
     clear_list(rpc_pkglist);
@@ -152,7 +156,7 @@ void print_search(char *pkgname) {
 
 void list_packages(void) {
     
-    system("pacman -Qm");
+    system(QUERY_INSTALLED);
 }
 
 void update(void) {
@@ -163,12 +167,12 @@ void update(void) {
 
 	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-	get_list(&pkglist, "echo -n $(pacman -Qmq)");
+	get_list(&pkglist, INSTALLED);
 	add_pkgver(pkglist);
 
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 	
-		get_str(&cmd, "https://aur.archlinux.org/rpc/v5/info?arg[]=%s" , pkglist->pkgname);
+		get_str(&cmd, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(cmd);
 		if (rpc_pkg->pkgname != NULL) {
 			pkgver = rpc_pkg->pkgver;
@@ -179,7 +183,7 @@ void update(void) {
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
 			pkglist->update = true;
 			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
-			sprintf(cmd, "\e[0m\t%-30s\033[38;5;8m%-20s\e[0m->\t\e[1;32m%s\e[0m\n", pkglist->pkgname, pkglist->pkgver, pkgver);
+			sprintf(cmd, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
 			str_malloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
 			strcat(update_list, cmd);
 		}
@@ -198,11 +202,11 @@ void update(void) {
 		clear_list(pkglist);
 		exit(EXIT_SUCCESS);
 	} else {
-		printf("\033[1;34m:: \e[0;1mUpdates are available for:\n\n%s\n", update_list);
+		printf(BBLUE"::"BOLD" Updates are available for:"RESET"\n\n%s\n", update_list);
 		free(update_list);
 	}
 
-	printf("\033[1;34m:: \e[0;1mProceed with installation? [Y/n]\e[0m ");
+	printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
 	for(;;) {
 		c = tolower(getchar());
 		if (c != '\n') {
@@ -252,21 +256,21 @@ char *not_on_aur(char *pkgname) {
 	char *cmd = NULL, *full_ver = NULL;
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
 
-	// update pkgname source folder in ~/.config/aurmor
-	get_str(&cmd, "cd %s && git pull &> /dev/null", pkgname);
+	// update pkgname source folder in ~/.config/aurx
+	get_str(&cmd, GIT_PULL, pkgname);
 	system(cmd);
 
 	// get epoch for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(epoch), pkgname);
-	retrieve(cmd, &epoch);
+	get_buffer(cmd, &epoch);
 
 	// get pkgver for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(pkgver), pkgname);
-	retrieve(cmd, &pkgver);
+	get_buffer(cmd, &pkgver);
 
 	// get pkgrel for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(pkgrel), pkgname);
-	retrieve(cmd, &pkgrel);	
+	get_buffer(cmd, &pkgrel);	
 
 	// copy epoch:pkgver-pkgrel into full_ver
 	str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);

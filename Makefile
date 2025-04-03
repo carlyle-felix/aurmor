@@ -3,8 +3,8 @@ INCL		= ./include
 SRC			= ./source
 BINDIR		= /usr/local
 
-aurmor: main.o buffer.o operation.o memory.o list.o rpc.o
-	gcc -o aurmor $(SRC)/main.c $(SRC)/buffer.c $(SRC)/operation.c \
+aurx: main.o buffer.o operation.o memory.o list.o rpc.o
+	gcc -o aurx $(SRC)/main.c $(SRC)/buffer.c $(SRC)/operation.c \
 		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c -lcurl -ljson-c
 
 main.o: $(SRC)/main.c $(INCL)/operation.h $(INCL)/memory.h \
@@ -30,11 +30,11 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 
 .PHONY: install clean uninstall
 install:
-	install -m 0755 aurmor $(BINDIR)/bin/
+	install -m 0755 aurx $(BINDIR)/bin/
 
 clean:
-	rm aurmor main.o buffer.o operation.o list.o memory.o \
+	rm aurx main.o buffer.o operation.o list.o memory.o \
 		rpc.o
 
 uninstall:
-	rm $(BINDIR)/bin/aurmor
+	rm $(BINDIR)/bin/aurx

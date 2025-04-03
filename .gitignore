@@ -1,4 +1,4 @@
-aurmor
+aurx
 buffer.o
 main.o
 memory.o
@@ -6,3 +6,4 @@ list.o
 operation.o
 rpc.o
 vgcore.*
+.vscode

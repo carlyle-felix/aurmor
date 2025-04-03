@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <string.h>
 #include <curl/curl.h>
 #include <json-c/json.h>
+
 #include "../include/rpc.h"
 #include "../include/memory.h"
 #include "../include/list.h"

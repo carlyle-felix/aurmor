@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../include/list.h"
 #include "../include/memory.h"
 #include "../include/buffer.h"
@@ -11,7 +14,7 @@ void get_list(List **list, char *cmd) {
 
     *list = list_malloc();
     
-	retrieve(cmd, &pacman_list);
+	get_buffer(cmd, &pacman_list);
     temp = pacman_list;
     while (*pacman_list != '\0') {
 		for (i = 0; i < NAME_LEN; i++) {
@@ -49,14 +52,14 @@ List *add_pkgname(List *list, char *pkgname) {
     return list;
 }
 
-// Calls from uninstall wont have versions so this needs to be done separately.
+// add_pkgname() calls from uninstall() wont need versions so do this separately.
 void add_pkgver(List *list) {
     
     char *cmd = NULL;
 
     while (list != NULL) {
-       	get_str(&cmd, "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')", list->pkgname);
-        retrieve(cmd, &list->pkgver);
+       	get_str(&cmd, INSTALLED_PKGVER, list->pkgname);
+        get_buffer(cmd, &list->pkgver);
 
         list = list->next;
     }

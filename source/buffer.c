@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../include/buffer.h"
 #include "../include/memory.h"
 
-void retrieve(const char *cmd, char **buffer_ptr) {
+void get_buffer(const char *cmd, Buffer *buffer_ptr) {
 	
 	char *temp = NULL;
 	FILE *p;	
@@ -11,7 +14,7 @@ void retrieve(const char *cmd, char **buffer_ptr) {
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
-		printf("\033[1;31mERROR: \e[0;1mFailed in buffer().\e[0m");
+		printf(BRED"ERROR:"BOLD" Failed in buffer().\n"RESET);
 		exit(EXIT_FAILURE);
 	}
 	fgets(temp, MAX_BUFFER, p);

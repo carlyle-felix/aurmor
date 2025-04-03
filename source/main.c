@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
 #include "../include/operation.h"
 #include "../include/memory.h"
 #include "../include/rpc.h"
@@ -15,12 +18,12 @@ int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		printf(" No operation specified, use -h for help.\n");
 	} else if (strcmp(argv[1], "-h") == 0) {
-		printf("Usage:\taurmor <operation> [...]\nOperations:\n");
+		printf("Usage:\taurx <operation> [...]\nOperations:\n");
         printf(" -u\t\t\t\t\tupdate and upgrade.\n");
 		printf(" -U [package(s)]\t\t\tforce update package(s).\n");
 		printf(" -i [package(s)]\t\t\tinstall package(s).\n");
 		printf(" -x [git clone URL]\t\t\tinstall specified target from a git repo");
-		printf(" -c\t\t\t\t\tclean ~/.cache/aurmor dir.\n");
+		printf(" -c\t\t\t\t\tclean ~/.cache/aurx dir.\n");
 		printf(" -q\t\t\t\t\tlist installed packages.\n");
 		printf(" -r [package(s)]\t\t\tuninstall package(s).\n");
 		printf(" -s [package]\t\t\t\tsearch package on AUR.\n");
@@ -78,10 +81,18 @@ int main(int argc, char *argv[]) {
 
 void set_dir(void) {
 
-	char *home, *aur = NULL;
+	char *home, *str = NULL;
+	int result;
 
 	home = getenv("HOME");
-	get_str(&aur, "%s/.cache/aurmor", home);
-	chdir(aur);
-	free(aur);
+	get_str(&str, "%s/.cache/aurx", home);
+	result = chdir(str);
+	if (result != 0) {
+		char *mkdir;
+		printf("~/.cache/aurx directory not found, creating...\n");
+		get_str(&mkdir, "mkdir -p %s", str);
+		system(mkdir);
+		free(mkdir);
+	}
+	free(str);
 }

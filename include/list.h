@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#define INSTALLED_PKGVER "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')"
+
 typedef struct node {
     char *pkgname;
     char *pkgver;
