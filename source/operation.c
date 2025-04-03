@@ -181,6 +181,8 @@ void update(void) {
 		}
 		
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
+			get_str(&cmd, GIT_PULL, pkglist->pkgname);
+			system(cmd);
 			pkglist->update = true;
 			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
 			sprintf(cmd, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
