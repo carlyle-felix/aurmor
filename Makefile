@@ -1,8 +1,7 @@
 CFLAGS 		= -Wall -Wextra -Wpedantic -g
 INCL		= ./include
 SRC			= ./source
-PREFIX		= /usr/local
-DESTDIR	 	=
+BINDIR		= /usr/local
 
 aurx: main.o buffer.o operation.o memory.o list.o rpc.o
 	gcc -o aurx $(SRC)/main.c $(SRC)/buffer.c $(SRC)/operation.c \
@@ -31,11 +30,11 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 
 .PHONY: install clean uninstall
 install:
-	install -Dm755 aurx $(DESTDIR)$(PREFIX)/bin/
+	install -Dm755 aurx $(BINDIR)/bin/
 
 clean:
 	rm aurx main.o buffer.o operation.o list.o memory.o \
 		rpc.o
 
 uninstall:
-	rm $(DESTDIR)$(PREFIX)/bin/aurx
+	rm $(BINDIR)/bin/aurx
