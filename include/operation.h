@@ -4,9 +4,10 @@
 // Commands in one place - easier to change.
 #define PKGBUILD_CMD(item) "echo -n $(cd %s && echo $(less PKGBUILD | grep " \
                             #item "= | cut -f2 -d '=') | tr -d \"'\\\"\")"
-#define GIT_PULL "cd %s && git pull &> /dev/null"
-#define GIT_CLONE "git clone %s"
+#define GIT_PULL_NULL "cd %s && git pull &> /dev/null"
+#define GIT_CLONE "git clone %s" 
 #define AUR_CLONE "git clone https://aur.archlinux.org/%s.git"
+#define AUR_CLONE_NULL "git clone https://aur.archlinux.org/%s.git &> /dev/null"
 #define AUR_SEARCH "https://aur.archlinux.org//rpc/v5/search/%s?by=name"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "cd %s && less PKGBUILD"

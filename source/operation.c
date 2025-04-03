@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -12,6 +14,7 @@
 bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
+bool is_dir(char *pkgname);
 
 void target_clone(const char *url) {
 
@@ -181,7 +184,13 @@ void update(void) {
 		}
 		
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) {  
-			get_str(&cmd, GIT_PULL, pkglist->pkgname);
+			if (is_dir(pkglist->pkgname) == true && rpc_pkg->pkgname != NULL) {
+				get_str(&cmd, GIT_PULL_NULL, pkglist->pkgname);
+			} else if (is_dir(pkglist->pkgname) == false && rpc_pkg->pkgname != NULL){
+				get_str(&cmd, AUR_CLONE_NULL, pkglist->pkgname);
+			} else {
+				printf(BRED"ERROR:"RESET" Source directory for %s. not found.\n", pkglist->pkgname);
+			}
 			system(cmd);
 			pkglist->update = true;
 			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
@@ -259,7 +268,7 @@ char *not_on_aur(char *pkgname) {
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
 
 	// update pkgname source folder in ~/.config/aurx
-	get_str(&cmd, GIT_PULL, pkgname);
+	get_str(&cmd, GIT_PULL_NULL, pkgname);
 	system(cmd);
 
 	// get epoch for current pkgname from pkgbuild
@@ -291,4 +300,15 @@ char *not_on_aur(char *pkgname) {
 	free(pkgrel);
 
 	return full_ver;
+}
+
+bool is_dir(char *pkgname) {
+
+	DIR* dir = opendir(pkgname);
+	if (dir) {
+		closedir(dir);
+		return true;
+	} else {
+		return false;
+	}
 }
