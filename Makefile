@@ -30,7 +30,7 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 
 .PHONY: install clean uninstall
 install:
-	sudo install -m 0755 aurx $(BINDIR)/bin/
+	install -m 0755 aurx $(BINDIR)/bin/
 
 clean:
 	rm aurx main.o buffer.o operation.o list.o memory.o \
