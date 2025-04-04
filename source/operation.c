@@ -160,7 +160,7 @@ void print_search(char *pkgname) {
 		for (temp = rpc_pkglist; rpc_pkglist != NULL; rpc_pkglist = rpc_pkglist->next) {
 			printf(BOLD"%s "BGREEN"%s"RESET, rpc_pkglist->pkgname, rpc_pkglist->pkgver);
 			if (rpc_pkglist->installed == true) {
-				printf(BCYAN"\t[installed]\n"RESET);
+				printf(BCYAN"\t[installed]"RESET);
 			}
 			printf("\n");
 		}
@@ -200,7 +200,7 @@ void update(void) {
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
 			pkglist->update = true;
 			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
-			sprintf(str, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
+			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
 			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
 		}
