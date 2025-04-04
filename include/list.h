@@ -10,6 +10,7 @@ typedef struct node {
     char *pkgver;
     int pop;
     bool update;
+    bool rpc_pkg;
     struct node *next;
 } List;
 

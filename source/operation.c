@@ -13,6 +13,7 @@
 bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
+void get_update(List *pkglist);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);
 
@@ -193,24 +194,18 @@ void update(void) {
 
 	pkglist = get_list(INSTALLED);
 	add_pkgver(pkglist);
-	printf(BBLUE"::"BOLD" Searching for updates...\n"RESET);
+	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
-	
 		get_str(&cmd, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(cmd);
 		if (rpc_pkg->pkgname != NULL) {
 			pkgver = rpc_pkg->pkgver;
 		} else {
 			pkgver = not_on_aur(pkglist->pkgname);
+			pkglist->rpc_pkg = false;
 		}
 		
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
-			if (is_dir(pkglist->pkgname) == true && rpc_pkg->pkgname != NULL) {
-				get_str(&cmd, GIT_PULL_NULL, pkglist->pkgname);
-			} else if (is_dir(pkglist->pkgname) == false && rpc_pkg->pkgname != NULL) {
-				get_str(&cmd, AUR_CLONE_NULL, pkglist->pkgname);
-			}
-			system(cmd);
 			pkglist->update = true;
 			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
 			sprintf(cmd, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
@@ -236,13 +231,14 @@ void update(void) {
 		free(update_list);
 	}
 
-	printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
+	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
 	for(;;) {
 		c = tolower(getchar());
 		if (c != '\n') {
 			while (getchar() != '\n');
 		}
 		if (c == 'y' || c == '\n') {
+			get_update(pkglist);
 			List *temp = pkglist;
 			while (pkglist != NULL) {
 				if (pkglist->update == true) {
@@ -287,8 +283,13 @@ char *not_on_aur(char *pkgname) {
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
 
 	// update pkgname source folder in ~/.config/aurx
-	get_str(&cmd, GIT_PULL_NULL, pkgname);
-	system(cmd);
+	if (is_dir(pkgname) == true) {
+		get_str(&cmd, GIT_PULL_NULL, pkgname);
+		system(cmd);
+	} else {
+		printf(BRED"ERROR:"BOLD" No source file found for %s.\n", pkgname);
+	}	
+	
 
 	// get epoch for current pkgname from pkgbuild
 	get_str(&cmd, PKGBUILD_CMD(epoch), pkgname);
@@ -319,6 +320,26 @@ char *not_on_aur(char *pkgname) {
 	free(pkgrel);
 
 	return full_ver;
+}
+
+void get_update(List *pkglist) {
+
+	char *cmd = NULL;
+	bool dir;
+
+	while (pkglist != NULL) {
+		dir = is_dir(pkglist->pkgname);
+		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
+			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
+			get_str(&cmd, AUR_CLONE_NULL, pkglist->pkgname);
+		} else if (pkglist->update == true && dir == true) {
+			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
+			get_str(&cmd, GIT_PULL_NULL, pkglist->pkgname);
+		} 
+		system(cmd);
+		pkglist = pkglist->next;
+	}
+	free(cmd);
 }
 
 bool is_dir(char *pkgname) {

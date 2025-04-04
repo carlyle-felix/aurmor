@@ -38,6 +38,7 @@ List *list_malloc(void) {
 	temp->pkgname = NULL;
 	temp->pkgver = NULL;
 	temp->pop = 0;
+	temp->rpc_pkg = true;
 	temp->update = false;
 	temp->next = NULL;
 	
