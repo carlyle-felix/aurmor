@@ -94,7 +94,7 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
         temp = list_malloc();
 
         for (cur = list, prev = NULL; \
-            cur != NULL && cur->pop >= temp->pop; \
+            cur != NULL && cur->pop >= pop; \
             prev = cur, cur = cur->next);
 
         temp->next = cur;
