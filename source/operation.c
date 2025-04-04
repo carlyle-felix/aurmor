@@ -16,12 +16,12 @@ void get_update(List *pkglist);
 
 void target_clone(const char *url) {
 
-    char *cmd = NULL, pkgname[NAME_LEN] = {'\0'};
+    char *str = NULL, pkgname[NAME_LEN] = {'\0'};
     register int i;
 
-    get_str(&cmd, GIT_CLONE, url);
-    system(cmd);
-    free(cmd);
+    get_str(&str, GIT_CLONE, url);
+    system(str);
+    free(str);
     while (*url++ != '\0');
     while (*url != '/') {
         url--;
@@ -36,25 +36,25 @@ void target_clone(const char *url) {
 
 void aur_clone(const char *pkgname) {	// modify to check if package is installed first and inform user.
 
-    char *cmd = NULL;
+    char *str = NULL;
 
-    get_str(&cmd, AUR_CLONE, pkgname);
-    system(cmd);
+    get_str(&str, AUR_CLONE, pkgname);
+    system(str);
 
     less_prompt(pkgname);
 
-    free(cmd);
+    free(str);
 }
 
 void less_prompt(const char *pkgname) {
 
-	char c, *cmd = NULL;
+	char c, *str = NULL;
 	register int i;
 
-	get_str(&cmd, "%s/PKGBUILD", pkgname);
-	if (file_exists(cmd) != true) {
+	get_str(&str, "%s/PKGBUILD", pkgname);
+	if (file_exists(str) != true) {
 		printf(BRED"ERROR:"BOLD" PKGBUILD for %s not found\n"RESET, pkgname);
-		free(cmd);
+		free(str);
 		return;
 	}
 
@@ -65,9 +65,9 @@ void less_prompt(const char *pkgname) {
 			while (getchar() != '\n');
 		}
         if (c == 'y' || c == '\n') {
-            get_str(&cmd, LESS_PKGBUILD, pkgname);
-            system(cmd);
-            free(cmd);
+            get_str(&str, LESS_PKGBUILD, pkgname);
+            system(str);
+            free(str);
             printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
             for(;;) {
                 c = tolower(getchar());
@@ -82,7 +82,7 @@ void less_prompt(const char *pkgname) {
                 } 
             } 
         } else if (c == 'n') {
-            free(cmd);
+            free(str);
             install(pkgname);
             return;
         }
@@ -91,32 +91,32 @@ void less_prompt(const char *pkgname) {
 
 void install(const char *pkgname) {
     
-    char *cmd = NULL;
+    char *str = NULL;
 
-    get_str(&cmd, MAKEPKG, pkgname);	// don't build -debug packages for now.
-    system(cmd);
-    free(cmd);
+    get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
+    system(str);
+    free(str);
 	clean();
 }
 
 void uninstall(char *pkgname) {
 
-    char *cmd = NULL;
+    char *str = NULL;
     
-    get_str(&cmd, UNINSTALL, pkgname);
-    system(cmd);
+    get_str(&str, UNINSTALL, pkgname);
+    system(str);
 
     if (pkgname == NULL) {
         free(pkgname);
     }
-    free(cmd);
+    free(str);
 
     clean();
 }
 
 void clean(void) {
 
-    char *cmd = NULL;
+    char *str = NULL;
     List *dir, *pacman, *rpc_pkg, *temp1, *temp2;
 
     
@@ -132,48 +132,55 @@ void clean(void) {
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            get_str(&cmd, RM_DIR, dir->pkgname);
-            system(cmd);
+            get_str(&str, RM_DIR, dir->pkgname);
+            system(str);
         } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
-			get_str(&cmd, AUR_PKG, dir->pkgname);
-			rpc_pkg = get_rpc_data(cmd);
+			get_str(&str, AUR_PKG, dir->pkgname);
+			rpc_pkg = get_rpc_data(str);
 			if (rpc_pkg->pkgname != NULL) {
-				get_str(&cmd, RM_DIR, dir->pkgname);
-            	system(cmd);
+				get_str(&str, RM_DIR, dir->pkgname);
+            	system(str);
 			}
 			clear_list(rpc_pkg);
 		} else {
-            get_str(&cmd, GIT_CLEAN, dir->pkgname);
-            system(cmd);
+            get_str(&str, GIT_CLEAN, dir->pkgname);
+            system(str);
         }
         dir = dir->next;
 		if (pacman != NULL) {
 			pacman = pacman->next;
 		}
     }
-	free(cmd);
+	free(str);
     clear_list(temp1);
     clear_list(temp2);
 }
 
 void print_search(char *pkgname) {
 
-    char *url = NULL;
+    char *str = NULL;
     List *rpc_pkglist, *temp;
+	 
+    get_str(&str, AUR_SEARCH, pkgname);
+    rpc_pkglist = get_rpc_data(str);
+	
 
-    get_str(&url, AUR_SEARCH, pkgname);
-    rpc_pkglist = get_rpc_data(url);
+	rpc_pkglist = check_status(rpc_pkglist);
 
 	if (rpc_pkglist->pkgname == NULL) {
 		printf("No results found for: %s.\n", pkgname);
 	} else {
-		for (temp = rpc_pkglist; temp != NULL; temp = temp->next) {
-			printf(BOLD"%s "BGREEN"%s\n"RESET, temp->pkgname, temp->pkgver);
+		for (temp = rpc_pkglist; rpc_pkglist != NULL; rpc_pkglist = rpc_pkglist->next) {
+			printf(BOLD"%s "BGREEN"%s"RESET, rpc_pkglist->pkgname, rpc_pkglist->pkgver);
+			if (rpc_pkglist->installed == true) {
+				printf(BCYAN"\t[installed]\n"RESET);
+			}
+			printf("\n");
 		}
-	} 
+	}
 
-    free(url);
-    clear_list(rpc_pkglist);
+	free(str);
+    clear_list(temp);
 }
 
 void list_packages(void) {
@@ -183,7 +190,7 @@ void list_packages(void) {
 
 void update(void) {
 	
-	char c, *cmd = NULL, *update_list = NULL, *pkgver = NULL;
+	char c, *str = NULL, *update_list = NULL, *pkgver = NULL;
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
 
@@ -193,8 +200,8 @@ void update(void) {
 	add_pkgver(pkglist);
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
-		get_str(&cmd, AUR_PKG , pkglist->pkgname);
-		rpc_pkg = get_rpc_data(cmd);
+		get_str(&str, AUR_PKG , pkglist->pkgname);
+		rpc_pkg = get_rpc_data(str);
 		if (rpc_pkg->pkgname != NULL) {
 			pkgver = rpc_pkg->pkgver;
 		} else {
@@ -204,10 +211,10 @@ void update(void) {
 		
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
 			pkglist->update = true;
-			str_malloc(&cmd, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
-			sprintf(cmd, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
-			str_malloc(&update_list, (strlen(update_list) + strlen(cmd) + 1));
-			strcat(update_list, cmd);
+			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
+			sprintf(str, "\t%-30s"GREY"%-20s"RESET"->\t"BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
+			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
+			strcat(update_list, str);
 		}
 
 		if (rpc_pkg->pkgname == NULL) {
@@ -215,7 +222,7 @@ void update(void) {
 		}
 		clear_list(rpc_pkg);
 	}
-	free(cmd);
+	free(str);
 
 	pkglist = temp;
 	if (update_list[0] == '\0') {
@@ -276,29 +283,29 @@ bool epoch_update(List *pkg, char *pkgver) {
 
 char *not_on_aur(char *pkgname) {
 
-	char *cmd = NULL, *full_ver = NULL;
+	char *str = NULL, *full_ver = NULL;
 	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
 
 	// update pkgname source folder in ~/.config/aurx
 	if (is_dir(pkgname) == true) {
-		get_str(&cmd, GIT_PULL_NULL, pkgname);
-		system(cmd);
+		get_str(&str, GIT_PULL_NULL, pkgname);
+		system(str);
 	} else {
 		printf(BRED"ERROR:"BOLD" No source file found for %s.\n", pkgname);
 	}	
 	
 
 	// get epoch for current pkgname from pkgbuild
-	get_str(&cmd, PKGBUILD_CMD(epoch), pkgname);
-	epoch = get_buffer(cmd);
+	get_str(&str, PKGBUILD_CMD(epoch), pkgname);
+	epoch = get_buffer(str);
 
 	// get pkgver for current pkgname from pkgbuild
-	get_str(&cmd, PKGBUILD_CMD(pkgver), pkgname);
-	pkgver = get_buffer(cmd);
+	get_str(&str, PKGBUILD_CMD(pkgver), pkgname);
+	pkgver = get_buffer(str);
 
 	// get pkgrel for current pkgname from pkgbuild
-	get_str(&cmd, PKGBUILD_CMD(pkgrel), pkgname);
-	pkgrel = get_buffer(cmd);	
+	get_str(&str, PKGBUILD_CMD(pkgrel), pkgname);
+	pkgrel = get_buffer(str);	
 
 	// copy epoch:pkgver-pkgrel into full_ver
 	str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
@@ -311,7 +318,7 @@ char *not_on_aur(char *pkgname) {
 	} else {
 		sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
 	}
-	free(cmd);
+	free(str);
 	free(epoch);
 	free(pkgver);
 	free(pkgrel);
@@ -321,20 +328,20 @@ char *not_on_aur(char *pkgname) {
 
 void get_update(List *pkglist) {
 
-	char *cmd = NULL;
+	char *str = NULL;
 	bool dir;
 
 	while (pkglist != NULL) {
 		dir = is_dir(pkglist->pkgname);
 		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
 			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&cmd, AUR_CLONE_NULL, pkglist->pkgname);
+			get_str(&str, AUR_CLONE_NULL, pkglist->pkgname);
 		} else if (pkglist->update == true && dir == true) {
 			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&cmd, GIT_PULL_NULL, pkglist->pkgname);
+			get_str(&str, GIT_PULL_NULL, pkglist->pkgname);
 		} 
-		system(cmd);
+		system(str);
 		pkglist = pkglist->next;
 	}
-	free(cmd);
+	free(str);
 }

@@ -129,3 +129,25 @@ List *find_pkg(List *list, char *pkgname) {
         return temp;
     }
 }
+
+List *check_status(List *list) {
+
+    char *str = NULL;
+    List *pkglist, *temp_list, *temp_pkglist;
+
+    get_str(&str, INSTALLED, NULL);
+	pkglist = get_list(str);
+    temp_pkglist = pkglist;
+
+    for (temp_list = list; list != NULL; list = list->next) {
+        for (pkglist = temp_pkglist; pkglist != NULL; pkglist = pkglist->next) {
+            if (strcmp(list->pkgname, pkglist->pkgname) == 0) {
+                list->installed = true;
+            }
+        }
+    }
+    free(str);
+    clear_list(temp_pkglist);
+
+    return temp_list;
+}
