@@ -260,6 +260,20 @@ void update(void) {
 	}
 }
 
+void force_update(char *pkgname) {
+
+	char *str = NULL;
+	if (is_dir(pkgname) == false) {
+		get_str(&str, AUR_CLONE_NULL, pkgname);
+	} else {
+		get_str(&str, GIT_PULL_NULL, pkgname);
+	}
+	system(str);
+	free(str);
+
+	less_prompt(pkgname);
+}
+
 bool epoch_update(List *pkg, char *pkgver) {
 
 	char *ins_pkgver, *upd_pkgver;

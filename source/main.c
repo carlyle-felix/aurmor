@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 	}  else if (strcmp(argv[1], "-U") == 0) {		// Doesn't order updates alphabetically (would be nice).
 		if (argc > 2) {
 			while (--argc > 1) {
-				less_prompt(argv[argc]);
+				force_update(argv[argc]);
 			}
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
