@@ -13,6 +13,7 @@ void set_dir(void);
 
 int main(int argc, char *argv[]) {
 
+	register int i;
 	set_dir();
 
 	if (argc == 1) {
@@ -31,16 +32,16 @@ int main(int argc, char *argv[]) {
 		update();
 	}  else if (strcmp(argv[1], "-U") == 0) {		// Doesn't order updates alphabetically (would be nice).
 		if (argc > 2) {
-			while (--argc > 1) {
-				force_update(argv[argc]);
+			for (i = 2; i < argc; i++) {
+				force_update(argv[i]);
 			}
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
 		}
 	} else if (strcmp(argv[1], "-i") == 0) {
 		if (argc > 2) {
-			while (--argc > 1) {
-				aur_clone(argv[argc]);
+			for (i = 2; i < argc; i++) {
+				aur_clone(argv[i]);
 			}
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
@@ -59,8 +60,8 @@ int main(int argc, char *argv[]) {
 		list_packages();
 	} else if (strcmp(argv[1], "-r") == 0) {
 		if (argc > 2) {
-			while (--argc > 1) {
-				uninstall(argv[argc]); 
+			for (i = 2; i < argc; i++) {
+				uninstall(argv[i]); 
 			}
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
