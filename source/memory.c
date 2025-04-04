@@ -4,6 +4,7 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
+#include "../include/util.h"
 
 void str_malloc(char **ptr, int size) {
 	

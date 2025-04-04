@@ -24,7 +24,8 @@ operation.o: $(SRC)/operation.c $(INCL)/operation.h $(INCL)/memory.h \
 list.o: $(SRC)/list.c $(INCL)/list.h $(INCL)/memory.h $(INCL)/util.h
 	gcc -c $(SRC)/list.c
 
-memory.o: $(SRC)/memory.c $(INCL)/memory.h $(INCL)/list.h $(INCL)/rpc.h
+memory.o: $(SRC)/memory.c $(INCL)/memory.h $(INCL)/list.h $(INCL)/rpc.h \
+		$(INCL)/util.h
 	gcc -c $(SRC)/memory.c
 
 rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
