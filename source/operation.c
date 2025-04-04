@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -59,34 +58,24 @@ void less_prompt(const char *pkgname) {
 	}
 
     printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
-    for (;;) {
-        c = tolower(getchar());
-        if (c != '\n') {
-			while (getchar() != '\n');
-		}
-        if (c == 'y' || c == '\n') {
-            get_str(&str, LESS_PKGBUILD, pkgname);
-            system(str);
-            free(str);
-            printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
-            for(;;) {
-                c = tolower(getchar());
-                if (c != '\n') {
-                    while (getchar() != '\n');
-                }
-                if (c == 'y' || c == '\n') {
-                    install(pkgname);
-                    return;
-                } else if (c == 'n') {
-                    return;
-                } 
-            } 
-        } else if (c == 'n') {
-            free(str);
-            install(pkgname);
-            return;
-        }
-    }
+	if (prompt() == true) {
+		get_str(&str, LESS_PKGBUILD, pkgname);
+		system(str);
+		free(str);
+
+		printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
+		if (prompt() == true) {
+			install(pkgname);
+			return;
+		} else {
+			return;
+		} 
+	} else {
+		free(str);
+		install(pkgname);
+		return;
+	}
+    
 }
 
 void install(const char *pkgname) {
@@ -235,28 +224,21 @@ void update(void) {
 	}
 
 	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
-	for(;;) {
-		c = tolower(getchar());
-		if (c != '\n') {
-			while (getchar() != '\n');
-		}
-		if (c == 'y' || c == '\n') {
-			get_update(pkglist);
-			List *temp = pkglist;
-			while (pkglist != NULL) {
-				if (pkglist->update == true) {
-					pkglist->update = false;
-					less_prompt(pkglist->pkgname);
-				}
-				pkglist = pkglist->next;
+	if (prompt() == true) {
+		get_update(pkglist);
+		List *temp = pkglist;
+		while (pkglist != NULL) {
+			if (pkglist->update == true) {
+				pkglist->update = false;
+				less_prompt(pkglist->pkgname);
 			}
-			clear_list(temp);
-			break;
-		} else if (c == 'n') {
-			clear_list(pkglist);
-			break;
+			pkglist = pkglist->next;
 		}
+		clear_list(temp);
+	} else {
+		clear_list(pkglist);
 	}
+	
 }
 
 void force_update(char *pkgname) {
@@ -275,19 +257,19 @@ void force_update(char *pkgname) {
 
 bool epoch_update(List *pkg, char *pkgver) {
 
-	char *ins_pkgver, *upd_pkgver;
+	char *installed_pkgver, *update_pkgver;
 	
-	ins_pkgver = pkg->pkgver;
-	upd_pkgver = pkgver;
+	installed_pkgver = pkg->pkgver;
+	update_pkgver = pkgver;
 
-	while (*ins_pkgver != ':' && *ins_pkgver != '\0') {
-		ins_pkgver++;
+	while (*installed_pkgver != ':' && *installed_pkgver != '\0') {
+		installed_pkgver++;
 	}
-	while (*upd_pkgver != ':' && *upd_pkgver != '\0') {
-		upd_pkgver++;
+	while (*update_pkgver != ':' && *update_pkgver != '\0') {
+		update_pkgver++;
 	}
 
-	if (*ins_pkgver == '\0' && *upd_pkgver == ':') {
+	if (*installed_pkgver == '\0' && *update_pkgver == ':') {
 		return true;
 	} else {
 		return false;

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <ctype.h>
 
 #include "../include/util.h"
 #include "../include/memory.h"
@@ -68,4 +69,21 @@ bool file_exists(char *path) {
 	} else {
 		return false;
 	}
+}
+
+bool prompt(void) {
+
+	char c;
+
+	for (;;) {
+        c = tolower(getchar());
+        if (c != '\n') {
+			while (getchar() != '\n');
+		}
+        if (c == 'y' || c == '\n') {
+			return true;
+        } else if (c == 'n') {
+			return false;
+        }
+    }
 }

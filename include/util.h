@@ -39,5 +39,6 @@ Buffer get_buffer(const char *cmd);
 void get_str(char **cmd, const char *str, const char *str_var);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);
+bool prompt(void);
 
 #endif
