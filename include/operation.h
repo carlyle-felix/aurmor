@@ -8,7 +8,7 @@
 #define GIT_CLONE "git clone %s" 
 #define AUR_CLONE "git clone https://aur.archlinux.org/%s.git"
 #define AUR_CLONE_NULL "git clone https://aur.archlinux.org/%s.git &> /dev/null"
-#define AUR_SEARCH "https://aur.archlinux.org//rpc/v5/search/%s?by=name"
+#define AUR_SEARCH "https://aur.archlinux.org/rpc/v5/search/%s"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "cd %s && less PKGBUILD"
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"

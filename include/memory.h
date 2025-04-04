@@ -8,6 +8,7 @@ typedef struct curl Json_buffer;
 
 void str_malloc(char **ptr, int size);
 List *list_malloc(void);
-Json_buffer *buffer_malloc(void);  
+void clear_list(List *list);
+Json_buffer *json_buffer_malloc(void);  
 
 #endif

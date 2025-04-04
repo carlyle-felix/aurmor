@@ -18,7 +18,6 @@ List *add_pkgname(List *list, char *pkgname);
 void add_pkgver(List *list);
 List *find_pkg(List *list, char *pkgname);
 List *get_list(char *cmd);
-void clear_list(List *list);
 List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop);
 
 #endif

@@ -31,7 +31,7 @@ char *curl(char *url) {
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
-    buffer = buffer_malloc();
+    buffer = json_buffer_malloc();
     
     if(curl != NULL) {
 
@@ -67,7 +67,7 @@ size_t callback(char *data, size_t size, size_t nmemb, void *p) {
 List *json(char *response) {
 
     register int i, n_results;
-    json_object *root, *results, *name, *pop, *version, *pkg;
+    json_object *root, *results, *name, *pop, *version, *pkg, *desc;
     
     List *temp = list_malloc();
     
@@ -79,10 +79,12 @@ List *json(char *response) {
         pkg = json_object_array_get_idx(results, i);
         
         name = json_object_object_get(pkg, "Name");
-        pop = json_object_object_get(pkg, "Popularity");
         version = json_object_object_get(pkg, "Version");
+        pop = json_object_object_get(pkg, "Popularity");
 
-        temp = add_json_data(temp, json_object_get_string(name), json_object_get_string(version), json_object_get_int(pop));
+        temp = add_json_data(temp, json_object_get_string(name), \
+                            json_object_get_string(version), \
+                            json_object_get_int(pop));
     }
     json_object_put(root);
     

@@ -46,7 +46,20 @@ List *list_malloc(void) {
 	return temp;
 }
 
-Json_buffer *buffer_malloc(void) {
+void clear_list(List *list) {
+    
+    List *temp;
+
+    while (list != NULL) {
+        temp = list;
+        list = list->next;
+        free(temp->pkgname);
+        free(temp->pkgver);
+        free(temp);
+    }
+}
+
+Json_buffer *json_buffer_malloc(void) {
 
 	Json_buffer *temp = malloc(sizeof(Json_buffer));
 	if (temp == NULL) {

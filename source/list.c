@@ -39,21 +39,26 @@ List *get_list(char *cmd) {
 
 // Add packages in reversed order
 List *add_pkgname(List *list, char *pkgname) {
+
+    List *temp;
     
     if (list->pkgname == NULL) {
-        str_malloc(&list->pkgname, strlen(pkgname) + 1);
-        strcpy(list->pkgname, pkgname);  
+        temp = list;
     } else {
-        List *cur, *prev, *temp;
+        List *cur, *prev;
         
         temp = list_malloc();
-        str_malloc(&temp->pkgname, strlen(pkgname) + 1);
-        strcpy(temp->pkgname, pkgname);
-        for (cur = list, prev = NULL; cur != NULL; prev = cur, cur = cur->next);
+        for (cur = list, prev = NULL; \
+            cur != NULL; prev = cur, \
+            cur = cur->next);
+
         if (prev != NULL) {
             prev->next = temp;
         }
     }
+
+    str_malloc(&temp->pkgname, strlen(pkgname) + 1);
+    strcpy(temp->pkgname, pkgname);
     
     return list;
 }
@@ -75,27 +80,23 @@ void add_pkgver(List *list) {
 // Store data retrieved from json in rpc.c
 List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop) {
 
+    List *temp;
+
     if (pkgname == NULL) {
         return list;
     } 
     
     if (list->pkgname == NULL) {
-        str_malloc(&list->pkgname, strlen(pkgname) + 1);
-        strcpy(list->pkgname, pkgname);
-        str_malloc(&list->pkgver, strlen(pkgver) + 1);
-        strcpy(list->pkgver, pkgver);
-        list->pop = pop;
+        temp = list;   
     } else {
-        List *cur, *prev, *temp;
-        
+        List *cur, *prev;
+
         temp = list_malloc();
 
-        str_malloc(&temp->pkgname, strlen(pkgname) + 1);
-        strcpy(temp->pkgname, pkgname);
-        str_malloc(&temp->pkgver, strlen(pkgver) + 1);
-        strcpy(temp->pkgver, pkgver);
-        temp->pop = pop;
-        for (cur = list, prev = NULL; cur != NULL && cur->pop >= temp->pop; prev = cur, cur = cur->next);
+        for (cur = list, prev = NULL; \
+            cur != NULL && cur->pop >= temp->pop; \
+            prev = cur, cur = cur->next);
+
         temp->next = cur;
         if (prev == NULL) {
             list = temp;
@@ -103,6 +104,13 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
             prev->next = temp;
         }
     }
+
+    str_malloc(&temp->pkgname, strlen(pkgname) + 1);
+    strcpy(temp->pkgname, pkgname);
+    str_malloc(&temp->pkgver, strlen(pkgver) + 1);
+    strcpy(temp->pkgver, pkgver);
+    temp->pop = pop;
+
     return list;
 }
 
@@ -119,18 +127,5 @@ List *find_pkg(List *list, char *pkgname) {
         return NULL;
     } else {
         return temp;
-    }
-}
-
-void clear_list(List *list) {
-    
-    List *temp;
-
-    while (list != NULL) {
-        temp = list;
-        list = list->next;
-        free(temp->pkgname);
-        free(temp->pkgver);
-        free(temp);
     }
 }
