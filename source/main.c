@@ -73,7 +73,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			printf("Please specify a search keyword, use -h for help.\n");
 		}
-		
+	} else {
+		printf("Unkown operation, use -h for help.\n");
 	}
 
 	return 0;
