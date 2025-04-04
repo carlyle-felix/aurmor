@@ -334,10 +334,10 @@ void get_update(List *pkglist) {
 	while (pkglist != NULL) {
 		dir = is_dir(pkglist->pkgname);
 		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
-			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
+			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
 			get_str(&str, AUR_CLONE_NULL, pkglist->pkgname);
 		} else if (pkglist->update == true && dir == true) {
-			printf(BBLUE" -> Fetching update for %s...\n"RESET, pkglist->pkgname);
+			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
 			get_str(&str, GIT_PULL_NULL, pkglist->pkgname);
 		} 
 		system(str);
