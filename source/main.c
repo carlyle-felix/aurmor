@@ -7,7 +7,7 @@
 #include "../include/memory.h"
 #include "../include/rpc.h"
 #include "../include/list.h"
-#include "../include/buffer.h"
+#include "../include/util.h"
 
 void set_dir(void);
 

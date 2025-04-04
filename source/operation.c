@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <dirent.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
-#include "../include/buffer.h"
+#include "../include/util.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
 
@@ -14,8 +13,6 @@ bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
 void get_update(List *pkglist);
-bool is_dir(char *pkgname);
-bool file_exists(char *path);
 
 void target_clone(const char *url) {
 
@@ -340,29 +337,4 @@ void get_update(List *pkglist) {
 		pkglist = pkglist->next;
 	}
 	free(cmd);
-}
-
-bool is_dir(char *pkgname) {
-
-	DIR* dir = opendir(pkgname);
-	if (dir) {
-		closedir(dir);
-		return true;
-	} else {
-		return false;
-	}
-}
-
-bool file_exists(char *path) {
-	
-	FILE *f;
-	int result;
-
-	f = fopen(path, "r");
-	if (f != NULL) {
-		fclose(f);
-		return true;
-	} else {
-		return false;
-	}
 }

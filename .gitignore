@@ -1,5 +1,5 @@
 aurx
-buffer.o
+util.o
 main.o
 memory.o
 list.o

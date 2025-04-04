@@ -6,7 +6,7 @@
 #include "../include/rpc.h"
 #include "../include/memory.h"
 #include "../include/list.h"
-#include "../include/buffer.h"
+#include "../include/util.h"
 
 size_t callback(char *data, size_t size, size_t nmemb, void *p);
 

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
-#include "../include/buffer.h"
+#include "../include/util.h"
 #include "../include/memory.h"
 
 Buffer get_buffer(const char *cmd) {
@@ -41,5 +42,30 @@ void get_str(char **cmd, const char *str, const char *str_var) {
 	} else {
 		str_malloc(cmd, strlen(str) + 1);
 		sprintf(*cmd, str);
+	}
+}
+
+bool is_dir(char *pkgname) {
+
+	DIR* dir = opendir(pkgname);
+	if (dir) {
+		closedir(dir);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool file_exists(char *path) {
+	
+	FILE *f;
+	int result;
+
+	f = fopen(path, "r");
+	if (f != NULL) {
+		fclose(f);
+		return true;
+	} else {
+		return false;
 	}
 }
