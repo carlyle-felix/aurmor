@@ -163,13 +163,11 @@ void print_search(char *pkgname) {
 	 
     get_str(&str, AUR_SEARCH, pkgname);
     rpc_pkglist = get_rpc_data(str);
-	
-
-	rpc_pkglist = check_status(rpc_pkglist);
 
 	if (rpc_pkglist->pkgname == NULL) {
 		printf("No results found for: %s.\n", pkgname);
 	} else {
+		rpc_pkglist = check_status(rpc_pkglist);
 		for (temp = rpc_pkglist; rpc_pkglist != NULL; rpc_pkglist = rpc_pkglist->next) {
 			printf(BOLD"%s "BGREEN"%s"RESET, rpc_pkglist->pkgname, rpc_pkglist->pkgver);
 			if (rpc_pkglist->installed == true) {
@@ -177,10 +175,11 @@ void print_search(char *pkgname) {
 			}
 			printf("\n");
 		}
+		rpc_pkglist = temp;
 	}
 
 	free(str);
-    clear_list(temp);
+    clear_list(rpc_pkglist);
 }
 
 void list_packages(void) {
