@@ -83,17 +83,18 @@ int main(int argc, char *argv[]) {
 void set_dir(void) {
 
 	char *home, *str = NULL;
-	int result;
 
 	home = getenv("HOME");
 	get_str(&str, "%s/.cache/aurx", home);
-	result = chdir(str);
-	if (result != 0) {
-		char *mkdir;
+	
+	if (is_dir(str) == false) {
+		char *mkdir = NULL;
 		printf("~/.cache/aurx directory not found, creating...\n");
 		get_str(&mkdir, "mkdir -p %s", str);
 		system(mkdir);
 		free(mkdir);
 	}
+	chdir(str);
+
 	free(str);
 }
