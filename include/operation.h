@@ -3,7 +3,6 @@
 
 void target_clone(char *url);
 void aur_clone(char *pkgnmae);
-void less_prompt(const char *pkgname);
 void uninstall(char *pkgnames);
 void clean(void);
 void print_search(char *pkgname);

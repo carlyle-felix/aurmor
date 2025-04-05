@@ -13,6 +13,7 @@ bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
 void get_update(List *pkglist);
+void less_prompt(const char *pkgname);
 
 void target_clone(char *url) {
 
