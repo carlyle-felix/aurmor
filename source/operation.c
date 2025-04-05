@@ -86,7 +86,6 @@ void less_prompt(const char *pkgname) {
 		install(pkgname);
 		return;
 	}
-    
 }
 
 void install(const char *pkgname) {
@@ -96,7 +95,6 @@ void install(const char *pkgname) {
     get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
     system(str);
     free(str);
-	clean();
 }
 
 void uninstall(char *pkgname) {
@@ -110,8 +108,6 @@ void uninstall(char *pkgname) {
         free(pkgname);
     }
     free(str);
-
-    clean();
 }
 
 void clean(void) {
@@ -249,7 +245,6 @@ void update(void) {
 	} else {
 		clear_list(pkglist);
 	}
-	
 }
 
 void force_update(char *pkgname) {
