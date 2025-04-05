@@ -20,40 +20,152 @@ void target_clone(char *url) {
     register int i;
 
 	temp = url;
-	while (*temp++ != '\0');
+	while (*temp != '\0') {
+		temp++;
+	}
     while (*temp != '/') {
         temp--;
     }
     temp++;
+
     for (i = 0; *temp != '.'; i++) {
         pkgname[i] = *temp++;
     }
 
 	if (is_dir(pkgname) == true) {
-		get_str(&str, GIT_PULL, pkgname);
-	} else {
-		get_str(&str, GIT_CLONE, url);
+		printf(" Removing %s directory before clone...", pkgname);
+		rmdir(pkgname);
 	}
+	get_str(&str, GIT_CLONE, url);
+	
     system(str);
     free(str);
 	
 	less_prompt(pkgname);
 }
 
-void aur_clone(char *pkgname) {	// modify to check if package is installed first and inform user.
+void aur_clone(char *pkgname) {
 
     char *str = NULL;
 
 	if (is_dir(pkgname) == true) {
-		get_str(&str, GIT_PULL, pkgname);
-	} else {
-		get_str(&str, AUR_CLONE, pkgname);
+		printf(" Removing %s directory before clone...", pkgname);
+		rmdir(pkgname);
 	}
-    system(str);
+	get_str(&str, AUR_CLONE, pkgname);
+    
+	system(str);
+	free(str);
+   
+	less_prompt(pkgname);   
+}
 
-    less_prompt(pkgname);
+void update(void) {
+	
+	char c, *str = NULL, *update_list = NULL, *pkgver = NULL;
+	register int i;
+	List *pkglist, *rpc_pkg, *temp;
 
-    free(str);
+	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
+
+	pkglist = get_list(INSTALLED);
+	add_pkgver(pkglist);
+
+	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
+	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+		get_str(&str, AUR_PKG , pkglist->pkgname);
+		rpc_pkg = get_rpc_data(str);
+		if (rpc_pkg->pkgname != NULL) {
+			pkgver = rpc_pkg->pkgver;
+		} else {
+			pkgver = not_on_aur(pkglist->pkgname);
+			pkglist->rpc_pkg = false;
+		}
+		
+		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
+			pkglist->update = true;
+			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
+			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
+			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
+			strcat(update_list, str);
+		}
+
+		if (rpc_pkg->pkgname == NULL) {
+			free(pkgver);
+		}
+		clear_list(rpc_pkg);
+	}
+	free(str);
+
+	pkglist = temp;
+	if (update_list[0] == '\0') {
+		printf(" Nothing to do.\n");
+		free(update_list);
+		clear_list(pkglist);
+		exit(EXIT_SUCCESS);
+	} else {
+		printf(BBLUE"::"BOLD" Updates are available for:"RESET"\n\n%s\n", update_list);
+		free(update_list);
+	}
+
+	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
+	if (prompt() == true) {
+		get_update(pkglist);
+		List *temp = pkglist;
+		while (pkglist != NULL) {
+			if (pkglist->update == true) {
+				less_prompt(pkglist->pkgname);
+			}
+			pkglist = pkglist->next;
+		}
+		clear_list(temp);
+	} else {
+		clear_list(pkglist);
+	}
+}
+
+void get_update(List *pkglist) {
+
+	char *str = NULL;
+	bool dir;
+
+	while (pkglist != NULL) {
+		dir = is_dir(pkglist->pkgname);
+		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
+			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
+			get_str(&str, AUR_CLONE_NULL, pkglist->pkgname);
+		} else if (pkglist->update == true && dir == true) {
+			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
+			get_str(&str, GIT_PULL_NULL, pkglist->pkgname);
+		} 
+		system(str);
+		pkglist = pkglist->next;
+	}
+	free(str);
+}
+
+void force_update(char *pkgname) {
+
+	char *str = NULL;
+	List *pkglist, *pkg;
+
+	pkglist = get_list(INSTALLED);
+	pkg = find_pkg(pkglist, pkgname);
+	if (pkg == NULL) {
+		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
+		exit(EXIT_FAILURE);
+	}
+
+	printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
+	if (is_dir(pkgname) == false) {
+		get_str(&str, AUR_CLONE_NULL, pkgname);
+	} else {
+		get_str(&str, GIT_PULL_NULL, pkgname);
+	}
+	system(str);
+	free(str);
+
+	less_prompt(pkgname);
 }
 
 void less_prompt(const char *pkgname) {
@@ -183,94 +295,6 @@ void list_packages(void) {
     system(QUERY_INSTALLED);
 }
 
-void update(void) {
-	
-	char c, *str = NULL, *update_list = NULL, *pkgver = NULL;
-	register int i;
-	List *pkglist, *rpc_pkg, *temp;
-
-	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
-
-	pkglist = get_list(INSTALLED);
-	add_pkgver(pkglist);
-	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
-	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
-		get_str(&str, AUR_PKG , pkglist->pkgname);
-		rpc_pkg = get_rpc_data(str);
-		if (rpc_pkg->pkgname != NULL) {
-			pkgver = rpc_pkg->pkgver;
-		} else {
-			pkgver = not_on_aur(pkglist->pkgname);
-			pkglist->rpc_pkg = false;
-		}
-		
-		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
-			pkglist->update = true;
-			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
-			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
-			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
-			strcat(update_list, str);
-		}
-
-		if (rpc_pkg->pkgname == NULL) {
-			free(pkgver);
-		}
-		clear_list(rpc_pkg);
-	}
-	free(str);
-
-	pkglist = temp;
-	if (update_list[0] == '\0') {
-		printf(" Nothing to do.\n");
-		free(update_list);
-		clear_list(pkglist);
-		exit(EXIT_SUCCESS);
-	} else {
-		printf(BBLUE"::"BOLD" Updates are available for:"RESET"\n\n%s\n", update_list);
-		free(update_list);
-	}
-
-	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
-	if (prompt() == true) {
-		get_update(pkglist);
-		List *temp = pkglist;
-		while (pkglist != NULL) {
-			if (pkglist->update == true) {
-				pkglist->update = false;
-				less_prompt(pkglist->pkgname);
-			}
-			pkglist = pkglist->next;
-		}
-		clear_list(temp);
-	} else {
-		clear_list(pkglist);
-	}
-}
-
-void force_update(char *pkgname) {
-
-	char *str = NULL;
-	List *pkglist, *pkg;
-
-	pkglist = get_list(INSTALLED);
-	pkg = find_pkg(pkglist, pkgname);
-	if (pkg == NULL) {
-		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
-		exit(EXIT_FAILURE);
-	}
-
-	printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
-	if (is_dir(pkgname) == false) {
-		get_str(&str, AUR_CLONE_NULL, pkgname);
-	} else {
-		get_str(&str, GIT_PULL_NULL, pkgname);
-	}
-	system(str);
-	free(str);
-
-	less_prompt(pkgname);
-}
-
 bool epoch_update(List *pkg, char *pkgver) {
 
 	char *installed_pkgver, *update_pkgver;
@@ -302,7 +326,7 @@ char *not_on_aur(char *pkgname) {
 		get_str(&str, GIT_PULL_NULL, pkgname);
 		system(str);
 	} else {
-		printf(BRED"ERROR:"BOLD" No source file found for %s.\n", pkgname);
+		printf(BRED"ERROR:"BOLD" No source directory found for %s.\n", pkgname);
 	}	
 	
 
@@ -335,24 +359,4 @@ char *not_on_aur(char *pkgname) {
 	free(pkgrel);
 
 	return full_ver;
-}
-
-void get_update(List *pkglist) {
-
-	char *str = NULL;
-	bool dir;
-
-	while (pkglist != NULL) {
-		dir = is_dir(pkglist->pkgname);
-		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
-			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&str, AUR_CLONE_NULL, pkglist->pkgname);
-		} else if (pkglist->update == true && dir == true) {
-			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&str, GIT_PULL_NULL, pkglist->pkgname);
-		} 
-		system(str);
-		pkglist = pkglist->next;
-	}
-	free(str);
 }

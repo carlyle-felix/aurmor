@@ -6,13 +6,13 @@ PREFIX		= /usr/local
 DESTDIR		=
 
 
-aurx: main.o util.o operation.o memory.o list.o rpc.o
-	gcc -o aurx $(SRC)/main.c $(SRC)/util.c $(SRC)/operation.c \
+aurx: aurx.o util.o operation.o memory.o list.o rpc.o
+	gcc -o aurx $(SRC)/aurx.c $(SRC)/util.c $(SRC)/operation.c \
 		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c -lcurl -ljson-c
 
-main.o: $(SRC)/main.c $(INCL)/operation.h $(INCL)/memory.h \
+aurx.o: $(SRC)/aurx.c $(INCL)/operation.h $(INCL)/memory.h \
 		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h
-	gcc -c $(SRC)/main.c
+	gcc -c $(SRC)/aurx.c
 
 util.o: $(SRC)/util.c $(INCL)/util.h $(INCL)/memory.h
 	gcc -c $(SRC)/util.c
@@ -37,7 +37,7 @@ install:
 	install -Dm755 $(BIN) $(DESTDIR)$(PREFIX)/bin/$(BIN)
 
 clean:
-	rm aurx main.o util.o operation.o list.o memory.o \
+	rm aurx aurx.o util.o operation.o list.o memory.o \
 		rpc.o
 
 uninstall:
