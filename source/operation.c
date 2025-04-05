@@ -14,31 +14,41 @@ char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
 void get_update(List *pkglist);
 
-void target_clone(const char *url) {
+void target_clone(char *url) {
 
-    char *str = NULL, pkgname[NAME_LEN] = {'\0'};
+    char *str = NULL, pkgname[NAME_LEN] = {'\0'}, *temp;
     register int i;
 
-    get_str(&str, GIT_CLONE, url);
+	temp = url;
+	while (*temp++ != '\0');
+    while (*temp != '/') {
+        temp--;
+    }
+    temp++;
+    for (i = 0; *temp != '.'; i++) {
+        pkgname[i] = *temp++;
+    }
+
+	if (is_dir(pkgname) == true) {
+		get_str(&str, GIT_PULL, pkgname);
+	} else {
+		get_str(&str, GIT_CLONE, url);
+	}
     system(str);
     free(str);
-    while (*url++ != '\0');
-    while (*url != '/') {
-        url--;
-    }
-    url++;
-    for (i = 0; *url != '.'; i++) {
-        pkgname[i] = *url++;
-    }
 	
 	less_prompt(pkgname);
 }
 
-void aur_clone(const char *pkgname) {	// modify to check if package is installed first and inform user.
+void aur_clone(char *pkgname) {	// modify to check if package is installed first and inform user.
 
     char *str = NULL;
 
-    get_str(&str, AUR_CLONE, pkgname);
+	if (is_dir(pkgname) == true) {
+		get_str(&str, GIT_PULL, pkgname);
+	} else {
+		get_str(&str, AUR_CLONE, pkgname);
+	}
     system(str);
 
     less_prompt(pkgname);
@@ -122,12 +132,14 @@ void clean(void) {
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            rmdir(dir->pkgname);
+            get_str(&str, RM_DIR, dir->pkgname);
+            system(str);
         } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
 			get_str(&str, AUR_PKG, dir->pkgname);
 			rpc_pkg = get_rpc_data(str);
 			if (rpc_pkg->pkgname != NULL) {
-				rmdir(dir->pkgname);
+				get_str(&str, RM_DIR, dir->pkgname);
+            	system(str);
 			}
 			clear_list(rpc_pkg);
 		} else {
