@@ -1,6 +1,6 @@
 aurx
 util.o
-main.o
+aurx.o
 memory.o
 list.o
 operation.o
