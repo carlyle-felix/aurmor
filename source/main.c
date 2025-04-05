@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -89,11 +90,8 @@ void set_dir(void) {
 	get_str(&str, "%s/.cache/aurx", home);
 	
 	if (is_dir(str) == false) {
-		char *mkdir = NULL;
 		printf("~/.cache/aurx directory not found, creating...\n");
-		get_str(&mkdir, "mkdir -p %s", str);
-		system(mkdir);
-		free(mkdir);
+		mkdir(str, 0755);
 	}
 	chdir(str);
 

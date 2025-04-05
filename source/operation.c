@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -121,14 +122,12 @@ void clean(void) {
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            get_str(&str, RM_DIR, dir->pkgname);
-            system(str);
+            rmdir(dir->pkgname);
         } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
 			get_str(&str, AUR_PKG, dir->pkgname);
 			rpc_pkg = get_rpc_data(str);
 			if (rpc_pkg->pkgname != NULL) {
-				get_str(&str, RM_DIR, dir->pkgname);
-            	system(str);
+				rmdir(dir->pkgname);
 			}
 			clear_list(rpc_pkg);
 		} else {
