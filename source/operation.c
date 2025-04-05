@@ -255,6 +255,16 @@ void update(void) {
 void force_update(char *pkgname) {
 
 	char *str = NULL;
+	List *pkglist, *pkg;
+
+	pkglist = get_list(INSTALLED);
+	pkg = find_pkg(pkglist, pkgname);
+	if (pkg == NULL) {
+		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
+		exit(EXIT_FAILURE);
+	}
+
+	printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
 	} else {
