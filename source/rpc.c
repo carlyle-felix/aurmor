@@ -31,7 +31,6 @@ char *curl(Json_buffer *buffer, char *url) {
     
     CURLcode res;
     CURL *curl;
-    char *response = NULL;
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
@@ -64,14 +63,45 @@ size_t callback(char *data, size_t size, size_t nmemb, Json_buffer *p) {
     return len;
 }
 
-List *json(char *response) {
+// not being used yet.
+void fetch_meta(void) {
+
+    FILE *p;
+    CURLcode res;
+    CURL *curl;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    
+    if(curl != NULL) {
+
+        p = fopen(META, "w");
+        curl_easy_setopt(curl, CURLOPT_URL, META_LINK);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_meta);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, p);
+
+        res = curl_easy_perform(curl);
+        fclose(p);
+        
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+    }
+}
+
+// not being used yet.
+size_t write_meta(char *data, size_t size, size_t nmemb, FILE *p) {
+    
+    return fwrite(data, size, nmemb, p);
+}
+
+List *json(char *json_data) {
 
     register int i, n_results;
     json_object *root, *results, *name, *pop, *version, *pkg, *desc;
     
     List *temp = list_malloc();
     
-    root = json_tokener_parse(response);
+    root = json_tokener_parse(json_data);
     results = json_object_object_get(root, "results");
     n_results = json_object_array_length(results);
 
