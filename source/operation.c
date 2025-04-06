@@ -12,7 +12,8 @@
 bool epoch_update(List *pkg, char *pkgver);
 char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
-void get_update(List *pkglist);
+void check_update(List *pkglist);
+void fetch_update(char *pkgname);
 void less_prompt(const char *pkgname);
 
 void target_clone(char *url) {
@@ -34,27 +35,30 @@ void target_clone(char *url) {
     }
 
 	if (is_dir(pkgname) == true) {
-		printf(" Removing %s directory before clone...", pkgname);
-		rmdir(pkgname);
+		printf("Removing %s directory before clone...\n", pkgname);
+		get_str(&str, RM_DIR, pkgname);
+		system(str);
 	}
-	get_str(&str, GIT_CLONE, url);
 	
+	get_str(&str, GIT_CLONE, url);
     system(str);
     free(str);
 	
 	less_prompt(pkgname);
 }
 
+
 void aur_clone(char *pkgname) {
 
     char *str = NULL;
 
 	if (is_dir(pkgname) == true) {
-		printf(" Removing %s directory before clone...", pkgname);
-		rmdir(pkgname);
+		printf("Removing %s directory before clone...\n", pkgname);
+		get_str(&str, RM_DIR, pkgname);
+		system(str);
 	}
-	get_str(&str, AUR_CLONE, pkgname);
-    
+	
+	get_str(&str, AUR_CLONE, pkgname); 
 	system(str);
 	free(str);
    
@@ -69,7 +73,7 @@ void update(void) {
 
 	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-	pkglist = get_list(INSTALLED);
+	pkglist = get_pkglist(INSTALLED);
 	add_pkgver(pkglist);
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
@@ -83,9 +87,9 @@ void update(void) {
 			pkglist->rpc_pkg = false;
 		}
 		
-		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
+		if (strcmp(pkglist->pkgver, pkgver) == 0 || epoch_update(pkglist, pkgver)) { 
 			pkglist->update = true;
-			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 68));
+			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 69));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
 			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
@@ -110,63 +114,65 @@ void update(void) {
 	}
 
 	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
-	if (prompt() == true) {
-		get_update(pkglist);
-		List *temp = pkglist;
-		while (pkglist != NULL) {
-			if (pkglist->update == true) {
-				less_prompt(pkglist->pkgname);
-			}
-			pkglist = pkglist->next;
-		}
-		clear_list(temp);
-	} else {
+	if (prompt() == false) {
 		clear_list(pkglist);
+		return;
 	}
+	
+	check_update(pkglist);
+	for (List *temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+		if (pkglist->update == true) {
+			less_prompt(pkglist->pkgname);
+		}
+	}
+	clear_list(temp);
 }
 
-void get_update(List *pkglist) {
+void check_update(List *pkglist) {
 
-	char *str = NULL;
 	bool dir;
 
 	while (pkglist != NULL) {
 		dir = is_dir(pkglist->pkgname);
-		if (pkglist->rpc_pkg == true && pkglist->update == true && dir == false) {
-			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&str, AUR_CLONE_NULL, pkglist->pkgname);
-		} else if (pkglist->update == true && dir == true) {
-			printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
-			get_str(&str, GIT_PULL_NULL, pkglist->pkgname);
-		} 
-		system(str);
+		if (pkglist->update == true) {
+			fetch_update(pkglist->pkgname);
+		}
 		pkglist = pkglist->next;
 	}
-	free(str);
 }
 
 void force_update(char *pkgname) {
 
-	char *str = NULL;
 	List *pkglist, *pkg;
 
-	pkglist = get_list(INSTALLED);
+	pkglist = get_pkglist(INSTALLED);
 	pkg = find_pkg(pkglist, pkgname);
+	clear_list(pkglist);
+
 	if (pkg == NULL) {
 		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
 		exit(EXIT_FAILURE);
 	}
+	clear_list(pkg);
 
 	printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
+	fetch_update(pkgname);
+
+	less_prompt(pkgname);
+}
+
+void fetch_update(char *pkgname) {
+
+	char *str = NULL;
+
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
 	} else {
 		get_str(&str, GIT_PULL_NULL, pkgname);
 	}
+
 	system(str);
 	free(str);
-
-	less_prompt(pkgname);
 }
 
 void less_prompt(const char *pkgname) {
@@ -182,23 +188,22 @@ void less_prompt(const char *pkgname) {
 	}
 
     printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
-	if (prompt() == true) {
-		get_str(&str, LESS_PKGBUILD, pkgname);
-		system(str);
-		free(str);
 
-		printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
-		if (prompt() == true) {
-			install(pkgname);
-			return;
-		} else {
-			return;
-		} 
-	} else {
+	if (prompt() == false) {
 		free(str);
 		install(pkgname);
 		return;
 	}
+	
+	get_str(&str, LESS_PKGBUILD, pkgname);
+	system(str);
+	free(str);
+
+	printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
+	if (prompt() == true) {
+		install(pkgname);
+	}
+	
 }
 
 void install(const char *pkgname) {
@@ -216,11 +221,11 @@ void uninstall(char *pkgname) {
     
     get_str(&str, UNINSTALL, pkgname);
     system(str);
+	
+	get_str(&str, RM_DIR, pkgname);
+	system(str);
 
-    if (pkgname == NULL) {
-        free(pkgname);
-    }
-    free(str);
+	free(str);
 }
 
 void clean(void) {
@@ -229,13 +234,13 @@ void clean(void) {
     List *dir, *pacman, *rpc_pkg, *temp1, *temp2;
 
     
-    dir = get_list(DIR_LIST);
+    dir = get_pkglist(DIR_LIST);
 	if (dir == NULL) {
 		printf("Nothing to do.\n");
 		return;
 	}
 
-	pacman = get_list(INSTALLED);
+	pacman = get_pkglist(INSTALLED);
 	printf("Cleaning aurx cache dir...\n");
 	temp1 = pacman;
     temp2 = dir;
@@ -275,17 +280,20 @@ void print_search(char *pkgname) {
 
 	if (rpc_pkglist->pkgname == NULL) {
 		printf("No results found for: %s.\n", pkgname);
-	} else {
-		rpc_pkglist = check_status(rpc_pkglist);
-		for (temp = rpc_pkglist; rpc_pkglist != NULL; rpc_pkglist = rpc_pkglist->next) {
-			printf(BOLD"%s "BGREEN"%s"RESET, rpc_pkglist->pkgname, rpc_pkglist->pkgver);
-			if (rpc_pkglist->installed == true) {
-				printf(BCYAN"\t[installed]"RESET);
-			}
-			printf("\n");
-		}
-		rpc_pkglist = temp;
+		free(str);
+    	clear_list(rpc_pkglist);
+		return;
 	}
+
+	rpc_pkglist = check_status(rpc_pkglist);
+	for (temp = rpc_pkglist; rpc_pkglist != NULL; rpc_pkglist = rpc_pkglist->next) {
+		printf(BOLD"%s "BGREEN"%s"RESET, rpc_pkglist->pkgname, rpc_pkglist->pkgver);
+		if (rpc_pkglist->installed == true) {
+			printf(BCYAN"\t[installed]"RESET);
+		}
+		printf("\n");
+	}
+	rpc_pkglist = temp;
 
 	free(str);
     clear_list(rpc_pkglist);

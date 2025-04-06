@@ -6,7 +6,7 @@
 #include "../include/memory.h"
 #include "../include/util.h"
 
-List *get_list(char *cmd) {
+List *get_pkglist(char *cmd) {
 
     char pkgname[NAME_LEN];
     Buffer pacman_list = NULL, temp_list = NULL;
@@ -136,7 +136,7 @@ List *check_status(List *list) {
     List *pkglist, *temp_list, *temp_pkglist;
 
     get_str(&str, INSTALLED, NULL);
-	pkglist = get_list(str);
+	pkglist = get_pkglist(str);
     temp_pkglist = pkglist;
 
     for (temp_list = list; list != NULL; list = list->next) {

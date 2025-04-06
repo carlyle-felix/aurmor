@@ -1,0 +1,1 @@
+[] write functions to reduce or eliminate dependance on system() (even though this is not intended to be portable).
