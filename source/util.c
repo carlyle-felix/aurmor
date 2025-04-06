@@ -3,6 +3,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "../include/util.h"
 #include "../include/memory.h"
@@ -46,31 +48,6 @@ void get_str(char **cmd, const char *str, const char *str_var) {
 	}
 }
 
-bool is_dir(char *pkgname) {
-
-	DIR* dir = opendir(pkgname);
-	if (dir) {
-		closedir(dir);
-		return true;
-	} else {
-		return false;
-	}
-}
-
-bool file_exists(char *path) {
-	
-	FILE *f;
-	int result;
-
-	f = fopen(path, "r");
-	if (f != NULL) {
-		fclose(f);
-		return true;
-	} else {
-		return false;
-	}
-}
-
 bool prompt(void) {
 
 	char c;
@@ -86,4 +63,65 @@ bool prompt(void) {
 			return false;
         }
     }
+}
+
+bool file_exists(char *path) {
+	
+	FILE *f;
+	int result;
+
+	f = fopen(path, "r");
+	if (f != NULL) {
+		fclose(f);
+		return true;
+	} 
+
+	return false;
+}
+
+bool is_dir(char *pkgname) {
+
+	DIR* dir = opendir(pkgname);
+	if (dir) {
+		closedir(dir);
+		return true;
+	}
+		
+	return false;
+}
+
+void remove_dir(char *path) {
+
+	DIR *dir;
+	struct dirent *p;
+	struct stat buffer;
+	int path_len;
+	char temp_path[MAX_BUFFER];
+
+	dir = opendir(path);
+	if (dir == NULL) {
+		if (file_exists(path) == true) {
+			remove(path);
+			return;
+		}
+		printf(BRED"ERROR:"BOLD"Failed to open %s directory.\n"RESET);
+		exit(EXIT_FAILURE);
+	}
+
+	while ((p = readdir(dir)) != NULL) {
+		if (strcmp(p->d_name, ".") == 0 || strcmp(p->d_name, "..") == 0) {
+			continue;
+		}
+
+		sprintf(temp_path, "%s/%s", path, p->d_name);
+		if (stat(temp_path, &buffer) == 0) {
+			if (is_dir(temp_path)) {
+				remove_dir(temp_path);
+			} else {
+				remove(temp_path);
+			}
+		}
+	}
+	closedir(dir);
+	rmdir(path);
 }

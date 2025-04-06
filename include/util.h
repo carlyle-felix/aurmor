@@ -19,7 +19,6 @@
 #define QUERY_INSTALLED "pacman -Qm"
 #define DIR_LIST "echo -n $(ls)"
 #define UNINSTALL "sudo pacman -Rsc %s"
-#define RM_DIR "rm -rf %s"
 #define GIT_CLEAN "cd %s && git clean -dfx"
 
 // Console colours
@@ -41,5 +40,6 @@ void get_str(char **cmd, const char *str, const char *str_var);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);
 bool prompt(void);
+void remove_dir(char *path);
 
 #endif

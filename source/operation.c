@@ -36,8 +36,7 @@ void target_clone(char *url) {
 
 	if (is_dir(pkgname) == true) {
 		printf("Removing %s directory before clone...\n", pkgname);
-		get_str(&str, RM_DIR, pkgname);
-		system(str);
+		remove_dir(pkgname);
 	}
 	
 	get_str(&str, GIT_CLONE, url);
@@ -54,8 +53,7 @@ void aur_clone(char *pkgname) {
 
 	if (is_dir(pkgname) == true) {
 		printf("Removing %s directory before clone...\n", pkgname);
-		get_str(&str, RM_DIR, pkgname);
-		system(str);
+		remove_dir(pkgname);
 	}
 	
 	get_str(&str, AUR_CLONE, pkgname); 
@@ -202,8 +200,7 @@ void less_prompt(const char *pkgname) {
 	printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
 	if (prompt() == true) {
 		install(pkgname);
-	}
-	
+	}	
 }
 
 void install(const char *pkgname) {
@@ -222,8 +219,7 @@ void uninstall(char *pkgname) {
     get_str(&str, UNINSTALL, pkgname);
     system(str);
 	
-	get_str(&str, RM_DIR, pkgname);
-	system(str);
+	remove_dir(pkgname);
 
 	free(str);
 }
@@ -246,14 +242,12 @@ void clean(void) {
     temp2 = dir;
     while (dir != NULL) {
         if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            get_str(&str, RM_DIR, dir->pkgname);
-            system(str);
+            remove_dir(dir->pkgname);
         } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
 			get_str(&str, AUR_PKG, dir->pkgname);
 			rpc_pkg = get_rpc_data(str);
 			if (rpc_pkg->pkgname != NULL) {
-				get_str(&str, RM_DIR, dir->pkgname);
-            	system(str);
+				remove_dir(dir->pkgname);
 			}
 			clear_list(rpc_pkg);
 		} else {
