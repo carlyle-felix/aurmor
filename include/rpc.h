@@ -8,7 +8,7 @@ typedef struct curl {
 
 typedef struct node List;
 
-char *curl(char *url);
+char *curl(Json_buffer *buffer, char *url);
 List *get_rpc_data(char *url);
 List *json(char *buffer); 
 

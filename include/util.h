@@ -20,6 +20,8 @@
 #define DIR_LIST "echo -n $(ls)"
 #define UNINSTALL "sudo pacman -Rsc %s"
 #define GIT_CLEAN "cd %s && git clean -dfx"
+#define META ".packages-meta-ext-v1.json.gz"
+#define META_LINK "https://aur.archlinux.org/packages-meta-ext-v1.json.gz"
 
 // Console colours
 #define RESET "\e[0m"

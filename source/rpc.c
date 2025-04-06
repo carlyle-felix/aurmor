@@ -8,50 +8,50 @@
 #include "../include/list.h"
 #include "../include/util.h"
 
-size_t callback(char *data, size_t size, size_t nmemb, void *p);
+size_t callback(char *data, size_t size, size_t nmemb, Json_buffer *p);
+size_t write_meta(char *data, size_t size, size_t nmemb, FILE *p);
 
 List *get_rpc_data(char *url) {
 
+    Json_buffer *buffer;
     char *response;
     List *temp;
 
-    response = curl(url);
-    temp = json(response);
+    buffer = json_buffer_malloc();
+    curl(buffer, url);
+    temp = json(buffer->response);
     
-    free(response);
+    free(buffer->response);
+    free(buffer);
+
     return temp;
 } 
 
-char *curl(char *url) {
-
-    Json_buffer *buffer;
+char *curl(Json_buffer *buffer, char *url) {
+    
     CURLcode res;
     CURL *curl;
     char *response = NULL;
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
-    buffer = json_buffer_malloc();
     
     if(curl != NULL) {
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) buffer);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, buffer);
 
         res = curl_easy_perform(curl);
-        get_str(&response, buffer->response, NULL);
 
         curl_easy_cleanup(curl);
         curl_global_cleanup();
     }
-    free(buffer->response);
-    free(buffer);
 
-    return response;
+    return buffer->response;
 }
 
-size_t callback(char *data, size_t size, size_t nmemb, void *p) {
+size_t callback(char *data, size_t size, size_t nmemb, Json_buffer *p) {
     
     int len = size * nmemb;
     Json_buffer *temp = (Json_buffer *)p;
