@@ -19,7 +19,6 @@ $ make
 | `aurx -U [package(s)]`| force update package(s).|
 | `aurx -i [package(s)]` | install from [AUR](https://aur.archlinux.org/). |
 | `aurx -x [git clone URL]` | clone and install from a specified git repo with PKGBUILD.|
-| `aumor -r [package(s)]` | uninstall package(s). |
 | `aurx -c` | delete all source directories in cache besides source directories from installed packages not found on the [AUR](https://aur.archlinux.org/). |
 | `aurx -r [package(s)]` | uninstall specified AUR package(s). |
 | `aurx -q` | list installed AUR packages. |

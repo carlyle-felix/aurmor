@@ -15,7 +15,7 @@
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
 #define INSTALLED "echo -n $(pacman -Qmq)"
 #define QUERY_INSTALLED "pacman -Qm"
-#define UNINSTALL "sudo pacman -Rsc %s"
+#define UNINSTALL "sudo pacman -Rsc"
 #define GIT_CLEAN "cd %s && git clean -dfx"
 #define META ".packages-meta-v1.json.gz"
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"
@@ -36,7 +36,7 @@ typedef struct node List;
 typedef char *Buffer;
 
 Buffer get_buffer(const char *cmd);
-void get_str(char **cmd, const char *str, const char *str_var);
+void get_str(char **str, const char *p, const char *str_var);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);
 bool prompt(void);

@@ -198,14 +198,21 @@ void install(const char *pkgname) {
     free(str);
 }
 
-void uninstall(char *pkgname) {
+void uninstall(List *list) {
 
     char *str = NULL;
     
-    get_str(&str, UNINSTALL, pkgname);
-    system(str);
-	
-	remove_dir(pkgname);
+	get_str(&str, UNINSTALL, NULL);
+	while (list != NULL) {
+		str_alloc(&str, strlen(str) + strlen(list->pkgname) + 2);
+		strcat(str, " ");
+		strcat(str, list->pkgname);
+		if (is_dir(list->pkgname) == true) {
+			remove_dir(list->pkgname);
+		}
+		list = list->next;
+	}
+	system(str);
 
 	free(str);
 }

@@ -61,9 +61,14 @@ int main(int argc, char *argv[]) {
 		list_packages();
 	} else if (strcmp(argv[1], "-r") == 0) {
 		if (argc > 2) {
+			List *list;
+			
+			list = list_malloc();
 			for (i = 2; i < argc; i++) {
-				uninstall(argv[i]); 
+				list = add_pkgname(list, argv[i]);
 			}
+			uninstall(list);
+			clear_list(list);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
 		}

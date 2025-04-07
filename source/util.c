@@ -40,14 +40,14 @@ Buffer get_buffer(const char *cmd) {
 }
 
 // compute how many bytes should be allocated to strings.
-void get_str(char **cmd, const char *str, const char *str_var) {
+void get_str(char **p, const char *str, const char *str_var) {
 	
 	if (str_var != NULL) {
-		str_alloc(cmd, strlen(str) + strlen(str_var) - 1);
-		sprintf(*cmd, str, str_var);
+		str_alloc(p, strlen(str) + strlen(str_var) - 1);
+		sprintf(*p, str, str_var);
 	} else {
-		str_alloc(cmd, strlen(str) + 1);
-		sprintf(*cmd, str);
+		str_alloc(p, strlen(str) + 1);
+		sprintf(*p, str);
 	}
 }
 
