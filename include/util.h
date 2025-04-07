@@ -17,11 +17,10 @@
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
 #define INSTALLED "echo -n $(pacman -Qmq)"
 #define QUERY_INSTALLED "pacman -Qm"
-#define DIR_LIST "echo -n $(ls)"
 #define UNINSTALL "sudo pacman -Rsc %s"
 #define GIT_CLEAN "cd %s && git clean -dfx"
-#define META ".packages-meta-ext-v1.json.gz"
-#define META_LINK "https://aur.archlinux.org/packages-meta-ext-v1.json.gz"
+#define META ".packages-meta-v1.json.gz"
+#define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"
 
 // Console colours
 #define RESET "\e[0m"
@@ -35,6 +34,7 @@
 
 #define MAX_BUFFER 1024
 
+typedef struct node List;
 typedef char *Buffer;
 
 Buffer get_buffer(const char *cmd);
@@ -43,5 +43,6 @@ bool is_dir(char *pkgname);
 bool file_exists(char *path);
 bool prompt(void);
 void remove_dir(char *path);
+List *get_dir_list(void);
 
 #endif

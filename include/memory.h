@@ -6,7 +6,7 @@
 typedef struct node List;
 typedef struct curl Json_buffer;
 
-void str_malloc(char **ptr, int size);
+void str_alloc(char **ptr, int size);
 List *list_malloc(void);
 void clear_list(List *list);
 Json_buffer *json_buffer_malloc(void);  

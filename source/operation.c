@@ -69,7 +69,7 @@ void update(void) {
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
 
-	str_malloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
+	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
 	pkglist = get_pkglist(INSTALLED);
 	add_pkgver(pkglist);
@@ -87,9 +87,9 @@ void update(void) {
 		
 		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
 			pkglist->update = true;
-			str_malloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 69));
+			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 69));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
-			str_malloc(&update_list, (strlen(update_list) + strlen(str) + 1));
+			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
 		}
 
@@ -230,7 +230,7 @@ void clean(void) {
     List *dir, *pacman, *rpc_pkg, *temp1, *temp2;
 
     
-    dir = get_pkglist(DIR_LIST);
+    dir = get_dir_list();
 	if (dir == NULL) {
 		printf("Nothing to do.\n");
 		return;
@@ -346,7 +346,7 @@ char *not_on_aur(char *pkgname) {
 	pkgrel = get_buffer(str);	
 
 	// copy epoch:pkgver-pkgrel into full_ver
-	str_malloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
+	str_alloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
 	if (epoch[0] == '\0') {
 		sprintf(full_ver, "%s-%s", pkgver, pkgrel);
 	} else if (pkgrel[0] == '\0') {

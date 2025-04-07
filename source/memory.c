@@ -6,7 +6,7 @@
 #include "../include/rpc.h"
 #include "../include/util.h"
 
-void str_malloc(char **ptr, int size) {
+void str_alloc(char **ptr, int size) {
 	
 	if (*ptr == NULL) {
 		*ptr = malloc(size);
@@ -68,7 +68,7 @@ Json_buffer *json_buffer_malloc(void) {
 		exit(EXIT_FAILURE);
 	}
 	temp->response = NULL;
-    str_malloc(&temp->response, sizeof(char *));
+    str_alloc(&temp->response, sizeof(char *));
     temp->response[0] = '\0';
     temp->size = 0;
 

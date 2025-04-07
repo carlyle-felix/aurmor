@@ -8,6 +8,7 @@
 
 #include "../include/util.h"
 #include "../include/memory.h"
+#include "../include/list.h"
 
 Buffer get_buffer(const char *cmd) {
 	
@@ -15,7 +16,7 @@ Buffer get_buffer(const char *cmd) {
 	FILE *p;	
 	Buffer temp = NULL;
 	
-	str_malloc(&temp_buffer, MAX_BUFFER);
+	str_alloc(&temp_buffer, MAX_BUFFER);
 
 	p = popen(cmd, "r");
 	if (p == NULL) {
@@ -30,7 +31,7 @@ Buffer get_buffer(const char *cmd) {
 		return NULL;
 	}
 
-	str_malloc(&temp, (strlen(temp_buffer) + 1));
+	str_alloc(&temp, (strlen(temp_buffer) + 1));
 	strcpy(temp, temp_buffer);
 	free(temp_buffer);
 
@@ -40,10 +41,10 @@ Buffer get_buffer(const char *cmd) {
 void get_str(char **cmd, const char *str, const char *str_var) {
 	
 	if (str_var != NULL) {
-		str_malloc(cmd, strlen(str) + strlen(str_var) - 1);
+		str_alloc(cmd, strlen(str) + strlen(str_var) - 1);
 		sprintf(*cmd, str, str_var);
 	} else {
-		str_malloc(cmd, strlen(str) + 1);
+		str_alloc(cmd, strlen(str) + 1);
 		sprintf(*cmd, str);
 	}
 }
@@ -114,14 +115,44 @@ void remove_dir(char *path) {
 		}
 
 		sprintf(temp_path, "%s/%s", path, p->d_name);
-		if (stat(temp_path, &buffer) == 0) {
-			if (is_dir(temp_path)) {
-				remove_dir(temp_path);
-			} else {
-				remove(temp_path);
-			}
+		if (is_dir(temp_path)) {
+			remove_dir(temp_path);
+		} else {
+			remove(temp_path);
 		}
+		
+			
 	}
 	closedir(dir);
 	rmdir(path);
+}
+
+List *get_dir_list(void) {
+
+	DIR *dir;
+	struct dirent *p;
+	List *dir_list;
+
+	dir = opendir(".");
+	if (dir == NULL) {
+		printf(BRED"ERROR:"BOLD"Failed to open %s directory.\n"RESET);
+		exit(EXIT_FAILURE);
+	}
+	
+	dir_list = list_malloc();
+
+	while ((p = readdir(dir)) != NULL) {
+		if (strcmp(p->d_name, ".") == 0 || strcmp(p->d_name, "..") == 0) {
+			continue;
+		}
+		dir_list = add_pkgname(dir_list, p->d_name);
+	}
+	closedir(dir);
+
+	if (dir_list->pkgname == NULL) {
+		free(dir_list);
+		return NULL;
+	}
+	
+	return dir_list;
 }

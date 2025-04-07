@@ -57,7 +57,7 @@ List *add_pkgname(List *list, char *pkgname) {
         }
     }
 
-    str_malloc(&temp->pkgname, strlen(pkgname) + 1);
+    str_alloc(&temp->pkgname, strlen(pkgname) + 1);
     strcpy(temp->pkgname, pkgname);
     
     return list;
@@ -105,9 +105,9 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
         }
     }
 
-    str_malloc(&temp->pkgname, strlen(pkgname) + 1);
+    str_alloc(&temp->pkgname, strlen(pkgname) + 1);
     strcpy(temp->pkgname, pkgname);
-    str_malloc(&temp->pkgver, strlen(pkgver) + 1);
+    str_alloc(&temp->pkgver, strlen(pkgver) + 1);
     strcpy(temp->pkgver, pkgver);
     temp->pop = pop;
 

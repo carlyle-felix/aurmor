@@ -55,7 +55,7 @@ size_t callback(char *data, size_t size, size_t nmemb, Json_buffer *p) {
     int len = size * nmemb;
     Json_buffer *temp = (Json_buffer *)p;
 
-    str_malloc(&temp->response, temp->size + len + 1);
+    str_alloc(&temp->response, temp->size + len + 1);
     memcpy(&(temp->response[temp->size]), data, len);
     temp->size += len;
     temp->response[temp->size] = '\0';
