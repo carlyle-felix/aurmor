@@ -8,7 +8,7 @@ void aur_clone(char *pkgnmae);
 void uninstall(List *list);
 void clean(void);
 void print_search(char *pkgname);
-void list_packages(void);
+void print_installed(void);
 void update(void);
 void force_update(char *pkgname);
 

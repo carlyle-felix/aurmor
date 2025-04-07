@@ -1,46 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alpm.h>
+#include <alpm_list.h>
 
 #include "../include/list.h"
 #include "../include/memory.h"
 #include "../include/util.h"
 
-// get a list of packages from a pipe buffer
-// read the list and add their names to a linked list.
-List *get_pkglist(char *cmd) {
-
-    char pkgname[NAME_LEN];
-    Buffer pacman_list = NULL, temp_list = NULL;
-    register int i;
-    List *temp;
+List *get_installed_list(void) {
     
-	pacman_list = get_buffer(cmd);
-    if (pacman_list == NULL) {
-        return NULL;
-    }
+    alpm_handle_t *pacman;
+    alpm_errno_t *err;
+    alpm_db_t *db;
+    alpm_list_t *list, *temp;
+    List *aur;
 
-    temp = list_malloc();
-    temp_list = pacman_list;
-    while (*pacman_list != '\0') {
-		for (i = 0; i < NAME_LEN; i++) {
-			pkgname[i] = '\0';
-		}
-		for (i = 0; *pacman_list != ' ' && *pacman_list != '\0'; i++) {
-			pkgname[i] = *pacman_list++;	
-		}
-		if (*pacman_list != '\0') {
-			pacman_list++;
-		} 
-		add_pkgname(temp, pkgname);
-    }
-    free(temp_list);
+    pacman = alpm_initialize("/", "/var/lib/pacman/", err);
+    db = alpm_get_localdb(pacman);
+    
+    list = alpm_db_get_pkgcache(db);
+    temp = list;
 
-    return temp;
+    aur = list_malloc();
+    for (temp = list; temp != NULL; temp = alpm_list_next(temp)) {
+        if (alpm_pkg_get_validation(temp->data) == 1) {
+            add_pkgname(aur, alpm_pkg_get_name(temp->data));
+            add_pkgver(aur, alpm_pkg_get_name(temp->data), alpm_pkg_get_version(temp->data));
+        }
+    }
+    
+    alpm_release(pacman);
+    return aur;
 }
 
-// Add packages in reversed order
-List *add_pkgname(List *list, char *pkgname) {
+// Add packages in correct order
+List *add_pkgname(List *list, const char *pkgname) {
 
     List *temp;
     
@@ -65,18 +60,13 @@ List *add_pkgname(List *list, char *pkgname) {
     return list;
 }
 
-// add_pkgname() calls from uninstall() wont need versions so do this separately.
-void add_pkgver(List *list) {
+void add_pkgver(List *list, const char *pkgname, const char *pkgver) {
     
-    char *cmd = NULL;
+    List *temp;
 
-    while (list != NULL) {
-       	get_str(&cmd, INSTALLED_PKGVER, list->pkgname);
-        list->pkgver = get_buffer(cmd);
-
-        list = list->next;
-    }
-    free(cmd);
+    temp = find_pkg(list, pkgname);
+    str_alloc(&temp->pkgver, strlen(pkgver) + 1);
+    strcpy(temp->pkgver, pkgver);
 }
 
 // Store data retrieved from json in rpc.c
@@ -116,7 +106,7 @@ List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop
     return list;
 }
 
-List *find_pkg(List *list, char *pkgname) {
+List *find_pkg(List *list, const char *pkgname) {
 
     List *temp;
 
@@ -136,11 +126,9 @@ List *find_pkg(List *list, char *pkgname) {
 // (for search output)
 List *check_status(List *list) {
 
-    char *str = NULL;
     List *pkglist, *temp_list, *temp_pkglist;
 
-    get_str(&str, INSTALLED, NULL);
-	pkglist = get_pkglist(str);
+    pkglist = get_installed_list();
     temp_pkglist = pkglist;
 
     for (temp_list = list; list != NULL; list = list->next) {
@@ -150,7 +138,6 @@ List *check_status(List *list) {
             }
         }
     }
-    free(str);
     clear_list(temp_pkglist);
 
     return temp_list;

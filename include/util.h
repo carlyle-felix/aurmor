@@ -13,8 +13,6 @@
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "cd %s && less PKGBUILD"
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
-#define INSTALLED "echo -n $(pacman -Qmq)"
-#define QUERY_INSTALLED "pacman -Qm"
 #define UNINSTALL "sudo pacman -Rsc"
 #define GIT_CLEAN "cd %s && git clean -dfx"
 #define META ".packages-meta-v1.json.gz"

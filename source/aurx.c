@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 	} else if (strcmp(argv[1], "-c") == 0) { 
 		clean();
 	} else if (strcmp(argv[1], "-q") == 0) {
-		list_packages();
+		print_installed();
 	} else if (strcmp(argv[1], "-r") == 0) {
 		if (argc > 2) {
 			List *list;
@@ -83,7 +83,6 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Unkown operation, use -h for help.\n");
 	}
-
 	return 0;
 }
 
