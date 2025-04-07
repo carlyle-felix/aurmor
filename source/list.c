@@ -6,6 +6,8 @@
 #include "../include/memory.h"
 #include "../include/util.h"
 
+// get a list of packages from a pipe buffer
+// read the list and add their names to a linked list.
 List *get_pkglist(char *cmd) {
 
     char pkgname[NAME_LEN];
@@ -130,6 +132,8 @@ List *find_pkg(List *list, char *pkgname) {
     }
 }
 
+// check whether items on a list is installed.
+// (for search output)
 List *check_status(List *list) {
 
     char *str = NULL;

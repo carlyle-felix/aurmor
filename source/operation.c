@@ -269,6 +269,10 @@ void list_packages(void) {
     system(QUERY_INSTALLED);
 }
 
+
+// check if an epoch has been added to a PKGBUILD that wasnt present in
+// the installed version. without this, if the "pkgver" is 
+// higher than the "epoch" (1), the epoch update will be ignored.
 bool epoch_update(List *pkg, char *pkgver) {
 
 	char *installed_pkgver, *update_pkgver;

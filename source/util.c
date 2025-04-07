@@ -10,6 +10,7 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
+// pipe output of commands to a buffer and return the buffer.
 Buffer get_buffer(const char *cmd) {
 	
 	char *temp_buffer = NULL;
@@ -38,6 +39,7 @@ Buffer get_buffer(const char *cmd) {
 	return temp;
 }
 
+// compute how many bytes should be allocated to strings.
 void get_str(char **cmd, const char *str, const char *str_var) {
 	
 	if (str_var != NULL) {
@@ -83,7 +85,7 @@ bool file_exists(char *path) {
 bool is_dir(char *pkgname) {
 
 	DIR* dir = opendir(pkgname);
-	if (dir) {
+	if (dir != NULL) {
 		closedir(dir);
 		return true;
 	}
@@ -91,6 +93,7 @@ bool is_dir(char *pkgname) {
 	return false;
 }
 
+// remove directories recursively.
 void remove_dir(char *path) {
 
 	DIR *dir;
@@ -119,14 +122,13 @@ void remove_dir(char *path) {
 			remove_dir(temp_path);
 		} else {
 			remove(temp_path);
-		}
-		
-			
+		}		
 	}
 	closedir(dir);
 	rmdir(path);
 }
 
+// get list of items in the .cache/aur directory.
 List *get_dir_list(void) {
 
 	DIR *dir;
