@@ -24,7 +24,7 @@ List *get_installed_list(void) {
 
     aur = list_malloc();
     for (temp = list; temp != NULL; temp = alpm_list_next(temp)) {
-        if (alpm_pkg_get_validation(temp->data) == 1) {
+        if (alpm_pkg_get_validation(temp->data) != 8) {
             add_pkgname(aur, alpm_pkg_get_name(temp->data));
             add_pkgver(aur, alpm_pkg_get_name(temp->data), alpm_pkg_get_version(temp->data));
         }
