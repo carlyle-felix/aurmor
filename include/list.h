@@ -11,7 +11,6 @@ typedef struct node {
     int pop;
     bool installed;
     bool update;
-    bool rpc_pkg;
     struct node *next;
 } List;
 

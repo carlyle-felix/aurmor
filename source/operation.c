@@ -10,7 +10,6 @@
 #include "../include/rpc.h"
 
 bool epoch_update(List *pkg, char *pkgver);
-char *not_on_aur(char *pkgname);
 void install(const char *pkgname);
 void check_update(List *pkglist);
 void fetch_update(char *pkgname);
@@ -65,7 +64,7 @@ void aur_clone(char *pkgname) {
 
 void update(void) {
 	
-	char c, *str = NULL, *update_list = NULL, *pkgver = NULL;
+	char c, *str = NULL, *update_list = NULL;
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
 
@@ -76,26 +75,18 @@ void update(void) {
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+		
 		get_str(&str, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(str);
-		if (rpc_pkg->pkgname != NULL) {
-			pkgver = rpc_pkg->pkgver;
-		} else {
-			pkgver = not_on_aur(pkglist->pkgname);
-			pkglist->rpc_pkg = false;
-		}
-		
-		if (strcmp(pkglist->pkgver, pkgver) < 0 || epoch_update(pkglist, pkgver)) { 
+
+		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) == 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
-			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(pkgver) + 69));
-			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, pkgver);
+			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69));
+			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
 		}
 
-		if (rpc_pkg->pkgname == NULL) {
-			free(pkgver);
-		}
 		clear_list(rpc_pkg);
 	}
 	free(str);
@@ -128,10 +119,7 @@ void update(void) {
 
 void check_update(List *pkglist) {
 
-	bool dir;
-
 	while (pkglist != NULL) {
-		dir = is_dir(pkglist->pkgname);
 		if (pkglist->update == true) {
 			fetch_update(pkglist->pkgname);
 		}
@@ -145,17 +133,15 @@ void force_update(char *pkgname) {
 
 	pkglist = get_pkglist(INSTALLED);
 	pkg = find_pkg(pkglist, pkgname);
-	clear_list(pkglist);
+	
 
 	if (pkg == NULL) {
 		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
 		exit(EXIT_FAILURE);
 	}
-	clear_list(pkg);
-
-	printf(BBLUE" ->"BOLD" Fetching update for %s...\n"RESET, pkglist->pkgname);
+	clear_list(pkglist);
+	
 	fetch_update(pkgname);
-
 	less_prompt(pkgname);
 }
 
@@ -163,6 +149,7 @@ void fetch_update(char *pkgname) {
 
 	char *str = NULL;
 
+	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
 	} else {
@@ -238,23 +225,8 @@ void clean(void) {
 
 	pacman = get_pkglist(INSTALLED);
 	printf("Cleaning aurx cache dir...\n");
-	temp1 = pacman;
-    temp2 = dir;
-    while (dir != NULL) {
-        if (pacman == NULL || strcmp(dir->pkgname, pacman->pkgname) != 0) {
-            remove_dir(dir->pkgname);
-        } else if (strcmp(dir->pkgname, pacman->pkgname) == 0) {
-			get_str(&str, AUR_PKG, dir->pkgname);
-			rpc_pkg = get_rpc_data(str);
-			if (rpc_pkg->pkgname != NULL) {
-				remove_dir(dir->pkgname);
-			}
-			clear_list(rpc_pkg);
-		} else {
-            get_str(&str, GIT_CLEAN, dir->pkgname);
-            system(str);
-        }
-        dir = dir->next;
+    for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
+        remove_dir(dir->pkgname);
 		if (pacman != NULL) {
 			pacman = pacman->next;
 		}
@@ -317,49 +289,4 @@ bool epoch_update(List *pkg, char *pkgver) {
 	} else {
 		return false;
 	}
-}
-
-char *not_on_aur(char *pkgname) {
-
-	char *str = NULL, *full_ver = NULL;
-	Buffer epoch = NULL, pkgver = NULL, pkgrel = NULL;
-
-	// update pkgname source folder in ~/.config/aurx
-	if (is_dir(pkgname) == true) {
-		get_str(&str, GIT_PULL_NULL, pkgname);
-		system(str);
-	} else {
-		printf(BRED"ERROR:"BOLD" No source directory found for %s.\n"RESET, pkgname);
-	}	
-	
-
-	// get epoch for current pkgname from pkgbuild
-	get_str(&str, PKGBUILD_CMD(epoch), pkgname);
-	epoch = get_buffer(str);
-
-	// get pkgver for current pkgname from pkgbuild
-	get_str(&str, PKGBUILD_CMD(pkgver), pkgname);
-	pkgver = get_buffer(str);
-
-	// get pkgrel for current pkgname from pkgbuild
-	get_str(&str, PKGBUILD_CMD(pkgrel), pkgname);
-	pkgrel = get_buffer(str);	
-
-	// copy epoch:pkgver-pkgrel into full_ver
-	str_alloc(&full_ver, (strlen(epoch) + strlen(pkgver) + strlen(pkgrel)) + 3);
-	if (epoch[0] == '\0') {
-		sprintf(full_ver, "%s-%s", pkgver, pkgrel);
-	} else if (pkgrel[0] == '\0') {
-		sprintf(full_ver, "%s:%s", epoch, pkgver);
-	} else if (epoch[0] == '\0' && pkgrel[0] == '\0') {
-		sprintf(full_ver, "%s", pkgver);
-	} else {
-		sprintf(full_ver, "%s:%s-%s", epoch, pkgver, pkgrel);
-	}
-	free(str);
-	free(epoch);
-	free(pkgver);
-	free(pkgrel);
-
-	return full_ver;
 }
