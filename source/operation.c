@@ -69,8 +69,7 @@ void update(void) {
 
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-	pkglist = get_pkglist(INSTALLED);
-	add_pkgver(pkglist);
+	pkglist = get_installed_list();
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
@@ -78,7 +77,7 @@ void update(void) {
 		get_str(&str, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(str);
 
-		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) < 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
+		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) == 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
 			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
@@ -130,7 +129,7 @@ void force_update(char *pkgname) {
 
 	List *pkglist, *pkg;
 
-	pkglist = get_pkglist(INSTALLED);
+	pkglist = get_installed_list();
 	pkg = find_pkg(pkglist, pkgname);
 	
 
@@ -229,7 +228,7 @@ void clean(void) {
 		return;
 	}
 
-	pacman = get_pkglist(INSTALLED);
+	pacman = get_installed_list();
 	printf("Cleaning aurx cache dir...\n");
     for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
         remove_dir(dir->pkgname);
@@ -254,7 +253,7 @@ void print_search(char *pkgname) {
 		printf("No results found for: %s.\n", pkgname);
 		free(str);
     	clear_list(rpc_pkglist);
-		return;
+		exit(EXIT_SUCCESS);
 	}
 
 	rpc_pkglist = check_status(rpc_pkglist);
@@ -265,15 +264,26 @@ void print_search(char *pkgname) {
 		}
 		printf("\n");
 	}
-	rpc_pkglist = temp;
 
 	free(str);
-    clear_list(rpc_pkglist);
+    clear_list(temp);
 }
 
-void list_packages(void) {
+void print_installed(void) {
     
-    system(QUERY_INSTALLED);
+    List *installed, *temp;
+
+	installed = get_installed_list();
+	if (installed == NULL) {
+		printf("No installed AUR packages found.\n");
+		exit(EXIT_SUCCESS);
+	}
+
+	for (temp = installed; installed != NULL; installed = installed->next) {
+		printf(BOLD"%s "BGREEN"%s\n"RESET, installed->pkgname, installed->pkgver);
+	}
+	
+	clear_list(temp);
 }
 
 

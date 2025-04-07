@@ -14,10 +14,10 @@ typedef struct node {
     struct node *next;
 } List;
 
-List *add_pkgname(List *list, char *pkgname);
-void add_pkgver(List *list);
-List *find_pkg(List *list, char *pkgname);
-List *get_pkglist(char *cmd);
+List *get_installed_list(void);
+List *add_pkgname(List *list, const char *pkgname);
+void add_pkgver(List *list, const char *pkgname, const char *pkgver);
+List *find_pkg(List *list, const char *pkgname);
 List *add_json_data(List *list, const char *pkgname, const char *pkgver, int pop);
 List *check_status(List *list);
 
