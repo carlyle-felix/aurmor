@@ -329,7 +329,7 @@ char *not_on_aur(char *pkgname) {
 		get_str(&str, GIT_PULL_NULL, pkgname);
 		system(str);
 	} else {
-		printf(BRED"ERROR:"BOLD" No source directory found for %s.\n", pkgname);
+		printf(BRED"ERROR:"BOLD" No source directory found for %s.\n"RESET, pkgname);
 	}	
 	
 
