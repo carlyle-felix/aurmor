@@ -3,6 +3,7 @@
 #include <string.h>
 #include <alpm.h>
 #include <alpm_list.h>
+#include <pacutils.h>
 
 #include "../include/list.h"
 #include "../include/memory.h"
@@ -10,27 +11,44 @@
 
 List *get_installed_list(void) {
     
-    alpm_handle_t *pacman;
+    pu_config_t *pac_conf;
+    alpm_handle_t *pacman, *pacman_conf;
     alpm_errno_t *err;
-    alpm_db_t *db;
-    alpm_list_t *list, *temp;
+    alpm_db_t *installed_db;
+    alpm_list_t *installed, *sync, *reset;
+    alpm_pkg_t *pkg;
     List *aur;
+   
+    
+    pac_conf = pu_config_new();
+    pu_ui_config_load(pac_conf, "/etc/pacman.conf");
+    pacman_conf = pu_initialize_handle_from_config(pac_conf);
+    sync = pu_register_syncdbs(pacman_conf, pac_conf->repos);
 
     pacman = alpm_initialize("/", "/var/lib/pacman/", err);
-    db = alpm_get_localdb(pacman);
+    installed_db = alpm_get_localdb(pacman);
+    installed = alpm_db_get_pkgcache(installed_db);
     
-    list = alpm_db_get_pkgcache(db);
-    temp = list;
-
+    printf("COUNT: %d\n", alpm_list_count(sync));
     aur = list_malloc();
-    for (temp = list; temp != NULL; temp = alpm_list_next(temp)) {
-        if (alpm_pkg_get_validation(temp->data) != 8) {
-            add_pkgname(aur, alpm_pkg_get_name(temp->data));
-            add_pkgver(aur, alpm_pkg_get_name(temp->data), alpm_pkg_get_version(temp->data));
+    for (reset = sync; installed != NULL; installed = alpm_list_next(installed)) {
+        for (sync = reset; sync != NULL; sync = alpm_list_next(sync)) {
+            pkg = alpm_db_get_pkg(sync->data, alpm_pkg_get_name(installed->data));
+            if (pkg != NULL) {
+                break;
+            }
+        }    
+
+        if (pkg == NULL) {
+            add_pkgname(aur, alpm_pkg_get_name(installed->data));
+            add_pkgver(aur, alpm_pkg_get_name(installed->data), alpm_pkg_get_version(installed->data));
         }
     }
-    
+
     alpm_release(pacman);
+    alpm_release(pacman_conf);
+    pu_config_free(pac_conf);
+
     return aur;
 }
 
