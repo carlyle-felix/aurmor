@@ -108,7 +108,7 @@ void update(void) {
 	}
 	
 	check_update(pkglist);
-	for (List *temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 		if (pkglist->update == true) {
 			less_prompt(pkglist->pkgname);
 		}
