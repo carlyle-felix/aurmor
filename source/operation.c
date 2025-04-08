@@ -77,7 +77,7 @@ void update(void) {
 		get_str(&str, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(str);
 
-		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) == 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
+		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) < 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
 			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
