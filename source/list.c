@@ -13,19 +13,22 @@ List *get_installed_list(void) {
     
     pu_config_t *pac_conf;
     alpm_handle_t *pacman, *pacman_conf;
-    alpm_errno_t *err;
+    alpm_errno_t err;
     alpm_db_t *installed_db;
     alpm_list_t *installed, *sync, *reset;
     alpm_pkg_t *pkg;
     List *aur;
    
-    
     pac_conf = pu_config_new();
     pu_ui_config_load(pac_conf, "/etc/pacman.conf");
     pacman_conf = pu_initialize_handle_from_config(pac_conf);
     sync = pu_register_syncdbs(pacman_conf, pac_conf->repos);
 
-    pacman = alpm_initialize("/", "/var/lib/pacman/", err);
+    pacman = alpm_initialize("/", "/var/lib/pacman/", &err);
+    if (pacman == NULL) {
+        printf(BRED"ERROR:"BOLD" alpm_initialize %s\n"RESET, alpm_strerror(err));
+        exit(EXIT_FAILURE);
+    }
     installed_db = alpm_get_localdb(pacman);
     installed = alpm_db_get_pkgcache(installed_db);
     
