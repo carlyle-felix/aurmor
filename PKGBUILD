@@ -10,9 +10,10 @@ license=( 'GPL-3.0-or-later' )
 depends=(
         'base-devel'
         'git'
+        'pacman'
+        'pacutils'
         'json-c'
         'libcurl-gnutls'
-        'pacman'
 )
 source=("${pkgname}::git+${url}.git")
 pkgver() {
