@@ -84,7 +84,6 @@ void update(void) {
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
 		}
-
 		clear_list(rpc_pkg);
 	}
 	free(str);
