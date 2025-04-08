@@ -14,7 +14,6 @@
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "cd %s && less PKGBUILD"
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
-#define UNINSTALL "sudo pacman -Rsc"
 #define META ".packages-meta-v1.json.gz"
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"
 
@@ -31,14 +30,14 @@
 #define MAX_BUFFER 1024
 
 typedef struct node List;
-typedef char *Buffer;
 
-Buffer get_buffer(const char *cmd);
+char *get_buffer(const char *cmd);
 void get_str(char **str, const char *p, const char *str_var);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);
 bool prompt(void);
 void remove_dir(char *path);
 List *get_dir_list(void);
+void alpm_uninstall(List *pkglist);
 
 #endif

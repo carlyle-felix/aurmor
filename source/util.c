@@ -5,17 +5,108 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <alpm.h>
+#include <alpm_list.h>
+#include <pacutils.h>
 
 #include "../include/util.h"
 #include "../include/memory.h"
 #include "../include/list.h"
 
-// pipe output of commands to a buffer and return the buffer.
-Buffer get_buffer(const char *cmd) {
+// group these alpm functions and also make this one so that it 
+// will only uninstall AUR packages, also try to print the hooks.
+void alpm_uninstall(List *pkglist) {
+
+	pu_config_t *pac_conf;
+	alpm_handle_t *pacman = NULL;
+	alpm_db_t *local_db;
+	alpm_pkg_t *pkg;
+	alpm_list_t *list, *deps, *error_list;
+	alpm_errno_t err;
+	List *temp;
+	bool not_found = false, success = true;
+	int n;
+
+	pac_conf = pu_config_new();
+    pu_ui_config_load(pac_conf, "/etc/pacman.conf");
+    
+	pacman = pu_initialize_handle_from_config(pac_conf);
+	if (pacman == NULL) {
+		printf("Failed\n");
+	}
 	
-	char *temp_buffer = NULL;
-	FILE *p;	
-	Buffer temp = NULL;
+	local_db = alpm_get_localdb(pacman);
+	n = alpm_trans_init(pacman, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_RECURSE | ALPM_TRANS_FLAG_NODEPVERSION);
+	if (n != 0) {
+		pu_config_free(pac_conf);
+		alpm_release(pacman);
+		clear_list(pkglist);
+		printf("error at alpm_trans_init.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	//printf("checking dependencies...\n\n");
+	printf(BOLD"Packages: "RESET);
+	for (temp = pkglist; temp != NULL; temp = temp->next) {
+		pkg = alpm_db_get_pkg(local_db, temp->pkgname);
+		if (pkg == NULL) {
+			printf(BRED"ERROR:"BOLD" %s not found.\n"RESET, temp->pkgname);
+			not_found = true;
+			continue;
+		}
+		n = alpm_remove_pkg(pacman, pkg);
+		if (n != 0) {
+			printf("error removing %s\n", temp->pkgname);
+		}
+		printf("%s"GREY"-%s "RESET, alpm_pkg_get_name(pkg), alpm_pkg_get_version(pkg));
+	}
+
+	if (not_found == true) {
+		alpm_trans_release(pacman);
+		alpm_release(pacman);
+		pu_config_free(pac_conf);
+		clear_list(pkglist);
+		exit(EXIT_FAILURE);
+	}
+
+	list = alpm_trans_get_remove(pacman);
+	// check deps
+
+	printf("\n\n"BBLUE"::"BOLD" Do you want to remove these packages? [Y/n] "RESET);
+	
+	if (prompt() == false) {
+		alpm_trans_release(pacman);
+		alpm_release(pacman);
+		pu_config_free(pac_conf);
+		return;
+	}
+	n = alpm_trans_prepare(pacman, &error_list);
+	if (n != 0) {
+		printf("error at alpm_trans_prepare.\n");
+		success = false;
+	}
+
+	n = alpm_trans_commit(pacman, &error_list);
+	if (n != 0) {
+		printf("error at alpm_trans_commit");
+		success = false;
+	}
+
+	if (success == false) {
+		printf("uninstall failed.\n");
+	}
+	printf("success!\n");
+
+	alpm_trans_release(pacman);
+	alpm_release(pacman);
+	pu_config_free(pac_conf);
+}
+
+// pipe output of commands to a buffer and return the buffer.
+char *get_buffer(const char *cmd) {
+	
+	char *temp_buffer = NULL, *temp = NULL;
+	FILE *p;
 	
 	str_alloc(&temp_buffer, MAX_BUFFER);
 

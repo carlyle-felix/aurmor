@@ -42,7 +42,10 @@ char *curl(Json_buffer *buffer, char *url) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, buffer);
 
         res = curl_easy_perform(curl);
-
+        if (res != CURLE_OK) {
+            printf(BRED"ERROR:"BOLD" %s.\n"RESET, curl_easy_strerror(res));
+            exit(EXIT_FAILURE);
+        }
         curl_easy_cleanup(curl);
         curl_global_cleanup();
     }
@@ -81,6 +84,10 @@ void fetch_meta(void) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, p);
 
         res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            printf(BRED"ERROR:"BOLD" %s.\n"RESET, curl_easy_strerror(res));
+            exit(EXIT_FAILURE);
+        }
         fclose(p);
         
         curl_easy_cleanup(curl);
@@ -98,13 +105,17 @@ List *json(char *json_data) {
 
     register int i, n_results;
     json_object *root, *results, *name, *pop, *version, *pkg, *desc;
-    
-    List *temp = list_malloc();
+    List *temp;
     
     root = json_tokener_parse(json_data);
     results = json_object_object_get(root, "results");
     n_results = json_object_array_length(results);
+    if (n_results == 0) {
+        json_object_put(root);
+        return NULL;
+    }
 
+    temp = list_malloc();
     for (i = 0; i < n_results; i++) {
         pkg = json_object_array_get_idx(results, i);
         
