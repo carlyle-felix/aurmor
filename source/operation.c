@@ -70,6 +70,9 @@ void update(void) {
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
 	pkglist = get_installed_list();
+	if (pkglist == NULL) {
+		printf("No installed AUR packages found.\n");
+	}
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
@@ -248,7 +251,7 @@ void print_search(char *pkgname) {
     get_str(&str, AUR_SEARCH, pkgname);
     rpc_pkglist = get_rpc_data(str);
 
-	if (rpc_pkglist->pkgname == NULL) {
+	if (rpc_pkglist == NULL) {
 		printf("No results found for: %s.\n", pkgname);
 		free(str);
     	clear_list(rpc_pkglist);

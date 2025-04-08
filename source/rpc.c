@@ -98,13 +98,17 @@ List *json(char *json_data) {
 
     register int i, n_results;
     json_object *root, *results, *name, *pop, *version, *pkg, *desc;
-    
-    List *temp = list_malloc();
+    List *temp;
     
     root = json_tokener_parse(json_data);
     results = json_object_object_get(root, "results");
     n_results = json_object_array_length(results);
+    if (n_results == 0) {
+        json_object_put(root);
+        return NULL;
+    }
 
+    temp = list_malloc();
     for (i = 0; i < n_results; i++) {
         pkg = json_object_array_get_idx(results, i);
         

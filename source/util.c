@@ -11,11 +11,10 @@
 #include "../include/list.h"
 
 // pipe output of commands to a buffer and return the buffer.
-Buffer get_buffer(const char *cmd) {
+char *get_buffer(const char *cmd) {
 	
-	char *temp_buffer = NULL;
-	FILE *p;	
-	Buffer temp = NULL;
+	char *temp_buffer = NULL, *temp = NULL;
+	FILE *p;
 	
 	str_alloc(&temp_buffer, MAX_BUFFER);
 

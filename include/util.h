@@ -31,9 +31,8 @@
 #define MAX_BUFFER 1024
 
 typedef struct node List;
-typedef char *Buffer;
 
-Buffer get_buffer(const char *cmd);
+char *get_buffer(const char *cmd);
 void get_str(char **str, const char *p, const char *str_var);
 bool is_dir(char *pkgname);
 bool file_exists(char *path);

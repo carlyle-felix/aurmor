@@ -51,6 +51,9 @@ List *get_installed_list(void) {
     alpm_release(pacman_conf);
     pu_config_free(pac_conf);
 
+    if (aur->pkgname == NULL) {
+        return NULL;
+    }
     return aur;
 }
 
