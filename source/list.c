@@ -29,7 +29,6 @@ List *get_installed_list(void) {
     installed_db = alpm_get_localdb(pacman);
     installed = alpm_db_get_pkgcache(installed_db);
     
-    printf("COUNT: %d\n", alpm_list_count(sync));
     aur = list_malloc();
     for (reset = sync; installed != NULL; installed = alpm_list_next(installed)) {
         for (sync = reset; sync != NULL; sync = alpm_list_next(sync)) {
