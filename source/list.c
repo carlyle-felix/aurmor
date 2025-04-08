@@ -12,30 +12,30 @@
 List *get_installed_list(void) {
     
     pu_config_t *pac_conf;
-    alpm_handle_t *pacman, *pacman_conf;
+    alpm_handle_t *pac_handle, *conf_handle;
     alpm_errno_t err;
-    alpm_db_t *installed_db;
-    alpm_list_t *installed, *sync, *reset;
+    alpm_db_t *local_db;
+    alpm_list_t *installed, *repo, *reset;
     alpm_pkg_t *pkg;
     List *aur;
    
     pac_conf = pu_config_new();
     pu_ui_config_load(pac_conf, "/etc/pacman.conf");
-    pacman_conf = pu_initialize_handle_from_config(pac_conf);
-    sync = pu_register_syncdbs(pacman_conf, pac_conf->repos);
+    conf_handle = pu_initialize_handle_from_config(pac_conf);
+    repo = pu_register_syncdbs(conf_handle, pac_conf->repos);
 
-    pacman = alpm_initialize("/", "/var/lib/pacman/", &err);
-    if (pacman == NULL) {
+    pac_handle = alpm_initialize("/", "/var/lib/pacman/", &err);
+    if (pac_handle == NULL) {
         printf(BRED"ERROR:"BOLD" alpm_initialize %s\n"RESET, alpm_strerror(err));
         exit(EXIT_FAILURE);
     }
-    installed_db = alpm_get_localdb(pacman);
-    installed = alpm_db_get_pkgcache(installed_db);
+    local_db = alpm_get_localdb(pac_handle);
+    installed = alpm_db_get_pkgcache(local_db);
     
     aur = list_malloc();
-    for (reset = sync; installed != NULL; installed = alpm_list_next(installed)) {
-        for (sync = reset; sync != NULL; sync = alpm_list_next(sync)) {
-            pkg = alpm_db_get_pkg(sync->data, alpm_pkg_get_name(installed->data));
+    for (reset = repo; installed != NULL; installed = alpm_list_next(installed)) {
+        for (repo = reset; repo != NULL; repo = alpm_list_next(repo)) {
+            pkg = alpm_db_get_pkg(repo->data, alpm_pkg_get_name(installed->data));
             if (pkg != NULL) {
                 break;
             }
@@ -47,8 +47,8 @@ List *get_installed_list(void) {
         }
     }
 
-    alpm_release(pacman);
-    alpm_release(pacman_conf);
+    alpm_release(pac_handle);
+    alpm_release(conf_handle);
     pu_config_free(pac_conf);
 
     if (aur->pkgname == NULL) {
