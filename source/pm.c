@@ -10,7 +10,7 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 
-void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
+void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
 void list_free(char *data);		// for alpm_list_fn_free
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
@@ -84,6 +84,16 @@ List *foreign_list(void) {
 
 bool is_foreign(char *pkgname) {
 
+	List *list, *temp;
+	
+	list = foreign_list();
+	for (temp = list; temp != NULL; temp = temp->next) {
+		if (strcmp(temp->pkgname, pkgname) == 0) {
+			break;
+		}
+	}
+	clear_list(list);
+	return (temp != NULL);
 }
 
 bool is_installed(char *pkgname) {
@@ -97,14 +107,8 @@ bool is_installed(char *pkgname) {
 	local_db = alpm_get_localdb(local);
 	pkg = alpm_db_get_pkg(local_db, pkgname);
 	
-	if (pkg != NULL) {
-		alpm_release(local);
-		return true;
-	} else {
-		alpm_release(local);
-		return false;
-	}
-
+	alpm_release(local);
+	return (pkg != NULL);
 }
 
 void list_free(char *data) {
@@ -119,7 +123,7 @@ void list_free(char *data) {
  * 	check if any packages besides the one being removed requires one of its deps
  * 	before removing the dep, if required the dep is still needed return true.
  */
-void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
+void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	
 	alpm_db_t *local_db;
 	alpm_pkg_t *dep_pkg;
@@ -144,7 +148,7 @@ void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		// if this is true, there are no other packages that requires it.
 		if (alpm_list_count(req_list) == 1 && strcmp(req_list->data, alpm_pkg_get_name(pkg)) == 0) {
 			alpm_remove_pkg(local, dep_pkg);
-			check_local_depends(local, dep_pkg);
+			check_req_depends(local, dep_pkg);
 		}
 
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
@@ -160,7 +164,7 @@ void alpm_uninstall(List *pkglist) {
 	alpm_list_t *list, *opt, *error_list;
 	alpm_errno_t err;
 	List *temp;
-	bool not_found = false, success = true;
+	bool proceed = true, success = true;
 	int res;
 
 	list = alpm_local(&local, &err);
@@ -168,39 +172,41 @@ void alpm_uninstall(List *pkglist) {
 
 	res = alpm_trans_init(local, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
-		printf("Elevated privilage required to perform this operation (root).\n");
-		printf("alpm_trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+		printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
+		printf(BRED"error:"RESET" alpm_trans_init: %s\n", alpm_strerror(alpm_errno(local)));
 		alpm_release(local);
 		clear_list(pkglist);
 		exit(EXIT_FAILURE);
 	}
-
+	
+	printf("Checking dependencies...\n\n");
 	for (temp = pkglist; temp != NULL; temp = temp->next) {
-		pkg = alpm_db_get_pkg(local_db, temp->pkgname);
-		if (pkg == NULL) {
-			printf(BRED"ERROR:"BOLD" %s not found.\n"RESET, temp->pkgname);
-			not_found = true;
+		if (is_foreign(temp->pkgname) == false) {
+			printf(BRED"error:"RESET" %s is not an AUR package.\n", temp->pkgname);
+			proceed = false;
 			continue;
 		}
+		
+		pkg = alpm_db_get_pkg(local_db, temp->pkgname);
+		if (pkg == NULL) {
+			printf(BRED"error:"RESET" %s not found.\n", temp->pkgname);
+			proceed = false;
+			continue;
+		}
+		check_req_depends(local, pkg);
 		res = alpm_remove_pkg(local, pkg);
 		if (res != 0) {
-			printf("alpm_remove_pkg: %s\n", alpm_strerror(alpm_errno(local)));
+			printf(BRED"error:"RESET" alpm_remove_pkg: %s\n", alpm_strerror(alpm_errno(local)));
 		}
 	}
 
-	if (not_found == true) {
+	if (proceed == false) {
 		alpm_trans_release(local);
 		alpm_release(local);
 		clear_list(pkglist);
 		exit(EXIT_FAILURE);
 	}
-
-	printf("checking dependencies...\n\n");
-	for (temp = pkglist; temp != NULL; temp = temp->next) {
-		check_local_depends(local, pkg);
-		
-	}
-
+	
 	printf(BOLD"Packages: "RESET);
 	list = alpm_trans_get_remove(local);
 	for (; list != NULL; list = alpm_list_next(list)) {
@@ -208,7 +214,6 @@ void alpm_uninstall(List *pkglist) {
 	}
 
 	printf("\n\n"BBLUE"::"BOLD" Do you want to remove these packages? [Y/n] "RESET);
-	
 	if (prompt() == false) {
 		alpm_trans_release(local);
 		alpm_release(local);
@@ -217,12 +222,12 @@ void alpm_uninstall(List *pkglist) {
 
 	res = alpm_trans_prepare(local, &error_list);
 	if (res != 0) {
-		printf("alpm_trans_prepare: %s\n", alpm_strerror(alpm_errno(local)));
+		printf(BRED"error:"RESET" alpm_trans_prepare: %s\n", alpm_strerror(alpm_errno(local)));
 	}
 
 	res = alpm_trans_commit(local, &error_list);
 	if (res != 0) {
-		printf("alpm_trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
+		printf(BRED"error:"RESET" alpm_trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
 		success = false;
 	}
 
