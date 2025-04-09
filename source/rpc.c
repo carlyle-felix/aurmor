@@ -43,7 +43,7 @@ char *curl(Json_buffer *buffer, char *url) {
 
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
-            printf(BRED"ERROR:"BOLD" %s.\n"RESET, curl_easy_strerror(res));
+            printf(BRED"error:"RESET" %s.\n", curl_easy_strerror(res));
             exit(EXIT_FAILURE);
         }
         curl_easy_cleanup(curl);
@@ -85,7 +85,7 @@ void fetch_meta(void) {
 
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
-            printf(BRED"ERROR:"BOLD" %s.\n"RESET, curl_easy_strerror(res));
+            printf(BRED"error:"RESET" %s.\n", curl_easy_strerror(res));
             exit(EXIT_FAILURE);
         }
         fclose(p);

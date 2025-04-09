@@ -134,7 +134,7 @@ void force_update(char *pkgname) {
 	
 
 	if (pkg == NULL) {
-		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
+		printf(BRED"error:"RESET" %s is not installed.");
 		exit(EXIT_FAILURE);
 	}
 	clear_list(pkglist);
@@ -165,7 +165,7 @@ void less_prompt(const char *pkgname) {
 
 	get_str(&str, "%s/PKGBUILD", pkgname);
 	if (file_exists(str) != true) {
-		printf(BRED"ERROR:"BOLD" PKGBUILD for %s not found\n"RESET, pkgname);
+		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
 		free(str);
 		return;
 	}

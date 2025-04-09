@@ -14,8 +14,8 @@
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "cd %s && less PKGBUILD"
 #define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
-#define META ".packages-meta-v1.json.gz"
-#define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"
+#define META ".packages-meta-v1.json.gz"    // not being used yet
+#define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"  // not being used yet
 
 // Console colours
 #define RESET "\e[0m"

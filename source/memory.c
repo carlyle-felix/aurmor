@@ -11,7 +11,7 @@ void str_alloc(char **ptr, int size) {
 	if (*ptr == NULL) {
 		*ptr = malloc(size);
 		if (*ptr == NULL) {
-			printf(BRED"ERROR:"BOLD" Failed to allocate memory for string.\n"RESET);
+			printf(BRED"error:"RESET" Failed to allocate memory for string.\n");
 			exit(EXIT_FAILURE);
 		} else {
 				*ptr[0] = '\0';
@@ -21,7 +21,7 @@ void str_alloc(char **ptr, int size) {
 
 		temp = realloc(*ptr, size);
 		if (temp == NULL) {
-			printf(BRED"ERROR:"BOLD" \e[0;1mFailed to reallocate memory of string.\n"RESET);
+			printf(BRED"error:"RESET" \e[0;1mFailed to reallocate memory of string.\n");
 			exit(EXIT_FAILURE);
 		}
 		*ptr = temp;
@@ -32,7 +32,7 @@ List *list_malloc(void) {
 
 	List *temp = malloc(sizeof(List));
 	if (temp == NULL) {
-		printf(BRED"ERROR:"BOLD" Failed to allocate memory for new node.\n"RESET);
+		printf(BRED"error:"RESET" Failed to allocate memory for new node.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -63,7 +63,7 @@ Json_buffer *json_buffer_malloc(void) {
 
 	Json_buffer *temp = malloc(sizeof(Json_buffer));
 	if (temp == NULL) {
-		printf(BRED"ERROR:"BOLD" Failed to allocate memory for JSON buffer.\n"RESET);
+		printf(BRED"error:"RESET" Failed to allocate memory for JSON buffer.\n");
 		exit(EXIT_FAILURE);
 	}
 	temp->response = NULL;

@@ -107,7 +107,7 @@ void remove_dir(char *path) {
 			remove(path);
 			return;
 		}
-		printf(BRED"ERROR:"BOLD"Failed to open %s directory.\n"RESET);
+		printf(BRED"error:"RESET"Failed to open %s directory.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -136,7 +136,7 @@ List *get_dir_list(void) {
 
 	dir = opendir(".");
 	if (dir == NULL) {
-		printf(BRED"ERROR:"BOLD"Failed to open %s directory.\n"RESET);
+		printf(BRED"error:"RESET"Failed to open %s directory.\n");
 		exit(EXIT_FAILURE);
 	}
 	
