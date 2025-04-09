@@ -10,7 +10,12 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 
-#define VALGRIND 1
+void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
+void list_free(char *data);		// for alpm_list_fn_free
+alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
+alpm_list_t *alpm_repos(alpm_handle_t **repo);
+bool is_foreign(char *pkgname);
+bool is_installed(char *pkgname);
 
 // return list of packages in localdb - dont need pu.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
@@ -77,6 +82,10 @@ List *foreign_list(void) {
     return aur;
 }
 
+bool is_foreign(char *pkgname) {
+
+}
+
 bool is_installed(char *pkgname) {
 
 	alpm_handle_t *local;
@@ -118,7 +127,7 @@ void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	alpm_list_t *dep_list, *req_list, *temp;
 
 	local_db = alpm_get_localdb(local);
-
+	
 	// search localdb for pkgname and use it to get a list of
 	// depenencies for package and traverse the list.
 	dep_list = alpm_pkg_get_depends(pkg);
@@ -138,25 +147,9 @@ void check_local_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 			check_local_depends(local, dep_pkg);
 		}
 
-		// use a temp variable to travese the list of packages that requires
-		// the dependency, the list needs to be freed later.
-		/*for (temp = req_list; temp != NULL; temp = alpm_list_next(temp)) {
-			
-			// check if there are any packages installed other than the one 
-			// supplied that needs the dependency.
-			if (strcmp(temp->data, pkgname) == 0 && alpm_list_count(temp) == 1) {
-				break;
-			}
-		}*/
-
-		// remove the package if no installed package needs it.
-		//if (temp == NULL) {
-		//	alpm_remove_pkg(local, dep_pkg);
-		//}
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
 		alpm_list_free(req_list);
 	}
-	
 }
 
 void alpm_uninstall(List *pkglist) {
@@ -205,6 +198,7 @@ void alpm_uninstall(List *pkglist) {
 	printf("checking dependencies...\n\n");
 	for (temp = pkglist; temp != NULL; temp = temp->next) {
 		check_local_depends(local, pkg);
+		
 	}
 
 	printf(BOLD"Packages: "RESET);

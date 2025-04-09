@@ -196,26 +196,7 @@ void install(const char *pkgname) {
     system(str);
     free(str);
 }
-/*
-void uninstall(List *list) {
 
-    char *str = NULL;
-    
-	get_str(&str, UNINSTALL, NULL);
-	while (list != NULL) {
-		str_alloc(&str, strlen(str) + strlen(list->pkgname) + 2);
-		strcat(str, " ");
-		strcat(str, list->pkgname);
-		if (is_dir(list->pkgname) == true) {
-			remove_dir(list->pkgname);
-		}
-		list = list->next;
-	}
-	system(str);
-
-	free(str);
-}
-*/
 void clean(void) {
 
     char *str = NULL;
@@ -287,9 +268,11 @@ void print_installed(void) {
 }
 
 
-// check if an epoch has been added to a PKGBUILD that wasnt present in
-// the installed version. without this, if the "pkgver" is 
-// higher than the "epoch" (1), the epoch update will be ignored.
+/* 
+ * check if an epoch has been added to a PKGBUILD that wasnt present in
+ * the installed version. without this, if the "pkgver" is 
+ * higher than the "epoch" (1), the epoch update will be ignored.
+ */
 bool epoch_update(List *pkg, char *pkgver) {
 
 	char *installed_pkgver, *update_pkgver;
