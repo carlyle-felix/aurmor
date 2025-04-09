@@ -9,6 +9,7 @@
 #include "../include/rpc.h"
 #include "../include/list.h"
 #include "../include/util.h"
+#include "../include/pm.h"
 
 void set_dir(void);
 

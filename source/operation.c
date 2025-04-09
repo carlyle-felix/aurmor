@@ -7,6 +7,7 @@
 #include "../include/util.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
+#include "../include/pm.h"
 
 bool epoch_update(List *pkg, char *pkgver);
 void install(const char *pkgname);
@@ -69,7 +70,7 @@ void update(void) {
 
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-	pkglist = get_installed_list();
+	pkglist = foreign_list();
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
@@ -128,7 +129,7 @@ void force_update(char *pkgname) {
 
 	List *pkglist, *pkg;
 
-	pkglist = get_installed_list();
+	pkglist = foreign_list();
 	pkg = find_pkg(pkglist, pkgname);
 	
 
@@ -195,7 +196,7 @@ void install(const char *pkgname) {
     system(str);
     free(str);
 }
-
+/*
 void uninstall(List *list) {
 
     char *str = NULL;
@@ -214,7 +215,7 @@ void uninstall(List *list) {
 
 	free(str);
 }
-
+*/
 void clean(void) {
 
     char *str = NULL;
@@ -227,7 +228,7 @@ void clean(void) {
 		return;
 	}
 
-	pacman = get_installed_list();
+	pacman = foreign_list();
 	printf("Cleaning aurx cache dir...\n");
     for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
         remove_dir(dir->pkgname);
@@ -272,7 +273,7 @@ void print_installed(void) {
     
     List *installed, *temp;
 
-	installed = get_installed_list();
+	installed = foreign_list();
 	if (installed == NULL) {
 		printf("No installed AUR packages found.\n");
 		exit(EXIT_SUCCESS);

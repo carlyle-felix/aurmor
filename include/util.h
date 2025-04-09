@@ -38,6 +38,5 @@ bool file_exists(char *path);
 bool prompt(void);
 void remove_dir(char *path);
 List *get_dir_list(void);
-void alpm_uninstall(List *pkglist);
 
 #endif

@@ -6,22 +6,24 @@ PREFIX		= /usr/local
 DESTDIR		=
 
 
-aurx: aurx.o util.o operation.o memory.o list.o rpc.o
+aurx: aurx.o util.o operation.o memory.o list.o rpc.o pm.o
 	gcc -o aurx $(SRC)/aurx.c $(SRC)/util.c $(SRC)/operation.c \
-		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c -lcurl -ljson-c -lalpm -lpacutils
+		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c $(SRC)/pm.c \
+		-lcurl -ljson-c -lalpm -lpacutils
 
 aurx.o: $(SRC)/aurx.c $(INCL)/operation.h $(INCL)/memory.h \
-		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h
+		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h $(INCL)/pm.h
 	gcc -c $(SRC)/aurx.c
 
 util.o: $(SRC)/util.c $(INCL)/util.h $(INCL)/memory.h
 	gcc -c $(SRC)/util.c
 
 operation.o: $(SRC)/operation.c $(INCL)/operation.h $(INCL)/memory.h \
-		$(INCL)/util.h $(INCL)/list.h $(INCL)/rpc.h
+		$(INCL)/util.h $(INCL)/list.h $(INCL)/rpc.h $(INCL)/pm.h
 	gcc -c $(SRC)/operation.c
 
-list.o: $(SRC)/list.c $(INCL)/list.h $(INCL)/memory.h $(INCL)/util.h
+list.o: $(SRC)/list.c $(INCL)/list.h $(INCL)/memory.h $(INCL)/util.h \
+		$(INCL)/pm.h
 	gcc -c $(SRC)/list.c
 
 memory.o: $(SRC)/memory.c $(INCL)/memory.h $(INCL)/list.h $(INCL)/rpc.h \
@@ -32,13 +34,17 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 		$(INCL)/util.h
 	gcc -c $(SRC)/rpc.c
 
+pm.o: $(SRC)/pm.c $(INCL)/pm.h $(INCL)/list.h $(INCL)/util.h \
+		$(INCL)/memory.h
+	gcc -c $(SRC)/pm.c
+
 .PHONY: install clean uninstall
 install:
 	install -Dm755 $(BIN) $(DESTDIR)$(PREFIX)/bin/$(BIN)
 
 clean:
 	rm aurx aurx.o util.o operation.o list.o memory.o \
-		rpc.o
+		rpc.o pm.o
 
 uninstall:
 	rm $(DESTDIR)$(PREFIX)/bin/$(BIN)
