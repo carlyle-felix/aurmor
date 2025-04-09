@@ -173,7 +173,7 @@ void alpm_uninstall(List *pkglist) {
 	list = alpm_local(&local, &err);
 	local_db = alpm_get_localdb(local);
 
-	res = alpm_trans_init(local, ALPM_TRANS_FLAG_DBONLY | ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
 		printf("Elevated privilage required to perform this operation (root).\n");
 		printf("alpm_trans_init: %s\n", alpm_strerror(alpm_errno(local)));
