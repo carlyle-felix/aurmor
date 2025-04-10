@@ -70,14 +70,7 @@ void update(void) {
 
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
-<<<<<<< HEAD
-	pkglist = get_installed_list();
-	if (pkglist == NULL) {
-		printf("No installed AUR packages found.\n");
-	}
-=======
 	pkglist = foreign_list();
->>>>>>> testing
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
@@ -136,11 +129,7 @@ void force_update(char *pkgname) {
 
 	List *pkglist, *pkg;
 
-<<<<<<< HEAD
-	pkglist = get_installed_list();
-=======
 	pkglist = foreign_list();
->>>>>>> testing
 	pkg = find_pkg(pkglist, pkgname);
 	
 
@@ -226,11 +215,7 @@ void clean(void) {
 		return;
 	}
 
-<<<<<<< HEAD
-	pacman = get_installed_list();
-=======
 	pacman = foreign_list();
->>>>>>> testing
 	printf("Cleaning aurx cache dir...\n");
     for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
         remove_dir(dir->pkgname);
@@ -275,11 +260,7 @@ void print_installed(void) {
     
     List *installed, *temp;
 
-<<<<<<< HEAD
-	installed = get_installed_list();
-=======
 	installed = foreign_list();
->>>>>>> testing
 	if (installed == NULL) {
 		printf("No installed AUR packages found.\n");
 		exit(EXIT_SUCCESS);

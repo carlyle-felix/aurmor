@@ -11,18 +11,10 @@
 #define GIT_CLEAN "cd %s && git clean -dfx"
 #define AUR_SEARCH "https://aur.archlinux.org/rpc/v5/search/%s?by=name"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
-<<<<<<< HEAD
-#define LESS_PKGBUILD "cd %s && less PKGBUILD"
-#define MAKEPKG "cd %s && makepkg -sirc OPTIONS=-debug && git clean -dfx"
-#define UNINSTALL "sudo pacman -Rsc"
-#define META ".packages-meta-v1.json.gz"
-#define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"
-=======
 #define LESS_PKGBUILD "less PKGBUILD"
 #define MAKEPKG "makepkg -sirc OPTIONS=-debug && git clean -dfx"
 #define META ".packages-meta-v1.json.gz"    // not being used yet
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"  // not being used yet
->>>>>>> testing
 
 // Console colours
 #define RESET "\e[0m"
