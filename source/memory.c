@@ -5,6 +5,7 @@
 #include "../include/list.h"
 #include "../include/rpc.h"
 #include "../include/util.h"
+#include "../include/colour.h"
 
 void str_alloc(char **ptr, int size) {
 	

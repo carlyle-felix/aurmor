@@ -9,6 +9,7 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 #include "../include/list.h"
+#include "../include/colour.h"
 
 // pipe output of commands to a buffer and return the buffer.
 char *get_buffer(const char *cmd) {
@@ -186,4 +187,45 @@ int change_dir(const char *dir) {
 	}
 	chdir(wd);
 	return chdir(dir);
+}
+
+bool console_colour(void) {
+
+	FILE *p;
+	char prev, ch = 'a', *temp, *buffer = NULL, str[6] = {'\0'};
+	register int i, j;
+	bool colour = false;
+
+	p = fopen("/etc/pacman.conf", "r");
+	if (p == NULL) {
+		printf(BRED"error:"RESET" could not read pacman.conf, defaulting to no colour.");
+		return false;
+	}
+
+	str_alloc(&buffer, MAX_BUFFER);
+	fread(buffer, sizeof(char), MAX_BUFFER, p);
+	buffer[MAX_BUFFER - 1] = '\0';
+	
+	fclose(p);
+
+	for (temp = buffer; ch != '\0'; temp++) {
+		prev = ch;
+		ch = *temp;
+		str[0] = '\0';
+		if (ch == 'C' && prev != '#') {
+			for (i = 0; i < 5 && ch != ' ' && ch != '\0'; i++) {
+				ch = *temp++;
+				str[i] = ch;
+			}
+			str[i] = '\0';
+			if (strcmp(str, "Color") == 0) {
+				colour = true;
+				break;
+			} 
+			
+		}
+	}
+
+	free(buffer);
+	return colour;
 }

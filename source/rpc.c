@@ -7,6 +7,7 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 #include "../include/util.h"
+#include "../include/colour.h"
 
 size_t callback(char *data, size_t size, size_t nmemb, Json_buffer *p);
 size_t write_meta(char *data, size_t size, size_t nmemb, FILE *p);

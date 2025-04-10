@@ -14,17 +14,7 @@
 #define META ".packages-meta-v1.json.gz"    // not being used yet
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"  // not being used yet
 
-// Console colours
-#define RESET "\e[0m"
-#define BOLD "\e[0;1m"
-#define BYELLOW "\033[1;33m"
-#define BRED "\033[1;31m"
-#define BBLUE "\033[1;34m"
-#define BCYAN "\033[1;36m"
-#define BGREEN "\e[1;32m"
-#define GREY "\033[38;5;8m"
-
-#define MAX_BUFFER 1024
+#define MAX_BUFFER 10240
 
 typedef struct node List;
 
@@ -36,5 +26,6 @@ bool prompt(void);
 void remove_dir(char *path);
 List *get_dir_list(void);
 int change_dir(const char *dir);
+bool console_colour(void);
 
 #endif

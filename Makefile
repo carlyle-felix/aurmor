@@ -15,27 +15,28 @@ aurx.o: $(SRC)/aurx.c $(INCL)/operation.h $(INCL)/memory.h \
 		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h $(INCL)/manager.h
 	gcc -c $(SRC)/aurx.c
 
-util.o: $(SRC)/util.c $(INCL)/util.h $(INCL)/memory.h
+util.o: $(SRC)/util.c $(INCL)/util.h $(INCL)/memory.h $(INCL)/colour.h
 	gcc -c $(SRC)/util.c
 
 operation.o: $(SRC)/operation.c $(INCL)/operation.h $(INCL)/memory.h \
-		$(INCL)/util.h $(INCL)/list.h $(INCL)/rpc.h $(INCL)/manager.h
+		$(INCL)/util.h $(INCL)/list.h $(INCL)/rpc.h $(INCL)/manager.h \
+		$(INCL)/colour.h
 	gcc -c $(SRC)/operation.c
 
 list.o: $(SRC)/list.c $(INCL)/list.h $(INCL)/memory.h $(INCL)/util.h \
-		$(INCL)/manager.h
+		$(INCL)/manager.h $(INCL)/colour.h
 	gcc -c $(SRC)/list.c
 
 memory.o: $(SRC)/memory.c $(INCL)/memory.h $(INCL)/list.h $(INCL)/rpc.h \
-		$(INCL)/util.h
+		$(INCL)/util.h $(INCL)/colour.h
 	gcc -c $(SRC)/memory.c
 
 rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
-		$(INCL)/util.h
+		$(INCL)/util.h $(INCL)/colour.h
 	gcc -c $(SRC)/rpc.c
 
 manager.o: $(SRC)/manager.c $(INCL)/manager.h $(INCL)/list.h $(INCL)/util.h \
-		$(INCL)/memory.h
+		$(INCL)/memory.h $(INCL)/colour.h
 	gcc -c $(SRC)/manager.c
 
 .PHONY: install clean uninstall

@@ -9,6 +9,7 @@
 #include "../include/list.h"
 #include "../include/util.h"
 #include "../include/memory.h"
+#include "../include/colour.h"
 
 void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
 void list_free(char *data);		// for alpm_list_fn_free
@@ -41,7 +42,7 @@ alpm_list_t *alpm_repos(alpm_handle_t **repo) {
     pu_ui_config_load(conf, "/etc/pacman.conf");
     *repo = pu_initialize_handle_from_config(conf);
 	if (*repo == NULL) {
-		printf("pu_initialize_buffer_from_config failed.\n");
+		printf(BRED"error:"RESET" pu_initialize_buffer_from_config failed.\n");
 	}
     repo_list = pu_register_syncdbs(*repo, conf->repos);
 

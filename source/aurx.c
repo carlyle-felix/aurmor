@@ -11,10 +11,13 @@
 #include "../include/util.h"
 #include "../include/manager.h"
 
+bool colour;
+
 int main(int argc, char *argv[]) {
 
 	register int i;
 
+	colour = console_colour();
 	change_dir("WD");
 
 	if (argc == 1) {
