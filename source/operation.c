@@ -182,7 +182,7 @@ void less_prompt(const char *pkgname) {
 	}
 	
 	system("less PKGBUILD");
-	
+
 	printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
 	if (prompt() == true) {
 		install(pkgname);
@@ -194,11 +194,9 @@ void install(const char *pkgname) {
     
     char *str = NULL;
 
-	change_dir(pkgname);
-    get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
+    get_str(&str, MAKEPKG, pkgname);
     system(str);
     free(str);
-	change_dir("WD");
 }
 
 void clean(void) {
