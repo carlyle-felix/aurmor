@@ -42,7 +42,10 @@ char *curl(Json_buffer *buffer, char *url) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, buffer);
 
         res = curl_easy_perform(curl);
-
+        if (res != CURLE_OK) {
+            printf(BRED"error:"RESET" %s.\n", curl_easy_strerror(res));
+            exit(EXIT_FAILURE);
+        }
         curl_easy_cleanup(curl);
         curl_global_cleanup();
     }
@@ -81,6 +84,10 @@ void fetch_meta(void) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, p);
 
         res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            printf(BRED"error:"RESET" %s.\n", curl_easy_strerror(res));
+            exit(EXIT_FAILURE);
+        }
         fclose(p);
         
         curl_easy_cleanup(curl);

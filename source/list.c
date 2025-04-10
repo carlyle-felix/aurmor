@@ -8,7 +8,9 @@
 #include "../include/list.h"
 #include "../include/memory.h"
 #include "../include/util.h"
+#include "../include/manager.h"
 
+<<<<<<< HEAD
 List *get_installed_list(void) {
     
     pu_config_t *pac_conf;
@@ -57,6 +59,8 @@ List *get_installed_list(void) {
     return aur;
 }
 
+=======
+>>>>>>> testing
 // Add packages in correct order
 List *add_pkgname(List *list, const char *pkgname) {
 
@@ -151,7 +155,11 @@ List *check_status(List *list) {
 
     List *pkglist, *temp_list, *temp_pkglist;
 
+<<<<<<< HEAD
     pkglist = get_installed_list();
+=======
+    pkglist = foreign_list();
+>>>>>>> testing
     temp_pkglist = pkglist;
 
     for (temp_list = list; list != NULL; list = list->next) {

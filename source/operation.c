@@ -7,6 +7,7 @@
 #include "../include/util.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
+#include "../include/manager.h"
 
 bool epoch_update(List *pkg, char *pkgver);
 void install(const char *pkgname);
@@ -69,10 +70,14 @@ void update(void) {
 
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
+<<<<<<< HEAD
 	pkglist = get_installed_list();
 	if (pkglist == NULL) {
 		printf("No installed AUR packages found.\n");
 	}
+=======
+	pkglist = foreign_list();
+>>>>>>> testing
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
@@ -82,7 +87,7 @@ void update(void) {
 
 		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) < 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
-			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69));
+			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 55));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
@@ -131,12 +136,16 @@ void force_update(char *pkgname) {
 
 	List *pkglist, *pkg;
 
+<<<<<<< HEAD
 	pkglist = get_installed_list();
+=======
+	pkglist = foreign_list();
+>>>>>>> testing
 	pkg = find_pkg(pkglist, pkgname);
 	
 
 	if (pkg == NULL) {
-		printf(BRED"ERROR:"BOLD" %s is not installed."RESET);
+		printf(BRED"error:"RESET" %s is not installed.");
 		exit(EXIT_FAILURE);
 	}
 	clear_list(pkglist);
@@ -149,6 +158,7 @@ void fetch_update(char *pkgname) {
 
 	char *str = NULL;
 
+	change_dir(pkgname);
 	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
@@ -158,16 +168,18 @@ void fetch_update(char *pkgname) {
 
 	system(str);
 	free(str);
+	change_dir("WD");
 }
 
 void less_prompt(const char *pkgname) {
 
-	char c, *str = NULL;
+	char c, *str = NULL; 
 	register int i;
 
+	change_dir(pkgname);
 	get_str(&str, "%s/PKGBUILD", pkgname);
 	if (file_exists(str) != true) {
-		printf(BRED"ERROR:"BOLD" PKGBUILD for %s not found\n"RESET, pkgname);
+		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
 		free(str);
 		return;
 	}
@@ -188,34 +200,18 @@ void less_prompt(const char *pkgname) {
 	if (prompt() == true) {
 		install(pkgname);
 	}	
+	change_dir("WD");
 }
 
 void install(const char *pkgname) {
     
     char *str = NULL;
 
+	change_dir(pkgname);
     get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
     system(str);
     free(str);
-}
-
-void uninstall(List *list) {
-
-    char *str = NULL;
-    
-	get_str(&str, UNINSTALL, NULL);
-	while (list != NULL) {
-		str_alloc(&str, strlen(str) + strlen(list->pkgname) + 2);
-		strcat(str, " ");
-		strcat(str, list->pkgname);
-		if (is_dir(list->pkgname) == true) {
-			remove_dir(list->pkgname);
-		}
-		list = list->next;
-	}
-	system(str);
-
-	free(str);
+	change_dir("WD");
 }
 
 void clean(void) {
@@ -230,7 +226,11 @@ void clean(void) {
 		return;
 	}
 
+<<<<<<< HEAD
 	pacman = get_installed_list();
+=======
+	pacman = foreign_list();
+>>>>>>> testing
 	printf("Cleaning aurx cache dir...\n");
     for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
         remove_dir(dir->pkgname);
@@ -275,7 +275,11 @@ void print_installed(void) {
     
     List *installed, *temp;
 
+<<<<<<< HEAD
 	installed = get_installed_list();
+=======
+	installed = foreign_list();
+>>>>>>> testing
 	if (installed == NULL) {
 		printf("No installed AUR packages found.\n");
 		exit(EXIT_SUCCESS);
@@ -289,9 +293,11 @@ void print_installed(void) {
 }
 
 
-// check if an epoch has been added to a PKGBUILD that wasnt present in
-// the installed version. without this, if the "pkgver" is 
-// higher than the "epoch" (1), the epoch update will be ignored.
+/* 
+ * check if an epoch has been added to a PKGBUILD that wasnt present in
+ * the installed version. without this, if the "pkgver" is 
+ * higher than the "epoch" (1), the epoch update will be ignored.
+ */
 bool epoch_update(List *pkg, char *pkgver) {
 
 	char *installed_pkgver, *update_pkgver;

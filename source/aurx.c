@@ -9,13 +9,13 @@
 #include "../include/rpc.h"
 #include "../include/list.h"
 #include "../include/util.h"
-
-void set_dir(void);
+#include "../include/manager.h"
 
 int main(int argc, char *argv[]) {
 
 	register int i;
-	set_dir();
+
+	change_dir("WD");
 
 	if (argc == 1) {
 		printf(" No operation specified, use -h for help.\n");
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 			for (i = 2; i < argc; i++) {
 				list = add_pkgname(list, argv[i]);
 			}
-			uninstall(list);
+			alpm_uninstall(list);
 			clear_list(list);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
@@ -84,20 +84,4 @@ int main(int argc, char *argv[]) {
 		printf("Unkown operation, use -h for help.\n");
 	}
 	return 0;
-}
-
-void set_dir(void) {
-
-	char *home, *str = NULL;
-
-	home = getenv("HOME");
-	get_str(&str, "%s/.cache/aurx", home);
-	
-	if (is_dir(str) == false) {
-		printf("~/.cache/aurx directory not found, creating...\n");
-		mkdir(str, 0755);
-	}
-	chdir(str);
-
-	free(str);
 }

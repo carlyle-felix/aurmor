@@ -14,7 +14,10 @@ typedef struct node {
     struct node *next;
 } List;
 
+<<<<<<< HEAD
 List *get_installed_list(void);
+=======
+>>>>>>> testing
 List *add_pkgname(List *list, const char *pkgname);
 void add_pkgver(List *list, const char *pkgname, const char *pkgver);
 List *find_pkg(List *list, const char *pkgname);
