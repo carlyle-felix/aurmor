@@ -7,7 +7,7 @@
 #include "../include/util.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
-#include "../include/pm.h"
+#include "../include/manager.h"
 
 bool epoch_update(List *pkg, char *pkgver);
 void install(const char *pkgname);

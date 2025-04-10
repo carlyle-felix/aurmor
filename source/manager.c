@@ -5,7 +5,7 @@
 #include <alpm_list.h>
 #include <pacutils.h>
 
-#include "../include/pm.h"
+#include "../include/manager.h"
 #include "../include/list.h"
 #include "../include/util.h"
 #include "../include/memory.h"

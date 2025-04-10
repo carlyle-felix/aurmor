@@ -1,5 +1,5 @@
-#ifndef PM_H
-#define PM_H
+#ifndef MANAGER_H
+#define MANAGER_H
 
 typedef struct node List;
 

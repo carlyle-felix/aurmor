@@ -5,6 +5,6 @@ memory.o
 list.o
 operation.o
 rpc.o
-pm.o
+manager.o
 vgcore.*
 .vscode
