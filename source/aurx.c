@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	change_dir("WD");
 
 	if (argc == 1) {
-		//printf(" No operation specified, use -h for help.\n");
+		printf(" No operation specified, use -h for help.\n");
 	} else if (strcmp(argv[1], "-h") == 0) {
 		printf("Usage:\taurx <operation> [...]\nOperations:\n");
         printf(" -u\t\t\t\t\tupdate and upgrade.\n");
