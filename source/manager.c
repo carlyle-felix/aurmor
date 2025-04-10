@@ -240,9 +240,7 @@ void alpm_uninstall(List *pkglist) {
 	}
 
 	if (success == true) {
-		printf("success!\n");
-	} else {
-		printf("uninstall failed.\n");
+		printf(BGREEN"=>"BOLD" Success\n"RESET);
 	}
 	
 	alpm_trans_release(local);
