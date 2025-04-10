@@ -102,13 +102,17 @@ bool is_installed(char *pkgname) {
 	alpm_db_t *local_db;
 	alpm_errno_t err;
 	alpm_pkg_t *pkg;
+	bool installed = true;
 
 	alpm_local(&local, &err);
 	local_db = alpm_get_localdb(local);
 	pkg = alpm_db_get_pkg(local_db, pkgname);
-	
+	if (pkg == NULL) {
+		installed = false;
+	}
 	alpm_release(local);
-	return (pkg != NULL);
+
+	return installed;
 }
 
 void list_free(char *data) {
@@ -181,15 +185,19 @@ void alpm_uninstall(List *pkglist) {
 	
 	printf("Checking dependencies...\n\n");
 	for (temp = pkglist; temp != NULL; temp = temp->next) {
-		if (is_foreign(temp->pkgname) == false) {
+		if (is_installed(temp->pkgname) == false) {
+			printf(BRED"error:"RESET" target not found: %s.\n", temp->pkgname);
+			proceed = false;
+			break;
+		} else if (is_foreign(temp->pkgname) == false) {
 			printf(BRED"error:"RESET" %s is not an AUR package.\n", temp->pkgname);
 			proceed = false;
-			continue;
+			break;
 		}
 		
 		pkg = alpm_db_get_pkg(local_db, temp->pkgname);
 		if (pkg == NULL) {
-			printf(BRED"error:"RESET" %s not found.\n", temp->pkgname);
+			printf(BRED"error:"RESET" target not found in local_db: %s.\n", temp->pkgname);
 			proceed = false;
 			continue;
 		}

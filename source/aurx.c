@@ -11,15 +11,14 @@
 #include "../include/util.h"
 #include "../include/manager.h"
 
-void set_dir(void);
-
 int main(int argc, char *argv[]) {
 
 	register int i;
-	set_dir();
+
+	change_dir("WD");
 
 	if (argc == 1) {
-		printf(" No operation specified, use -h for help.\n");
+		//printf(" No operation specified, use -h for help.\n");
 	} else if (strcmp(argv[1], "-h") == 0) {
 		printf("Usage:\taurx <operation> [...]\nOperations:\n");
         printf(" -u\t\t\t\t\tupdate and upgrade.\n");
@@ -85,20 +84,4 @@ int main(int argc, char *argv[]) {
 		printf("Unkown operation, use -h for help.\n");
 	}
 	return 0;
-}
-
-void set_dir(void) {
-
-	char *home, *str = NULL;
-
-	home = getenv("HOME");
-	get_str(&str, "%s/.cache/aurx", home);
-	
-	if (is_dir(str) == false) {
-		printf("~/.cache/aurx directory not found, creating...\n");
-		mkdir(str, 0755);
-	}
-	chdir(str);
-
-	free(str);
 }

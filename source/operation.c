@@ -80,7 +80,7 @@ void update(void) {
 
 		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) < 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
-			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69));
+			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 55));
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
@@ -147,6 +147,7 @@ void fetch_update(char *pkgname) {
 
 	char *str = NULL;
 
+	change_dir(pkgname);
 	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
@@ -156,13 +157,15 @@ void fetch_update(char *pkgname) {
 
 	system(str);
 	free(str);
+	change_dir("WD");
 }
 
 void less_prompt(const char *pkgname) {
 
-	char c, *str = NULL;
+	char c, *str = NULL; 
 	register int i;
 
+	change_dir(pkgname);
 	get_str(&str, "%s/PKGBUILD", pkgname);
 	if (file_exists(str) != true) {
 		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
@@ -186,15 +189,18 @@ void less_prompt(const char *pkgname) {
 	if (prompt() == true) {
 		install(pkgname);
 	}	
+	change_dir("WD");
 }
 
 void install(const char *pkgname) {
     
     char *str = NULL;
 
+	change_dir(pkgname);
     get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
     system(str);
     free(str);
+	change_dir("WD");
 }
 
 void clean(void) {

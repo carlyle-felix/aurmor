@@ -81,7 +81,7 @@ bool file_exists(char *path) {
 	return false;
 }
 
-bool is_dir(char *pkgname) {
+bool is_dir(const char *pkgname) {
 
 	DIR* dir = opendir(pkgname);
 	if (dir != NULL) {
@@ -156,4 +156,34 @@ List *get_dir_list(void) {
 	}
 	
 	return dir_list;
+}
+
+int change_dir(const char *dir) {
+
+	static char *home = NULL, wd[MAX_BUFFER];
+	register int i;
+
+	if (home == NULL) {
+		home = getenv("HOME");
+		
+		strcpy(wd, home);
+		strcat(wd, "/.cache/aurx");
+
+		if (is_dir(wd) == false) {
+			printf("~/.cache/aurx directory not found, creating...\n");
+			mkdir(wd, 0755);
+		}
+	}
+
+	// only those needed by the program.
+	if (strcmp(dir, "WD") == 0) {
+		return chdir(wd);
+	}
+
+	if (is_dir(dir) == false) {
+		printf(BRED"error:"RESET"%s dir not found.\n", dir);
+		return 0;
+	}
+	chdir(wd);
+	return chdir(dir);
 }
