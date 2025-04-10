@@ -8,12 +8,8 @@ DESTDIR		=
 
 aurx: aurx.o util.o operation.o memory.o list.o rpc.o manager.o
 	gcc -o aurx $(SRC)/aurx.c $(SRC)/util.c $(SRC)/operation.c \
-<<<<<<< HEAD
-		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c -lcurl -ljson-c -lalpm -lpacutils
-=======
 		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c $(SRC)/manager.c \
 		-lcurl -ljson-c -lalpm -lpacutils
->>>>>>> testing
 
 aurx.o: $(SRC)/aurx.c $(INCL)/operation.h $(INCL)/memory.h \
 		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h $(INCL)/manager.h

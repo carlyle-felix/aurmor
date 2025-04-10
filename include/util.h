@@ -5,10 +5,9 @@
 
 // Commands in one place - easier to change.
 #define GIT_CLONE "git clone %s" 
-#define GIT_PULL_NULL "cd %s && git pull &> /dev/null"
+#define GIT_PULL_NULL "git pull &> /dev/null"
 #define AUR_CLONE "git clone https://aur.archlinux.org/%s.git"
 #define AUR_CLONE_NULL "git clone https://aur.archlinux.org/%s.git &> /dev/null"
-#define GIT_CLEAN "cd %s && git clean -dfx"
 #define AUR_SEARCH "https://aur.archlinux.org/rpc/v5/search/%s?by=name"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "less PKGBUILD"
