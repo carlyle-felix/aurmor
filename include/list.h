@@ -5,13 +5,13 @@
 
 #define INSTALLED_PKGVER "echo -n $(pacman -Qm | grep %s | cut -f2 -d ' ')"
 
-typedef struct node {
+typedef struct package {
     char *pkgname;
     char *pkgver;
     int pop;
     bool installed;
     bool update;
-    struct node *next;
+    struct package *next;
 } List;
 
 List *add_pkgname(List *list, const char *pkgname);

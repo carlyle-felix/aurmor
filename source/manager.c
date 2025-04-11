@@ -10,12 +10,13 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 
-void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
+void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
 void list_free(char *data);		// for alpm_list_fn_free
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
 bool is_foreign(char *pkgname);
 bool is_installed(char *pkgname);
+
 
 // return list of packages in localdb - dont need pu.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
@@ -127,7 +128,7 @@ void list_free(char *data) {
  * 	check if any packages besides the one being removed requires one of its deps
  * 	before removing the dep, if required the dep is still needed return true.
  */
-void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
+void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	
 	alpm_db_t *local_db;
 	alpm_pkg_t *dep_pkg;
@@ -152,7 +153,7 @@ void check_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		// if this is true, there are no other packages that requires it.
 		if (alpm_list_count(req_list) == 1 && strcmp(req_list->data, alpm_pkg_get_name(pkg)) == 0) {
 			alpm_remove_pkg(local, dep_pkg);
-			check_req_depends(local, dep_pkg);
+			rm_req_depends(local, dep_pkg);
 		}
 
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
@@ -201,7 +202,7 @@ void alpm_uninstall(List *pkglist) {
 			proceed = false;
 			continue;
 		}
-		check_req_depends(local, pkg);
+		rm_req_depends(local, pkg);
 		res = alpm_remove_pkg(local, pkg);
 		if (res != 0) {
 			printf(BRED"error:"RESET" alpm_remove_pkg: %s\n", alpm_strerror(alpm_errno(local)));
@@ -245,4 +246,134 @@ void alpm_uninstall(List *pkglist) {
 	
 	alpm_trans_release(local);
 	alpm_release(local);
+}
+
+void alpm_install(List *list) {
+
+	alpm_handle_t *repo, *local;
+	alpm_list_t *repo_db_list, *db_temp, *local_list;
+	alpm_pkg_t *pkg;
+	alpm_errno_t err;
+	List *temp;
+	
+
+	repo_db_list = alpm_repos(&repo);
+	local_list = alpm_local(&local, &err);
+
+	alpm_trans_init(local, ALPM_TRANS_FLAG_NEEDED);
+	
+	// get the deps from srcinfo.
+
+	// call add_deps in a loop until all packages are added.
+	for(;;) {
+		//add_deps()
+	}
+	
+}
+
+void add_deps(alpm_handle_t *local, char *pkgname) {
+	
+	alpm_handle_t *repo;
+	alpm_list_t *repo_db_list, *db_temp;
+	alpm_pkg_t *pkg;
+
+	// here, pkg is deps to the packages in the param list.
+	for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+		pkg = alpm_db_get_pkg(db_temp->data, pkgname);
+		if (pkg != NULL) {
+			//check pkg deps and add them recursively
+			alpm_add_pkg(local, pkg);
+		}
+	}
+
+}
+
+Srcinfo *srcinfo(char *pkgname, char *key) {
+
+	Srcinfo *list, *temp_list;
+	FILE *srcinfo; 
+	char *buffer = NULL, *temp, *str = key, dep[MAX_BUFFER] = {'\0'}, *data = NULL; //excessive.
+	int read = 0, max = MAX_BUFFER, key_len;
+	register int i;
+	
+	change_dir(pkgname);
+
+	str_alloc(&buffer, max);
+	for (;;) {
+		srcinfo = fopen(".SRCINFO", "r");
+		if (srcinfo == NULL) {
+			printf(BRED"error:"RESET"failed to open %s/.SRCINFO", pkgname);
+		}
+		read = fread(buffer, sizeof(char), max, srcinfo);
+		if (read == max) {
+			max = read * 2;
+			str_alloc(&buffer, max);
+		} else {
+			fclose(srcinfo);
+			break;
+		}
+		fclose(srcinfo);
+	}
+	buffer[read] = '\0';
+
+	list = malloc(sizeof(Srcinfo));
+	list->data = NULL;
+	list->next = NULL;
+
+	key_len = strlen(key);
+	//str_alloc(&str, key_len + 1);
+	for (temp = buffer; *temp != '\0'; temp++) {
+		// advance past the tab.
+		if (*temp == '\t') {
+			temp++;
+		}
+
+		// check the first letter, if no match, advance to newline char.
+		if (*temp != key[0]) {
+			while (*temp != '\n') {
+				temp++;
+			}
+			continue;
+		}
+
+		for (i = 0; i < key_len; i++) {
+			if (*temp++ != str[i]) {
+				// if no match, skip line, advance to newline char.
+				while (*temp != '\n') {
+					temp++;
+				}
+				i = 0;
+				break;
+			}
+		}
+		
+		if (i == (key_len)) {
+			dep[0] = '\0';
+			while (*temp == ' ' || *temp == '=') {
+				temp++;
+			}
+			for (i = 0; *temp != '\n'; i++) {
+				dep[i] = *temp++;
+			}
+			printf("dep: %s\n", dep);
+			temp_list = malloc(sizeof(Srcinfo));
+			temp_list->data = NULL;
+			temp_list->next = NULL;
+			str_alloc(&temp_list->data, strlen(dep) + 1);
+			strcpy(temp_list->data, dep);
+			temp_list->next = list;
+			list = temp_list;
+		}
+	}
+	change_dir("WD");
+	free(buffer);
+
+	while (list != NULL) {
+		// off by one.
+		printf("list->data: %s\n", list->data);
+		temp_list = list;
+		list = list->next;
+		free(temp_list->data);
+		free(temp_list);
+	}
 }

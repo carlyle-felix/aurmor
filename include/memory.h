@@ -3,7 +3,7 @@
 
 #define NAME_LEN 100
 
-typedef struct node List;
+typedef struct package List;
 typedef struct curl Json_buffer;
 
 void str_alloc(char **ptr, int size);

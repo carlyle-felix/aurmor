@@ -6,7 +6,7 @@ typedef struct curl {
     int size;
 } Json_buffer;
 
-typedef struct node List;
+typedef struct package List;
 
 char *curl(Json_buffer *buffer, char *url);
 List *get_rpc_data(char *url);

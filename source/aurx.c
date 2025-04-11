@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <alpm_list.h>
 
 #include "../include/operation.h"
 #include "../include/memory.h"
@@ -40,13 +41,7 @@ int main(int argc, char *argv[]) {
 			printf("Please specify package(s), use -h for help.\n");
 		}
 	} else if (strcmp(argv[1], "-i") == 0) {
-		if (argc > 2) {
-			for (i = 2; i < argc; i++) {
-				aur_clone(argv[i]);
-			}
-		} else {
-			printf("Please specify package(s), use -h for help.\n");
-		}
+		srcinfo(argv[2], argv[3]);
 	} else if (strcmp(argv[1], "-x") == 0) {
 		if (argc == 3) {
 			target_clone(argv[2]);

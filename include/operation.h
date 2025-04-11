@@ -1,7 +1,7 @@
 #ifndef OPERATION_H
 #define OPERATION_H
 
-typedef struct node List;
+typedef struct package List;
 
 void target_clone(char *url);
 void aur_clone(char *pkgnmae);
