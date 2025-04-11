@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,17 +148,19 @@ void fetch_update(char *pkgname) {
 
 	char *str = NULL;
 
-	change_dir(pkgname);
 	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
 	if (is_dir(pkgname) == false) {
 		get_str(&str, AUR_CLONE_NULL, pkgname);
+		system(str);
 	} else {
+		change_dir(pkgname);
 		get_str(&str, GIT_PULL_NULL, pkgname);
+		system(str);
+		change_dir("WD");
 	}
 
-	system(str);
+	
 	free(str);
-	change_dir("WD");
 }
 
 void less_prompt(const char *pkgname) {
@@ -166,10 +169,8 @@ void less_prompt(const char *pkgname) {
 	register int i;
 
 	change_dir(pkgname);
-	get_str(&str, "%s/PKGBUILD", pkgname);
-	if (file_exists(str) != true) {
+	if (file_exists("PKGBUILD") != true) {
 		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
-		free(str);
 		return;
 	}
 
@@ -181,9 +182,7 @@ void less_prompt(const char *pkgname) {
 		return;
 	}
 	
-	get_str(&str, LESS_PKGBUILD, pkgname);
-	system(str);
-	free(str);
+	system("less PKGBUILD");
 
 	printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
 	if (prompt() == true) {
@@ -196,11 +195,9 @@ void install(const char *pkgname) {
     
     char *str = NULL;
 
-	change_dir(pkgname);
-    get_str(&str, MAKEPKG, pkgname);	// don't build -debug packages for now.
+    get_str(&str, MAKEPKG, pkgname);
     system(str);
     free(str);
-	change_dir("WD");
 }
 
 void clean(void) {
@@ -236,7 +233,7 @@ void print_search(char *pkgname) {
     get_str(&str, AUR_SEARCH, pkgname);
     rpc_pkglist = get_rpc_data(str);
 
-	if (rpc_pkglist->pkgname == NULL) {
+	if (rpc_pkglist == NULL) {
 		printf("No results found for: %s.\n", pkgname);
 		free(str);
     	clear_list(rpc_pkglist);

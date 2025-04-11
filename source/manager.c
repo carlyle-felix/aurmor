@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <alpm.h>
-#include <alpm_list.h>
-#include <pacutils.h>
 
 #include "../include/manager.h"
 #include "../include/list.h"
@@ -16,7 +13,9 @@ alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
 bool is_foreign(char *pkgname);
 bool is_installed(char *pkgname);
-
+void resolve_deps(alpm_handle_t *local, alpm_pkg_t *pkg);
+Srcinfo *read_srcinfo(char *pkgname, char *key);
+void clear_deps(Srcinfo *list);
 
 // return list of packages in localdb - dont need pu.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
@@ -251,44 +250,105 @@ void alpm_uninstall(List *pkglist) {
 void alpm_install(List *list) {
 
 	alpm_handle_t *repo, *local;
-	alpm_list_t *repo_db_list, *db_temp, *local_list;
+	alpm_list_t *repo_db_list, *db_temp, *local_list, *add_list, *error_list;
 	alpm_pkg_t *pkg;
 	alpm_errno_t err;
-	List *temp;
+	Srcinfo *deps, *temp_deps;
+	int res;
 	
 
 	repo_db_list = alpm_repos(&repo);
 	local_list = alpm_local(&local, &err);
 
-	alpm_trans_init(local, ALPM_TRANS_FLAG_NEEDED);
-	
-	// get the deps from srcinfo.
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
+	if (res != 0) {
+		printf("error: trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+	}
 
-	// call add_deps in a loop until all packages are added.
-	for(;;) {
-		//add_deps()
+	// get the dep list from srcinfo.
+	for (;list != NULL; list = list->next) {
+		deps = read_srcinfo(list->pkgname, "depends");
+
+		// ignore deps that are already installed
+		if (is_installed(list->pkgname) == true) {
+			clear_deps(deps);
+			continue;
+		}
+
+		// pass deps one by one to resolve_deps
+		for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
+			for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+				pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
+				if (pkg != NULL) {
+					resolve_deps(local, pkg);
+				}
+			}
+		}
+		
+		clear_deps(deps);
+	}
+
+	// list deps for test.
+	add_list = alpm_trans_get_add(local);
+	printf("\nadd_list size: %d\n", alpm_list_count(add_list));
+	while (add_list != NULL) {
+		printf("package add: %s\n", alpm_pkg_get_name(add_list->data));
+		add_list = alpm_list_next(add_list);
+	}
+
+	res = alpm_trans_prepare(local, &error_list);
+	printf("prep res: %d\n", res);
+	if (res != 0) {
+		printf("error: trans_prep: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	res = alpm_trans_commit(local, &error_list);
+	if (res != 0) {
+		printf("error: trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	if (res == 0) {
+		printf("success.\n");
 	}
 	
+	alpm_trans_release(local);
+	alpm_release(repo);
+	alpm_release(local);
 }
 
-void add_deps(alpm_handle_t *local, char *pkgname) {
-	
-	alpm_handle_t *repo;
-	alpm_list_t *repo_db_list, *db_temp;
-	alpm_pkg_t *pkg;
+void resolve_deps(alpm_handle_t *local, alpm_pkg_t *pkg) {
 
-	// here, pkg is deps to the packages in the param list.
-	for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
-		pkg = alpm_db_get_pkg(db_temp->data, pkgname);
-		if (pkg != NULL) {
-			//check pkg deps and add them recursively
-			alpm_add_pkg(local, pkg);
+	alpm_handle_t *repo;
+	alpm_list_t *repo_db_list, *db_temp, *req_deps;
+	alpm_pkg_t *dep_pkg;
+	alpm_depend_t *dep;
+	int res;
+
+	repo_db_list = alpm_repos(&repo);
+	req_deps = alpm_pkg_get_depends(pkg);
+
+	for (; req_deps != NULL; req_deps = alpm_list_next(req_deps)) {
+		dep = req_deps->data;
+		for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+			dep_pkg = alpm_db_get_pkg(db_temp->data, dep->name);
+			if (dep_pkg != NULL && is_installed(dep->name) == false) {
+				res = alpm_add_pkg(local, dep_pkg);
+				printf("resolve: %s, res: %d\n", alpm_pkg_get_name(dep_pkg), res);
+
+				alpm_pkg_set_reason(dep_pkg, ALPM_PKG_REASON_DEPEND);
+				resolve_deps(local, dep_pkg);
+			}
 		}
 	}
 
+	alpm_release(repo);
 }
 
-Srcinfo *srcinfo(char *pkgname, char *key) {
+/*
+ * returns a list of keys found.
+ * pkgname: as found in .SRCINFO.
+ * key: .SRCINFO field to search for.
+ * TODO: deal with version requirements.
+ */
+Srcinfo *read_srcinfo(char *pkgname, char *key) {
 
 	Srcinfo *list, *temp_list;
 	FILE *srcinfo; 
@@ -296,13 +356,13 @@ Srcinfo *srcinfo(char *pkgname, char *key) {
 	int read = 0, max = MAX_BUFFER, key_len;
 	register int i;
 	
-	change_dir(pkgname);
+	chdir("/home/carlyle/.cache/aurx/spotify");
 
 	str_alloc(&buffer, max);
 	for (;;) {
 		srcinfo = fopen(".SRCINFO", "r");
 		if (srcinfo == NULL) {
-			printf(BRED"error:"RESET"failed to open %s/.SRCINFO", pkgname);
+			printf(BRED"error:"RESET" failed to open %s/.SRCINFO", pkgname);
 		}
 		read = fread(buffer, sizeof(char), max, srcinfo);
 		if (read == max) {
@@ -352,7 +412,7 @@ Srcinfo *srcinfo(char *pkgname, char *key) {
 			while (*temp == ' ' || *temp == '=') {
 				temp++;
 			}
-			for (i = 0; *temp != '\n'; i++) {
+			for (i = 0; *temp != '\n' && *temp != '>'; i++) {
 				dep[i] = *temp++;
 			}
 			printf("dep: %s\n", dep);
@@ -368,9 +428,16 @@ Srcinfo *srcinfo(char *pkgname, char *key) {
 	change_dir("WD");
 	free(buffer);
 
+	return list;
+}
+
+void clear_deps(Srcinfo *list) {
+
+	Srcinfo *temp_list;
+
 	while (list != NULL) {
 		// off by one.
-		printf("list->data: %s\n", list->data);
+		printf("clear_list: data: %s\n", list->data);
 		temp_list = list;
 		list = list->next;
 		free(temp_list->data);

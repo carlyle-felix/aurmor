@@ -41,7 +41,18 @@ int main(int argc, char *argv[]) {
 			printf("Please specify package(s), use -h for help.\n");
 		}
 	} else if (strcmp(argv[1], "-i") == 0) {
-		srcinfo(argv[2], argv[3]);
+		if (argc > 2) {
+			List *list;
+			
+			list = list_malloc();
+			for (i = 2; i < argc; i++) {
+				list = add_pkgname(list, argv[i]);
+			}
+			alpm_install(list);
+			clear_list(list);
+		} else {
+			printf("Please specify package(s), use -h for help.\n");
+		}	
 	} else if (strcmp(argv[1], "-x") == 0) {
 		if (argc == 3) {
 			target_clone(argv[2]);

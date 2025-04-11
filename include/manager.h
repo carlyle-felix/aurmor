@@ -1,6 +1,10 @@
 #ifndef MANAGER_H
 #define MANAGER_H
+
+#include <alpm.h>
 #include <alpm_list.h>
+#include <pacutils.h>
+
 typedef struct package List;
 
 typedef struct info {
@@ -10,6 +14,6 @@ typedef struct info {
 
 List *foreign_list(void);
 void alpm_uninstall(List *pkglist);
-Srcinfo *srcinfo(char *pkgname, char *key);
+void alpm_install(List *list);
 
 #endif 

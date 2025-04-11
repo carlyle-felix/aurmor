@@ -181,7 +181,7 @@ int change_dir(const char *dir) {
 	}
 
 	if (is_dir(dir) == false) {
-		printf(BRED"error:"RESET"%s dir not found.\n", dir);
+		printf(BRED"error:"RESET" %s dir not found.\n", dir);
 		return 0;
 	}
 	chdir(wd);
