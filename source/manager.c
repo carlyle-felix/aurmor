@@ -13,11 +13,11 @@ alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
 bool is_foreign(char *pkgname);
 bool is_installed(char *pkgname);
-void resolve_deps(alpm_handle_t *local, alpm_pkg_t *pkg);
+void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *pkg);
 Srcinfo *read_srcinfo(char *pkgname, char *key);
 void clear_deps(Srcinfo *list);
 
-// return list of packages in localdb - dont need pu.
+// return list of packages in localdb - probably don't need this.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
 
     alpm_db_t *local_db;
@@ -256,9 +256,8 @@ void alpm_install(List *list) {
 	Srcinfo *deps, *temp_deps;
 	int res;
 	
-
-	repo_db_list = alpm_repos(&repo);
-	local_list = alpm_local(&local, &err);
+	repo_db_list = alpm_repos(&local);
+	
 
 	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
@@ -279,9 +278,17 @@ void alpm_install(List *list) {
 		for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
 			for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
 				pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
+
 				if (pkg != NULL) {
-					resolve_deps(local, pkg);
+					if (is_installed(temp_deps->data) == false) {
+						res = alpm_add_pkg(local, pkg);
+						if (res != 0) {
+							printf("error: alpm_add_pkg (install): %s\n", alpm_strerror(alpm_errno(local)));
+						}
+					}
+					resolve_deps(local, repo_db_list, pkg);
 				}
+
 			}
 		}
 		
@@ -310,19 +317,16 @@ void alpm_install(List *list) {
 	}
 	
 	alpm_trans_release(local);
-	alpm_release(repo);
 	alpm_release(local);
 }
 
-void resolve_deps(alpm_handle_t *local, alpm_pkg_t *pkg) {
+void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *pkg) {
 
-	alpm_handle_t *repo;
-	alpm_list_t *repo_db_list, *db_temp, *req_deps;
+	alpm_list_t *db_temp, *req_deps;
 	alpm_pkg_t *dep_pkg;
 	alpm_depend_t *dep;
 	int res;
 
-	repo_db_list = alpm_repos(&repo);
 	req_deps = alpm_pkg_get_depends(pkg);
 
 	for (; req_deps != NULL; req_deps = alpm_list_next(req_deps)) {
@@ -331,15 +335,16 @@ void resolve_deps(alpm_handle_t *local, alpm_pkg_t *pkg) {
 			dep_pkg = alpm_db_get_pkg(db_temp->data, dep->name);
 			if (dep_pkg != NULL && is_installed(dep->name) == false) {
 				res = alpm_add_pkg(local, dep_pkg);
-				printf("resolve: %s, res: %d\n", alpm_pkg_get_name(dep_pkg), res);
+				printf("resolve: %s\n", alpm_pkg_get_name(dep_pkg));
+				if (res != 0) {
+					printf("error: alpm_add_pkg: %s\n", alpm_strerror(alpm_errno(local)));
+				}
 
 				alpm_pkg_set_reason(dep_pkg, ALPM_PKG_REASON_DEPEND);
-				resolve_deps(local, dep_pkg);
+				resolve_deps(local, repo_db_list, dep_pkg);
 			}
 		}
 	}
-
-	alpm_release(repo);
 }
 
 /*
