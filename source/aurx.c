@@ -15,7 +15,8 @@
 int main(int argc, char *argv[]) {
 
 	register int i;
-
+	
+	drop_root();
 	change_dir("WD");
 
 	if (argc == 1) {

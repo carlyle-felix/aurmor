@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <unistd.h>
 
 #include "../include/util.h"
@@ -165,6 +167,7 @@ int change_dir(const char *dir) {
 
 	if (home == NULL) {
 		home = getenv("HOME");
+		printf("%s\n", home);
 		
 		strcpy(wd, home);
 		strcat(wd, "/.cache/aurx");
@@ -188,4 +191,39 @@ int change_dir(const char *dir) {
 	}
 	chdir(wd);
 	return chdir(dir);
+}
+
+void gain_root(void) {
+
+	int res;
+	struct passwd *pw;
+
+	res = seteuid(0);
+	if (res != 0) {
+		printf("error: gain_root() failed\n");
+		printf("env: %s", getenv("HOME"));
+	}
+
+	pw = getpwuid(0);
+	setenv("HOME", pw->pw_dir, 1);
+	printf("root gained, euid: %d\n", geteuid());
+}
+
+void drop_root(void) {
+
+	int res;
+	struct passwd *pw;
+	uid_t uid;
+
+	pw = getpwnam(getlogin());
+	uid = pw->pw_uid;
+	res = seteuid(uid);
+	if (res != 0) {
+		printf("error: drop_root() failed\n");
+		
+	}
+
+	pw = getpwuid(uid);
+	setenv("HOME", pw->pw_dir, 1);
+	printf("root dropped, euid: %d\n", geteuid());
 }

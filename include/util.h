@@ -37,5 +37,7 @@ bool prompt(void);
 void remove_dir(char *path);
 List *get_dir_list(void);
 int change_dir(const char *dir);
+void gain_root(void);
+void drop_root(void);
 
 #endif
