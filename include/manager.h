@@ -7,10 +7,10 @@
 
 typedef struct package List;
 
-typedef struct info {
+typedef struct data {
     char *data;
-    struct info *next;
-} Srcinfo;
+    struct data *next;
+} Data;
 
 List *foreign_list(void);
 void alpm_uninstall(List *pkglist);
