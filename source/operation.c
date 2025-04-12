@@ -66,7 +66,6 @@ void aur_clone(char *pkgname) {
 void update(void) {
 	
 	char c, *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
-	int len;
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
 
