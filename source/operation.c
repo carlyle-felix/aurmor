@@ -68,6 +68,7 @@ void update(void) {
 	char c, *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
+	bool found_debug = false;
 
 	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
 
@@ -80,10 +81,12 @@ void update(void) {
 		get_str(&debug, "%s", pkglist->pkgname);
 		for(debug_temp = debug; *debug_temp != '\0'; debug_temp++) {
 			if(*debug_temp == '-' && strcmp(debug_temp, "-debug") == 0) {
+				found_debug = true;
 				break;
 			}
 		}
-		if (*debug != '\0') {
+		if (found_debug == true) {
+			found_debug = false;
 			continue;
 		}
 		
@@ -92,7 +95,7 @@ void update(void) {
 
 		if (strcmp(pkglist->pkgver, rpc_pkg->pkgver) < 0 || epoch_update(pkglist, rpc_pkg->pkgver)) { 
 			pkglist->update = true;
-			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 55));
+			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69)); // get the counting correct.
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
