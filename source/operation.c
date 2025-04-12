@@ -64,7 +64,8 @@ void aur_clone(char *pkgname) {
 
 void update(void) {
 	
-	char c, *str = NULL, *update_list = NULL;
+	char c, *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
+	int len;
 	register int i;
 	List *pkglist, *rpc_pkg, *temp;
 
@@ -74,6 +75,17 @@ void update(void) {
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
 	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+
+		// disregard -debug;
+		get_str(&debug, "%s", pkglist->pkgname);
+		for(debug_temp = debug; *debug_temp != '\0'; debug_temp++) {
+			if(*debug_temp == '-' && strcmp(debug_temp, "-debug") == 0) {
+				break;
+			}
+		}
+		if (*debug != '\0') {
+			continue;
+		}
 		
 		get_str(&str, AUR_PKG , pkglist->pkgname);
 		rpc_pkg = get_rpc_data(str);
@@ -84,10 +96,11 @@ void update(void) {
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
 			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
 			strcat(update_list, str);
-		}
+		}	
 		clear_list(rpc_pkg);
 	}
 	free(str);
+	free(debug);
 
 	pkglist = temp;
 	if (update_list[0] == '\0') {
