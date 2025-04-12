@@ -305,6 +305,20 @@ void alpm_install(List *list) {
 	drop_root();
 	// get the dep list from srcinfo.
 	for (;list != NULL; list = list->next) {
+
+		// TODO: READ MAKEDEPS FROM SRCINFO AND ACTION IT HERE.
+		
+		build(list->pkgname);
+
+		// path: WD/pkgname/pkgname-pkgver-arch.pkg.tar.zst
+		res = alpm_pkg_load(local, "path", 1, 0, &pkg);
+		if (res != 0) {
+			printf("failed to add local package: %s.\n", alpm_strerror(alpm_errno(local)));
+		}
+		res = alpm_add_pkg(local, pkg);
+		if (res != 0) {
+			printf("failed to add package.\n");
+		}
 		deps = read_srcinfo(list->pkgname, "depends");
 
 		// ignore deps that are already installed
