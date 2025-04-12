@@ -178,11 +178,13 @@ int change_dir(const char *dir) {
 	// only those needed by the program.
 	if (strcmp(dir, "WD") == 0) {
 		return chdir(wd);
+	} else if (strcmp(dir, "HOME") == 0) {
+		return chdir(home);
 	} 
 
 	if (is_dir(dir) == false) {
 		printf(BRED"error:"RESET" %s dir not found.\n", dir);
-		return 0;
+		return -1;
 	}
 	chdir(wd);
 	return chdir(dir);

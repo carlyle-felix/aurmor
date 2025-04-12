@@ -166,7 +166,7 @@ void alpm_uninstall(List *pkglist) {
 	alpm_handle_t *local;
 	alpm_db_t *local_db;
 	alpm_pkg_t *pkg;
-	alpm_list_t *list, *opt, *error_list;
+	alpm_list_t *list, *temp_list, *opt, *error_list;
 	alpm_errno_t err;
 	List *temp;
 	bool proceed = true, success = true;
@@ -218,10 +218,11 @@ void alpm_uninstall(List *pkglist) {
 	
 	printf(BOLD"Packages: "RESET);
 	list = alpm_trans_get_remove(local);
-	clean_up(list);
-	for (; list != NULL; list = alpm_list_next(list)) {
+	for (temp_list = list; list != NULL; list = alpm_list_next(list)) {
 		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(list->data), alpm_pkg_get_version(list->data));
 	}
+	clean_up(temp_list);
+
 	printf("\n\n"BBLUE"::"BOLD" Do you want to remove these packages? [Y/n] "RESET);
 	if (prompt() == false) {
 		alpm_trans_release(local);
@@ -233,7 +234,6 @@ void alpm_uninstall(List *pkglist) {
 	if (res != 0) {
 		printf(BRED"error:"RESET" alpm_trans_prepare: %s\n", alpm_strerror(alpm_errno(local)));
 	}
-
 	res = alpm_trans_commit(local, &error_list);
 	if (res != 0) {
 		printf(BRED"error:"RESET" alpm_trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
@@ -241,6 +241,7 @@ void alpm_uninstall(List *pkglist) {
 	}
 
 	if (success == true) {
+		
 		printf(BGREEN"=>"BOLD" Success\n"RESET);
 	}
 	
@@ -248,27 +249,32 @@ void alpm_uninstall(List *pkglist) {
 	alpm_release(local);
 }
 
+// cleaning up system files not needed, pivot to cleaning config and cache dirs. 
 void clean_up(alpm_list_t *rm_list) {
 
-	alpm_filelist_t *list;
-	alpm_file_t *file;
-	register int i;
+	const char *pkgname;
+	char config[MAX_BUFFER], cache[MAX_BUFFER];
 
-	chdir("/");
+	change_dir("HOME");
+	
 	for (; rm_list != NULL; rm_list = alpm_list_next(rm_list)) {
-		list = alpm_pkg_get_files(rm_list->data);
+		strcpy(config, ".config/");
+		strcpy(cache, ".cache/");
 
-		// traverse list of files installed for each package
-		// set for removal.
-		for (i = 0; i < list->count; i++) {
-			file = list->files;
-			
-			// ignore leading directories
-			if (is_dir(file[i].name) == false) {
-				printf("path: %s\n", file[i].name);
-			}
+		pkgname = alpm_pkg_get_name(rm_list->data);
+		strcat(config, pkgname);
+		printf("pkgname: %s, dir: %s\n", pkgname, config);
+		if (is_dir(config) == true) {
+			remove_dir(config);
+		}
+		strcat(cache, pkgname);
+		printf("pkgname: %s, dir: %s\n", pkgname, cache);
+		if (is_dir(cache) == true) {
+			remove_dir(cache);
 		}
 	}
+	
+	change_dir("WD");
 }
 
 void alpm_install(List *list) {
@@ -385,7 +391,7 @@ Srcinfo *read_srcinfo(char *pkgname, char *key) {
 	int read = 0, max = MAX_BUFFER, key_len;
 	register int i;
 	
-	chdir("/home/carlyle/.cache/aurx/spotify");
+	change_dir(pkgname);
 
 	str_alloc(&buffer, max);
 	for (;;) {
