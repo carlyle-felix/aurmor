@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -200,8 +202,8 @@ void gain_root(void) {
 	res = seteuid(0);
 	if (res != 0) {
 		printf("error: gain_root() failed\n");
-		printf("env: %s", getenv("HOME"));
 	}
+	printf("gained root, euid: %d\n", geteuid());
 }
 
 void drop_root(void) {
@@ -215,10 +217,47 @@ void drop_root(void) {
 	res = seteuid(uid);
 	if (res != 0) {
 		printf("error: drop_root() failed\n");
-		
 	}
 
 	pw = getpwuid(uid);
 	setenv("HOME", pw->pw_dir, 1);
 	printf("root dropped, euid: %d\n", geteuid());
+}
+
+void build(char *pkgname) {
+
+	char *buffer = NULL;
+	pid_t pid;
+	int res;
+	struct passwd *pw;
+
+	gain_root();
+	pid = fork();
+	if (pid < 0) {
+		printf("error: failed to create new process.\n");
+		exit(EXIT_FAILURE);
+	} else if (pid == 0) {
+		pw = getpwnam(getlogin());
+		printf("user: %s\n", getlogin());
+		
+		res = setuid(pw->pw_uid);
+		if (res == 0) {
+			printf("build root dropped, euid: %d\n", getuid());
+		}
+		
+		change_dir(pkgname);
+		res = system(MAKEPKG);
+		if (res != 0) {
+			printf("system() failed with exit status: %s\n", WEXITSTATUS(res));
+		}
+		change_dir("WD");
+		
+		exit(0);
+	} else {
+		waitpid(pid, &res, 0);
+		if (WIFEXITED(res) == false) {
+            printf("error: process %d closed abnormally\n", pid);
+        }
+	}
+
 }
