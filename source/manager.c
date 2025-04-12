@@ -8,6 +8,7 @@
 #include "../include/memory.h"
 
 void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
+void clean_up(alpm_list_t *rm_list);
 void list_free(char *data);		// for alpm_list_fn_free
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
@@ -217,10 +218,10 @@ void alpm_uninstall(List *pkglist) {
 	
 	printf(BOLD"Packages: "RESET);
 	list = alpm_trans_get_remove(local);
+	clean_up(list);
 	for (; list != NULL; list = alpm_list_next(list)) {
 		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(list->data), alpm_pkg_get_version(list->data));
 	}
-
 	printf("\n\n"BBLUE"::"BOLD" Do you want to remove these packages? [Y/n] "RESET);
 	if (prompt() == false) {
 		alpm_trans_release(local);
@@ -245,6 +246,29 @@ void alpm_uninstall(List *pkglist) {
 	
 	alpm_trans_release(local);
 	alpm_release(local);
+}
+
+void clean_up(alpm_list_t *rm_list) {
+
+	alpm_filelist_t *list;
+	alpm_file_t *file;
+	register int i;
+
+	chdir("/");
+	for (; rm_list != NULL; rm_list = alpm_list_next(rm_list)) {
+		list = alpm_pkg_get_files(rm_list->data);
+
+		// traverse list of files installed for each package
+		// set for removal.
+		for (i = 0; i < list->count; i++) {
+			file = list->files;
+			
+			// ignore leading directories
+			if (is_dir(file[i].name) == false) {
+				printf("path: %s\n", file[i].name);
+			}
+		}
+	}
 }
 
 void alpm_install(List *list) {
