@@ -196,17 +196,12 @@ int change_dir(const char *dir) {
 void gain_root(void) {
 
 	int res;
-	struct passwd *pw;
 
 	res = seteuid(0);
 	if (res != 0) {
 		printf("error: gain_root() failed\n");
 		printf("env: %s", getenv("HOME"));
 	}
-
-	pw = getpwuid(0);
-	setenv("HOME", pw->pw_dir, 1);
-	printf("root gained, euid: %d\n", geteuid());
 }
 
 void drop_root(void) {
