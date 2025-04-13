@@ -169,7 +169,6 @@ char *change_dir(const char *dir) {
 
 	if (home == NULL) {
 		home = getenv("HOME");
-		printf("%s\n", home);
 		
 		strcpy(wd, home);
 		strcat(wd, "/.cache/aurx");

@@ -8,17 +8,20 @@
 #include "../include/memory.h"
 
 void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
-void clean_up(Data *rm_list);
+void clean_up(Depends *rm_list);
 void list_free(char *data);		// for alpm_list_fn_free
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
 alpm_list_t *alpm_repos(alpm_handle_t **repo);
 bool is_foreign(char *pkgname);
 bool is_installed(char *pkgname);
+int install_depends(Depends *deps);
 void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *pkg);
-Data *read_srcinfo(char *pkgname, char *key);
-Data *add_data(Data *list, const char *data);
-Data *data_list_malloc(void);
-void clear_data_list(Data *list);
+char *read_srcinfo(char *pkgname);
+Srcinfo *pkg_srcinfo_malloc(void);
+char *zst_path(Srcinfo *pkg);
+Depends *add_data(Depends *list, const char *data);
+Depends *depends_malloc(void);
+void clear_depends(Depends *list);
 
 // return list of packages in localdb - probably don't need this.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
@@ -163,7 +166,7 @@ void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	}
 }
 
-void alpm_uninstall(List *pkglist) {
+int alpm_uninstall(List *pkglist) {
 
 	alpm_handle_t *local;
 	alpm_db_t *local_db;
@@ -171,7 +174,7 @@ void alpm_uninstall(List *pkglist) {
 	alpm_list_t *list, *temp_list, *opt, *error_list;
 	alpm_errno_t err;
 	List *temp;
-	Data *post_rm = NULL;
+	Depends *post_rm = NULL;
 	const char *pkgname;
 	bool proceed = true, success = true;
 	int res;
@@ -184,9 +187,6 @@ void alpm_uninstall(List *pkglist) {
 	if (res != 0) {
 		printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		printf(BRED"error:"RESET" alpm_trans_init: %s\n", alpm_strerror(alpm_errno(local)));
-		alpm_release(local);
-		clear_list(pkglist);
-		exit(EXIT_FAILURE);
 	}
 	drop_root();
 
@@ -219,7 +219,7 @@ void alpm_uninstall(List *pkglist) {
 		alpm_trans_release(local);
 		alpm_release(local);
 		clear_list(pkglist);
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	
 	printf(BOLD"Packages: "RESET);
@@ -234,7 +234,7 @@ void alpm_uninstall(List *pkglist) {
 	if (prompt() == false) {
 		alpm_trans_release(local);
 		alpm_release(local);
-		return;
+		return -1;
 	}
 
 	gain_root();
@@ -249,7 +249,7 @@ void alpm_uninstall(List *pkglist) {
 	}
 	if (success == true) {
 		clean_up(post_rm);
-		clear_data_list(post_rm);
+		clear_depends(post_rm);
 		printf(BGREEN"=>"BOLD" Success\n"RESET);
 	}
 	alpm_trans_release(local);	
@@ -259,7 +259,7 @@ void alpm_uninstall(List *pkglist) {
 }
 
 // cleaning up system files not needed, pivot to cleaning config and cache dirs. 
-void clean_up(Data *post_rm) {
+void clean_up(Depends *post_rm) {
 
 	const char *pkgname;
 	char config[MAX_BUFFER], cache[MAX_BUFFER];
@@ -272,12 +272,10 @@ void clean_up(Data *post_rm) {
 
 		pkgname = post_rm->data;
 		strcat(config, pkgname);
-		printf("pkgname: %s, dir: %s\n", pkgname, config);
 		if (is_dir(config) == true) {
 			remove_dir(config);
 		}
 		strcat(cache, pkgname);
-		printf("pkgname: %s, dir: %s\n", pkgname, cache);
 		if (is_dir(cache) == true) {
 			remove_dir(cache);
 		}
@@ -286,121 +284,175 @@ void clean_up(Data *post_rm) {
 	change_dir("WD");
 }
 
-void alpm_install(List *list) {
+int alpm_install(List *list) {
 
-	alpm_handle_t *repo, *local;
-	alpm_list_t *repo_db_list, *db_temp, *local_list, *add_list, *error_list;
+	alpm_handle_t *local;
+	alpm_list_t *add_list, *error_list, *local_list;
 	alpm_pkg_t *pkg;
 	alpm_errno_t err;
-	Data *deps, *temp_deps, *pkgname, *epoch, *pkgver, *pkgrel;
+	Srcinfo *pkg_info;
 	int res;
 	char *cwd, path[MAX_BUFFER];
-	
-	repo_db_list = alpm_repos(&local);
-	
-	gain_root();
-	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
-	if (res != 0) {
-		printf("error: trans_init: %s\n", alpm_strerror(alpm_errno(local)));
-		clear_list(list);
-		alpm_release(local);
-		exit(EXIT_FAILURE);
-	}
-	drop_root();
-	// get the dep list from srcinfo.
+	bool ans = true;
+
+	local_list = alpm_local(&local, &err);
+
+	// depends and makedepends must be installed before package.
 	for (;list != NULL; list = list->next) {
 
-		/* TODO: 
-		 * READ MAKEDEPS FROM SRCINFO AND ACTION IT HERE.
-		 * ADD ALL NEEDED INFO FROM SRCINFO TO THE DATA LIST.
-		 * DON'T USE LIST STRUCT ITEMS IN THIS LOOP.
-		 */
-		
-		res = build(list->pkgname);
-		if (res != 0) {
-			printf("failed to build package: %s", list->pkgname);
-			clear_list(list);
-			alpm_release(local);
-			exit(EXIT_FAILURE);
-		}
-		
-		pkgname = read_srcinfo(list->pkgname, "pkgname");
-		epoch = read_srcinfo(list->pkgname, "epoch");
-		pkgver = read_srcinfo(list->pkgname, "pkgver");
-		pkgrel = read_srcinfo(list->pkgname, "pkgrel");
-		cwd = change_dir(list->pkgname);
-		printf("CWD: %s\n", cwd);
-		
-		sprintf(path,"%s/%s-%s:%s-%s-x86_64.pkg.tar.zst", cwd, pkgname->data, epoch->data, pkgver->data, pkgrel->data);
-		printf("PATH: %s\n", path);
-		// path: WD/pkgname/pkgname-epoch:pkgver-pkgrel-arch.pkg.tar.zst
-		res = alpm_pkg_load(local, path, 1, 0, &pkg);
-		if (res != 0) {
-			printf("failed to add local package: %s.\n", alpm_strerror(alpm_errno(local)));
-			exit(EXIT_FAILURE);
-		}
-		clear_data_list(pkgname);
-		clear_data_list(epoch);
-		clear_data_list(pkgver);
-		clear_data_list(pkgrel);
-
-		res = alpm_add_pkg(local, pkg);
-		if (res != 0) {
-			printf("failed to add package.\n");
-		}
-		deps = read_srcinfo(list->pkgname, "depends");
-
-		// ignore deps that are already installed
+		// ignore packages that are already installed
 		if (is_installed(list->pkgname) == true) {
-			clear_data_list(deps);
+			printf(BOLD"%s already installed.\n"RESET, list->pkgname);
 			continue;
 		}
 
-		// pass deps one by one to resolve_deps
-		for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
-			for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
-				pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
+		pkg_info = populate_pkg(list->pkgname);
 
-				if (pkg != NULL) {
-					if (is_installed(temp_deps->data) == false) {
-						res = alpm_add_pkg(local, pkg);
-						if (res != 0) {
-							printf("error: alpm_add_pkg (install): %s\n", alpm_strerror(alpm_errno(local)));
-						}
+		printf(BGREEN"==>"BOLD" Checking dependencies...\n"RESET);
+		res = install_depends(pkg_info->depends);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to install dependencies");
+		}
+		// print installing missin build dependencies (remove these later.)
+		res = install_depends(pkg_info->makedepends);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to install build dependencies");
+		}
+
+		// build and add the package zst
+		res = build(list->pkgname);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to build package: %s", list->pkgname);
+		}
+
+		// this should be done after deps are resolved.
+		gain_root();
+		res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
+		if (res != 0) {
+			printf("error: trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+		}
+		drop_root();
+		
+		res = alpm_pkg_load(local, pkg_info->zst_path, 1, 0, &pkg);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to add local package: %s.\n", alpm_strerror(alpm_errno(local)));
+		}
+		res = alpm_add_pkg(local, pkg);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to add package.\n");
+		}
+		clear_pkg_srcinfo(pkg_info);
+
+		printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
+		ans = prompt();	
+		gain_root();
+
+		if (ans == false) {
+			alpm_trans_release(local);
+			drop_root();
+			alpm_release(local);
+			return -1;
+		}
+		res = alpm_trans_prepare(local, &error_list);
+		if (res != 0) {
+			printf(BRED"error:"RESET" trans_prep: %s\n", alpm_strerror(alpm_errno(local)));
+		}
+		res = alpm_trans_commit(local, &error_list);
+		if (res != 0) {
+			printf(BRED"error:"RESET" trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
+		}
+		if (res == 0) {
+			printf(BGREEN"Success.\n"RESET);
+		}
+		alpm_trans_release(local);
+		drop_root();
+		alpm_release(local);
+	}	
+	return 0;
+}
+
+int install_depends(Depends *deps) {
+
+	alpm_handle_t *local;
+	alpm_db_t *local_db, *repo_db;
+	alpm_list_t *repo_db_list, *db_temp, *add_list, *error_list;
+	alpm_pkg_t *pkg;
+	Depends *temp_deps;
+	bool ans = true, missing_dep = false;
+	int res;
+
+	// don't bother if list is empty
+	if (deps == NULL) {
+		return 0;
+	}
+
+	repo_db_list = alpm_repos(&local);
+
+	gain_root();
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
+	if (res != 0) {
+		printf(BRED"error:"RESET" trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	drop_root();
+
+	// pass deps one by one to resolve_deps
+	for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
+		for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+			pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
+			
+			if (pkg != NULL) {
+				if (is_installed(temp_deps->data) == false) {
+					missing_dep = true;
+					res = alpm_add_pkg(local, pkg);
+					if (res != 0) {
+						printf(BRED"error:"RESET" alpm_add_pkg (install): %s\n", alpm_strerror(alpm_errno(local)));
 					}
-					resolve_deps(local, repo_db_list, pkg);
-				}
-
+				} 
+				resolve_deps(local, repo_db_list, pkg);
 			}
 		}
-		
-		clear_data_list(deps);
 	}
 
-	// list deps for test.
+	if (missing_dep == false) {
+		gain_root();
+		alpm_trans_release(local);
+		drop_root();
+		alpm_release(local);
+		return 0;
+	}
 	add_list = alpm_trans_get_add(local);
-	printf("\nadd_list size: %d\n", alpm_list_count(add_list));
 	while (add_list != NULL) {
-		printf("package add: %s\n", alpm_pkg_get_name(add_list->data));
 		add_list = alpm_list_next(add_list);
 	}
-	//gain_root();
+
+	// dont gain root before prompt.
+	printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
+	ans = prompt();
+	gain_root();
+	if (ans == false) {
+		alpm_trans_release(local);
+		drop_root();
+		alpm_release(local);
+		return -1;
+	}
+	
 	res = alpm_trans_prepare(local, &error_list);
 	printf("prep res: %d\n", res);
 	if (res != 0) {
-		printf("error: trans_prep: %s\n", alpm_strerror(alpm_errno(local)));
+		printf(BRED"error:"RESET" trans_prep: %s\n", alpm_strerror(alpm_errno(local)));
 	}
 	res = alpm_trans_commit(local, &error_list);
 	if (res != 0) {
-		printf("error: trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
+		printf(BRED"error:"RESET" trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
 	}
 	if (res == 0) {
-		printf("success.\n");
+		printf(BGREEN"Success.\n"RESET);
 	}
 	alpm_trans_release(local);
-	//drop_root();
-
+	drop_root();
 	alpm_release(local);	
+	
+	return 0;
 }
 
 void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *pkg) {
@@ -418,7 +470,6 @@ void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *p
 			dep_pkg = alpm_db_get_pkg(db_temp->data, dep->name);
 			if (dep_pkg != NULL && is_installed(dep->name) == false) {
 				res = alpm_add_pkg(local, dep_pkg);
-				printf("resolve: %s\n", alpm_pkg_get_name(dep_pkg));
 				if (res != 0) {
 					printf("error: alpm_add_pkg: %s\n", alpm_strerror(alpm_errno(local)));
 				}
@@ -431,18 +482,102 @@ void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *p
 }
 
 /*
+*	populate package struct.
+*/
+Srcinfo *populate_pkg(char *pkgname) {
+
+	Srcinfo *pkg = pkg_srcinfo_malloc();
+	int key_len;
+	register int i, key;
+	char *buffer, *temp_buffer, *str, key_item[MAX_BUFFER];
+	char *keys[] = {"pkgname", "epoch", "pkgver", "pkgrel", 
+					"makedepends", "depends", "optdepends"};
+
+	buffer = read_srcinfo(pkgname);
+
+	// traverse list of keys
+	for (key = 0; key < 7; key++) {
+		key_len = strlen(keys[key]);
+		for (temp_buffer = buffer; *temp_buffer != '\0'; temp_buffer++) {
+			// advance past the tab.
+			if (*temp_buffer == '\t') {
+				temp_buffer++;
+			}
+
+			// check the first letter, if no match, advance to newline char.
+			if (*temp_buffer != keys[key][0]) {
+				while (*temp_buffer != '\n') {
+					temp_buffer++;
+				}
+				continue;
+			}
+
+			for (i = 0; i < key_len; i++) {
+				if (*temp_buffer++ != keys[key][i]) {
+					// if no match, skip line, advance to newline char.
+					while (*temp_buffer != '\n') {
+						temp_buffer++;
+					}
+					i = 0;
+					break;
+				}
+			}
+			
+			if (i == (key_len)) {
+				key_item[0] = '\0';
+				while (*temp_buffer == ' ' || *temp_buffer == '=') {
+					temp_buffer++;
+				}
+				for (i = 0; *temp_buffer != '\n' && *temp_buffer != '>'; i++) {
+					key_item[i] = *temp_buffer++;
+				}
+				key_item[i] = '\0';
+				if (key_item[0] == '\0') {
+					continue;
+				}
+				// put data in correct fields according to key.
+				switch (key) {
+					case 0:		
+						str_alloc(&pkg->pkgname, strlen(key_item) + 1);
+						strcpy(pkg->pkgname, key_item);
+						break;
+					case 1:
+						str_alloc(&pkg->epoch, strlen(key_item) + 1);
+						strcpy(pkg->epoch, key_item);
+						break;
+					case 2:
+						str_alloc(&pkg->pkgver, strlen(key_item) + 1);
+						strcpy(pkg->pkgver, key_item);
+						break;
+					case 3: 
+						str_alloc(&pkg->pkgrel, strlen(key_item) + 1);
+						strcpy(pkg->pkgrel, key_item);
+					default:
+						pkg->depends = add_data(pkg->depends, key_item);
+						break;
+				}
+			}
+		}
+	}
+	pkg->zst_path = zst_path(pkg);
+
+	change_dir("WD");
+	free(buffer);
+
+	return pkg;
+}
+
+/*
  * returns a list of keys found.
  * pkgname: as found in .SRCINFO.
  * key: .SRCINFO field to search for.
  * TODO: deal with version requirements.
  */
-Data *read_srcinfo(char *pkgname, char *key) {
+char *read_srcinfo(char *pkgname) {
 
-	Data *list = NULL;
 	FILE *srcinfo; 
-	char *buffer = NULL, *temp, *str = key, dep[MAX_BUFFER] = {'\0'}, *data = NULL; //excessive.
-	int read = 0, max = MAX_BUFFER, key_len;
-	register int i;
+	char *buffer = NULL;
+	int read = 0, max = MAX_BUFFER;
 	
 	change_dir(pkgname);
 
@@ -464,71 +599,87 @@ Data *read_srcinfo(char *pkgname, char *key) {
 	}
 	buffer[read] = '\0';
 
-	key_len = strlen(key);
-	//str_alloc(&str, key_len + 1);
-	for (temp = buffer; *temp != '\0'; temp++) {
-		// advance past the tab.
-		if (*temp == '\t') {
-			temp++;
-		}
-
-		// check the first letter, if no match, advance to newline char.
-		if (*temp != key[0]) {
-			while (*temp != '\n') {
-				temp++;
-			}
-			continue;
-		}
-
-		for (i = 0; i < key_len; i++) {
-			if (*temp++ != str[i]) {
-				// if no match, skip line, advance to newline char.
-				while (*temp != '\n') {
-					temp++;
-				}
-				i = 0;
-				break;
-			}
-		}
-		
-		if (i == (key_len)) {
-			dep[0] = '\0';
-			while (*temp == ' ' || *temp == '=') {
-				temp++;
-			}
-			for (i = 0; *temp != '\n' && *temp != '>'; i++) {
-				dep[i] = *temp++;
-			}
-			printf("dep: %s\n", dep);
-			list = add_data(list, dep);
-		}
-	}
-	change_dir("WD");
-	free(buffer);
-
-	return list;
+	return buffer;
 }
 
-Data *add_data(Data *list, const char *data) {
+// Move to memory
+
+/* 	char *pkgname;
+ *  char *epoch;
+ *  char *pkgver;
+ *  char *pkgrel;
+ *  char *zst_path;
+ *  Depends *makedepends;
+ *  Depends *depends;
+ *  Depends *optdepends;
+*/
+
+/*
+*	return the absolute path of package zst 
+*/
+char *zst_path(Srcinfo *pkg) {
 	
-	Data *temp;
+	char *cwd, *path = NULL;
 
-	temp = data_list_malloc();
-	str_alloc(&temp->data, strlen(data) + 1);
-	strcpy(temp->data, data);
-	temp->next = list;
-	list = temp;
+	cwd = change_dir(pkg->pkgname);
 
-	return list;
+	if (pkg->epoch == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + 24);
+		sprintf(path, "%s/%s-%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->pkgrel);
+	} else if (pkg->pkgrel == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + 24);
+		sprintf(path, "%s/%s-%s:%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver);
+	} else if (pkg->epoch == NULL && pkg->pkgrel == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + 23);
+		sprintf(path, "%s/%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver);
+	} else {
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + 25);
+		sprintf(path, "%s/%s-%s:%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->pkgrel);
+	}
+
+	return path;
 }
 
-Data *data_list_malloc(void) {
+Srcinfo *pkg_srcinfo_malloc(void) {
 
-	Data *temp;
+	Srcinfo *pkg = malloc(sizeof(Srcinfo));
+	if (pkg == NULL) {
+		printf(BRED"error:"RESET" failed to allocate memory for srcinfo list.\n");
+		exit(EXIT_FAILURE);
+	}
+	pkg->pkgname = NULL;
+	pkg->epoch = NULL;
+	pkg->pkgver = NULL;
+	pkg->pkgrel = NULL;
+	pkg->zst_path = NULL;
+	pkg->makedepends = NULL;
+	pkg->depends = NULL;
+	pkg->optdepends = NULL;
 
-	temp = malloc(sizeof(Data));
+	return pkg;
+}
+
+void clear_pkg_srcinfo(Srcinfo *pkg) {
+
+	free(pkg->pkgname);
+	free(pkg->epoch);
+	free(pkg->pkgver);
+	free(pkg->pkgrel);
+	free(pkg->zst_path);
+	clear_depends(pkg->makedepends);
+	clear_depends(pkg->depends);
+	clear_depends(pkg->optdepends);
+	free(pkg);
+	
+}
+
+Depends *depends_malloc(void) {
+
+	Depends *temp;
+
+	temp = malloc(sizeof(Depends));
 	if (temp == NULL) {
-		printf("error: failed to allocate storage for data_list\n");
+		printf(BRED"error:"RESET" failed to allocate storage for data_list\n");
 		exit(EXIT_FAILURE);
 	}
 	temp->data = NULL;
@@ -537,13 +688,25 @@ Data *data_list_malloc(void) {
 	return temp;
 }
 
-void clear_data_list(Data *list) {
+Depends *add_data(Depends *list, const char *data) {
+	
+	Depends *temp;
 
-	Data *temp_list;
+	temp = depends_malloc();
+	str_alloc(&temp->data, strlen(data) + 1);
+	strcpy(temp->data, data);
+	temp->next = list;
+	list = temp;
+
+	return list;
+}
+
+
+void clear_depends(Depends *list) {
+
+	Depends *temp_list;
 
 	while (list != NULL) {
-		// off by one.
-		printf("clear_list: data: %s\n", list->data);
 		temp_list = list;
 		list = list->next;
 		free(temp_list->data);

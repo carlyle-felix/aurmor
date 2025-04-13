@@ -7,13 +7,27 @@
 
 typedef struct package List;
 
-typedef struct data {
+typedef struct depends {
     char *data;
-    struct data *next;
-} Data;
+    struct depends *next;
+} Depends;
+
+typedef struct srcinfo {
+    char *pkgname;
+    char *epoch;
+    char *pkgver;
+    char *pkgrel;
+    char *zst_path;
+    Depends *makedepends;
+    Depends *depends;
+    Depends *optdepends;
+} Srcinfo;
+
+Srcinfo *populate_pkg(char *pkgname);
+void clear_pkg_srcinfo(Srcinfo *pkg);
 
 List *foreign_list(void);
-void alpm_uninstall(List *pkglist);
-void alpm_install(List *list);
+int alpm_uninstall(List *pkglist);
+int alpm_install(List *list);
 
 #endif 
