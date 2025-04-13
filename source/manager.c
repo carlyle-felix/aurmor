@@ -7,7 +7,8 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 
-void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
+// prototypes (NOTE: A lot of these must be moved. kept here during testing)
+void rm_depends(alpm_handle_t *local, alpm_pkg_t *pkg);
 void clean_up(Depends *rm_list);
 void list_free(char *data);		// for alpm_list_fn_free
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err);
@@ -22,6 +23,7 @@ char *zst_path(Srcinfo *pkg);
 Depends *add_data(Depends *list, const char *data);
 Depends *depends_malloc(void);
 void clear_depends(Depends *list);
+int rm_makedepends(Depends *deps);
 
 // return list of packages in localdb - probably don't need this.
 alpm_list_t *alpm_local(alpm_handle_t **local, alpm_errno_t *err) {
@@ -137,7 +139,7 @@ void list_free(char *data) {
  * 	transactions in order for this funtion to be reused by alpm_install to remove 
  * 	makedepends.
  */
-void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
+void rm_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	
 	alpm_db_t *local_db;
 	alpm_pkg_t *dep_pkg;
@@ -162,7 +164,7 @@ void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		// if this is true, there are no other packages that requires it.
 		if (alpm_list_count(req_list) == 1 && strcmp(req_list->data, alpm_pkg_get_name(pkg)) == 0) {
 			alpm_remove_pkg(local, dep_pkg);
-			rm_req_depends(local, dep_pkg);
+			rm_depends(local, dep_pkg);
 		}
 
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
@@ -213,7 +215,7 @@ int alpm_uninstall(List *pkglist) {
 			proceed = false;
 			continue;
 		}
-		rm_req_depends(local, pkg);
+		rm_depends(local, pkg);
 		res = alpm_remove_pkg(local, pkg);
 		if (res != 0) {
 			printf(BRED"error:"RESET" alpm_remove_pkg: %s\n", alpm_strerror(alpm_errno(local)));
@@ -221,15 +223,16 @@ int alpm_uninstall(List *pkglist) {
 	}
 
 	if (proceed == false) {
+		gain_root();
 		alpm_trans_release(local);
+		drop_root();
 		alpm_release(local);
-		clear_list(pkglist);
 		return -1;
 	}
 	
 	list = alpm_trans_get_remove(local);
 	printf(BOLD"Packages (%d): "RESET, alpm_list_count(list));
-	for (list; list != NULL; list = alpm_list_next(list)) {
+	for (; list != NULL; list = alpm_list_next(list)) {
 		pkgname = alpm_pkg_get_name(list->data);
 		printf("%s"GREY"-%s  "RESET, pkgname, alpm_pkg_get_version(list->data));
 		post_rm = add_data(post_rm, pkgname);
@@ -250,16 +253,14 @@ int alpm_uninstall(List *pkglist) {
 	res = alpm_trans_commit(local, &error_list);
 	if (res != 0) {
 		printf(BRED"error:"RESET" alpm_trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
-		success = false;
 	}
-	if (success == true) {
+	if (res == 0) {
 		clean_up(post_rm);
-		clear_depends(post_rm);
 		printf(BGREEN"=>"BOLD" Success\n"RESET);
 	}
+	clear_depends(post_rm);
 	alpm_trans_release(local);	
 	drop_root();
-
 	alpm_release(local);
 }
 
@@ -321,7 +322,7 @@ int alpm_install(List *list) {
 			clear_pkg_srcinfo(pkg_info);
 			continue;
 		}
-		// print installing missin build dependencies (remove these later.)
+		// print installing missing makedeps (remove these later.)
 		res = install_depends(pkg_info->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
@@ -333,6 +334,12 @@ int alpm_install(List *list) {
 		res = build(list->pkgname);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to build package: %s", list->pkgname);
+		}
+
+		// remove makedepends
+		res = rm_makedepends(pkg_info->makedepends);
+		if (res != 0) {
+			printf("Keeping makedepends.");
 		}
 
 		// this should be done after deps are resolved.
@@ -476,6 +483,66 @@ int install_depends(Depends *deps) {
 	return 0;
 }
 
+int rm_makedepends(Depends *deps) {
+	
+	alpm_handle_t *local;
+	alpm_db_t *local_db;
+	alpm_list_t *repo_db_list, *list, *error_list;
+	alpm_pkg_t *pkg;
+	int res;
+
+	repo_db_list = alpm_repos(&local);
+	local_db = alpm_get_localdb(local);
+
+	gain_root();
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
+	if (res != 0) {
+		printf(BRED"error:"RESET" trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	drop_root();
+
+	for (; deps != NULL; deps = deps->next) {
+		pkg = alpm_db_get_pkg(local_db, deps->data);
+		rm_depends(local, pkg);
+	}
+
+	list = alpm_trans_get_remove(local);
+	printf(BOLD"Packages (%d): "RESET, alpm_list_count(list));
+	for (; list != NULL; list = alpm_list_next(list)) {
+		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(list->data), alpm_pkg_get_version(list->data));
+	}
+
+	printf("\n\n"BBLUE"::"BOLD" Do you want to remove these packages? [Y/n] "RESET);
+	if (prompt() == false) {
+		gain_root();
+		alpm_trans_release(local);
+		drop_root();
+		alpm_release(local);
+		return -1;
+	}
+
+	gain_root();
+	res = alpm_trans_prepare(local, &error_list);
+	if (res != 0) {
+		printf(BRED"error:"RESET" alpm_trans_prepare: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	res = alpm_trans_commit(local, &error_list);
+	if (res != 0) {
+		printf(BRED"error:"RESET" alpm_trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
+	}
+	if (res == 0) {
+		printf(BGREEN"=>"BOLD" Success\n"RESET);
+	}
+	alpm_trans_release(local);	
+	drop_root();
+
+	alpm_release(local);
+	return 0;
+}
+
+/*
+*	add dependencies to transaction
+*/
 void resolve_deps(alpm_handle_t *local, alpm_list_t *repo_db_list, alpm_pkg_t *pkg) {
 
 	alpm_list_t *db_temp, *req_deps;
@@ -573,8 +640,16 @@ Srcinfo *populate_pkg(char *pkgname) {
 					case 3: 
 						str_alloc(&pkg->pkgrel, strlen(key_item) + 1);
 						strcpy(pkg->pkgrel, key_item);
+					case 4:
+						pkg->makedepends = add_data(pkg->makedepends, key_item);
+						break;
+					case 5: 
+						pkg->depends = add_data(pkg->makedepends, key_item);
+						break;
+					case 6:
+						pkg->optdepends = add_data(pkg->optdepends, key_item);
+						break;
 					default:
-						pkg->depends = add_data(pkg->depends, key_item);
 						break;
 				}
 			}
