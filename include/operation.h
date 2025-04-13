@@ -5,7 +5,7 @@ typedef struct package List;
 
 void target_clone(char *url);
 void aur_clone(char *pkgnmae);
-void uninstall(List *list);
+//void uninstall(List *list);
 void clean(void);
 void print_search(char *pkgname);
 void print_installed(void);

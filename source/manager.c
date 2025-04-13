@@ -292,8 +292,9 @@ void alpm_install(List *list) {
 	alpm_list_t *repo_db_list, *db_temp, *local_list, *add_list, *error_list;
 	alpm_pkg_t *pkg;
 	alpm_errno_t err;
-	Data *deps, *temp_deps;
+	Data *deps, *temp_deps, *pkgname, *epoch, *pkgver, *pkgrel;
 	int res;
+	char *cwd, path[MAX_BUFFER];
 	
 	repo_db_list = alpm_repos(&local);
 	
@@ -301,20 +302,48 @@ void alpm_install(List *list) {
 	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
 		printf("error: trans_init: %s\n", alpm_strerror(alpm_errno(local)));
+		clear_list(list);
+		alpm_release(local);
+		exit(EXIT_FAILURE);
 	}
 	drop_root();
 	// get the dep list from srcinfo.
 	for (;list != NULL; list = list->next) {
 
-		// TODO: READ MAKEDEPS FROM SRCINFO AND ACTION IT HERE.
+		/* TODO: 
+		 * READ MAKEDEPS FROM SRCINFO AND ACTION IT HERE.
+		 * ADD ALL NEEDED INFO FROM SRCINFO TO THE DATA LIST.
+		 * DON'T USE LIST STRUCT ITEMS IN THIS LOOP.
+		 */
 		
-		build(list->pkgname);
-
-		// path: WD/pkgname/pkgname-pkgver-arch.pkg.tar.zst
-		res = alpm_pkg_load(local, "path", 1, 0, &pkg);
+		res = build(list->pkgname);
+		if (res != 0) {
+			printf("failed to build package: %s", list->pkgname);
+			clear_list(list);
+			alpm_release(local);
+			exit(EXIT_FAILURE);
+		}
+		
+		pkgname = read_srcinfo(list->pkgname, "pkgname");
+		epoch = read_srcinfo(list->pkgname, "epoch");
+		pkgver = read_srcinfo(list->pkgname, "pkgver");
+		pkgrel = read_srcinfo(list->pkgname, "pkgrel");
+		cwd = change_dir(list->pkgname);
+		printf("CWD: %s\n", cwd);
+		
+		sprintf(path,"%s/%s-%s:%s-%s-x86_64.pkg.tar.zst", cwd, pkgname->data, epoch->data, pkgver->data, pkgrel->data);
+		printf("PATH: %s\n", path);
+		// path: WD/pkgname/pkgname-epoch:pkgver-pkgrel-arch.pkg.tar.zst
+		res = alpm_pkg_load(local, path, 1, 0, &pkg);
 		if (res != 0) {
 			printf("failed to add local package: %s.\n", alpm_strerror(alpm_errno(local)));
+			exit(EXIT_FAILURE);
 		}
+		clear_data_list(pkgname);
+		clear_data_list(epoch);
+		clear_data_list(pkgver);
+		clear_data_list(pkgrel);
+
 		res = alpm_add_pkg(local, pkg);
 		if (res != 0) {
 			printf("failed to add package.\n");
@@ -355,7 +384,7 @@ void alpm_install(List *list) {
 		printf("package add: %s\n", alpm_pkg_get_name(add_list->data));
 		add_list = alpm_list_next(add_list);
 	}
-	gain_root();
+	//gain_root();
 	res = alpm_trans_prepare(local, &error_list);
 	printf("prep res: %d\n", res);
 	if (res != 0) {
@@ -369,7 +398,7 @@ void alpm_install(List *list) {
 		printf("success.\n");
 	}
 	alpm_trans_release(local);
-	drop_root();
+	//drop_root();
 
 	alpm_release(local);	
 }

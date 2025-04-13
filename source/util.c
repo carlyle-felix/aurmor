@@ -162,9 +162,9 @@ List *get_dir_list(void) {
 	return dir_list;
 }
 
-int change_dir(const char *dir) {
+char *change_dir(const char *dir) {
 
-	static char *home = NULL, wd[MAX_BUFFER];
+	static char *home = NULL, wd[MAX_BUFFER], cwd[MAX_BUFFER];
 	register int i;
 
 	if (home == NULL) {
@@ -182,17 +182,21 @@ int change_dir(const char *dir) {
 
 	// only those needed by the program.
 	if (strcmp(dir, "WD") == 0) {
-		return chdir(wd);
+		chdir(wd);
 	} else if (strcmp(dir, "HOME") == 0) {
-		return chdir(home);
-	} 
+		chdir(home);
+	} else {
+		chdir(wd);
 
-	if (is_dir(dir) == false) {
-		printf(BRED"error:"RESET" %s dir not found.\n", dir);
-		return -1;
+		if (is_dir(dir) == false) {
+			printf(BRED"error:"RESET" %s dir not found.\n", dir);
+			return NULL;
+		}
+		
+		chdir(dir);
 	}
-	chdir(wd);
-	return chdir(dir);
+
+	return getcwd(cwd, MAX_BUFFER);
 }
 
 void gain_root(void) {
@@ -224,10 +228,9 @@ void drop_root(void) {
 	printf("root dropped, euid: %d\n", geteuid());
 }
 
-void build(char *pkgname) {
+int build(char *pkgname) {
 
-	char *buffer = NULL;
-	pid_t pid;
+	int pid;
 	int res;
 	struct passwd *pw;
 
@@ -248,7 +251,7 @@ void build(char *pkgname) {
 		change_dir(pkgname);
 		res = system(MAKEPKG);
 		if (res != 0) {
-			printf("system() failed with exit status: %s\n", WEXITSTATUS(res));
+			printf("system(makepkg) failed\n");
 		}
 		change_dir("WD");
 		
@@ -256,8 +259,8 @@ void build(char *pkgname) {
 	} else {
 		waitpid(pid, &res, 0);
 		if (WIFEXITED(res) == false) {
-            printf("error: process %d closed abnormally\n", pid);
+			return -1;
         }
+		return 0;
 	}
-
 }

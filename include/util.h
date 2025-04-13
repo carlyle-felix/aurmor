@@ -11,7 +11,7 @@
 #define AUR_SEARCH "https://aur.archlinux.org/rpc/v5/search/%s?by=name"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "less PKGBUILD"
-#define MAKEPKG "makepkg OPTIONS=-debug"
+#define MAKEPKG "makepkg -f OPTIONS=-debug"
 #define META ".packages-meta-v1.json.gz"    // not being used yet
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"  // not being used yet
 
@@ -36,9 +36,9 @@ bool file_exists(char *path);
 bool prompt(void);
 void remove_dir(char *path);
 List *get_dir_list(void);
-int change_dir(const char *dir);
+char *change_dir(const char *dir);
 void gain_root(void);
 void drop_root(void);
-void build(char *pkgname);
+int build(char *pkgname);
 
 #endif
