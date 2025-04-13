@@ -11,10 +11,60 @@
 #include "../include/manager.h"
 
 bool epoch_update(List *pkg, char *pkgver);
-void install(const char *pkgname);
+
 void check_update(List *pkglist);
 void fetch_update(char *pkgname);
-void less_prompt(const char *pkgname);
+bool less_prompt(const char *pkgname);
+
+void install(List *pkglist) {
+    
+	List *temp_list;
+
+    for (temp_list = pkglist; temp_list != NULL; temp_list = temp_list->next) {
+		aur_clone(temp_list->pkgname);
+		change_owner(temp_list->pkgname);
+		if (less_prompt(temp_list->pkgname) == true) {
+			temp_list->install = true;
+		}
+	}
+	alpm_install(pkglist);
+}
+
+bool less_prompt(const char *pkgname) {
+
+	change_dir(pkgname);
+	if (file_exists("PKGBUILD") != true) {
+		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
+		return false;	// pkgbuild not found, this package should be ignored later.
+	}
+
+    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
+	// if user chooses not to read pkgbuild, assume that package should be installed.
+	if (prompt() == false) {
+		return true;
+	}
+	
+	system("less PKGBUILD");
+
+	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
+	return prompt();
+
+	change_dir("WD");
+}
+
+void aur_clone(char *pkgname) {
+
+    char *str = NULL;
+
+	if (is_dir(pkgname) == true) {
+		printf("Removing %s directory before clone...\n", pkgname);
+		remove_dir(pkgname);
+	}
+	
+	get_str(&str, AUR_CLONE, pkgname); 
+	system(str);
+	free(str); 
+}
 
 void target_clone(char *url) {
 
@@ -44,23 +94,6 @@ void target_clone(char *url) {
     free(str);
 	
 	less_prompt(pkgname);
-}
-
-
-void aur_clone(char *pkgname) {
-
-    char *str = NULL;
-
-	if (is_dir(pkgname) == true) {
-		printf("Removing %s directory before clone...\n", pkgname);
-		remove_dir(pkgname);
-	}
-	
-	get_str(&str, AUR_CLONE, pkgname); 
-	system(str);
-	free(str);
-   
-	less_prompt(pkgname);   
 }
 
 void update(void) {
@@ -176,43 +209,6 @@ void fetch_update(char *pkgname) {
 
 	
 	free(str);
-}
-
-void less_prompt(const char *pkgname) {
-
-	char c, *str = NULL; 
-	register int i;
-
-	change_dir(pkgname);
-	if (file_exists("PKGBUILD") != true) {
-		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
-		return;
-	}
-
-    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
-
-	if (prompt() == false) {
-		free(str);
-		install(pkgname);
-		return;
-	}
-	
-	system("less PKGBUILD");
-
-	printf(BBLUE"::"BOLD" Continue to install? [Y/n] "RESET);
-	if (prompt() == true) {
-		install(pkgname);
-	}	
-	change_dir("WD");
-}
-
-void install(const char *pkgname) {
-    
-    char *str = NULL;
-
-    get_str(&str, MAKEPKG, pkgname);
-    system(str);
-    free(str);
 }
 
 void clean(void) {

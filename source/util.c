@@ -14,6 +14,8 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
+void traverse_dir(char *path, char *func, int uid, int gid); // make it use va_args?
+
 // pipe output of commands to a buffer and return the buffer.
 char *get_buffer(const char *cmd) {
 	
@@ -99,10 +101,28 @@ bool is_dir(const char *path) {
 // remove directories recursively.
 void remove_dir(char *path) {
 
+	traverse_dir(path, "rm", 0, 0);
+	rmdir(path);
+}
+
+void change_owner(char *path) {
+
+	int uid, gid;
+
+	uid = geteuid();
+	gid = getegid();
+	gain_root();
+	traverse_dir(path, "chown", uid, gid);
+	chown(path, uid, gid);
+	drop_root();
+}
+
+void traverse_dir(char *path, char *func, int uid, int gid) {
+
 	DIR *dir;
 	struct dirent *p;
 	struct stat buffer;
-	int path_len;
+	int path_len, res;
 	char temp_path[MAX_BUFFER];
 
 	dir = opendir(path);
@@ -121,14 +141,23 @@ void remove_dir(char *path) {
 		}
 
 		sprintf(temp_path, "%s/%s", path, p->d_name);
-		if (is_dir(temp_path)) {
-			remove_dir(temp_path);
-		} else {
-			remove(temp_path);
-		}		
+		if (strcmp(func, "rm") == 0) {
+			if (is_dir(temp_path)) {
+				remove_dir(temp_path);
+			} else {
+				remove(temp_path);
+			}		
+		} else if (strcmp(func, "chown") == 0){
+			if (is_dir(temp_path)) {
+				traverse_dir(temp_path, "chown", uid, gid);
+				chown(temp_path, uid, gid);
+			} else {
+				chown(temp_path, uid, gid);
+			}	
+		}
+		
 	}
 	closedir(dir);
-	rmdir(path);
 }
 
 // get list of items in the .cache/aur directory.

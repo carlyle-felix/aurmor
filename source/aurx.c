@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 			for (i = 2; i < argc; i++) {
 				list = add_pkgname(list, argv[i]);
 			}
-			alpm_install(list);
+			install(list);
 			clear_list(list);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");

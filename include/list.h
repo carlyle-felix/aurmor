@@ -9,6 +9,7 @@ typedef struct package {
     char *pkgname;
     char *pkgver;
     int pop;
+    bool install;
     bool installed;
     bool update;
     struct package *next;

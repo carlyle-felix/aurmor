@@ -132,6 +132,10 @@ void list_free(char *data) {
 /*	
  * 	check if any packages besides the one being removed requires one of its deps
  * 	before removing the dep, if required the dep is still needed return true.
+ * 
+ * 	NOTE: This function and alpm_uninstall() should be rewritten to have separated
+ * 	transactions in order for this funtion to be reused by alpm_install to remove 
+ * 	makedepends.
  */
 void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 	
@@ -165,6 +169,7 @@ void rm_req_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		alpm_list_free(req_list);
 	}
 }
+
 
 int alpm_uninstall(List *pkglist) {
 
@@ -222,8 +227,8 @@ int alpm_uninstall(List *pkglist) {
 		return -1;
 	}
 	
-	printf(BOLD"Packages: "RESET);
 	list = alpm_trans_get_remove(local);
+	printf(BOLD"Packages (%d): "RESET, alpm_list_count(list));
 	for (list; list != NULL; list = alpm_list_next(list)) {
 		pkgname = alpm_pkg_get_name(list->data);
 		printf("%s"GREY"-%s  "RESET, pkgname, alpm_pkg_get_version(list->data));
@@ -287,19 +292,20 @@ void clean_up(Depends *post_rm) {
 int alpm_install(List *list) {
 
 	alpm_handle_t *local;
-	alpm_list_t *add_list, *error_list, *local_list;
+	alpm_list_t *add_list, *error_list, *repo_db_list;
 	alpm_pkg_t *pkg;
-	alpm_errno_t err;
 	Srcinfo *pkg_info;
 	int res;
-	char *cwd, path[MAX_BUFFER];
 	bool ans = true;
 
-	local_list = alpm_local(&local, &err);
+	repo_db_list = alpm_repos(&local);
 
 	// depends and makedepends must be installed before package.
 	for (;list != NULL; list = list->next) {
-
+		// ignore packages user rejected
+		if (list->install == false) {
+			continue;
+		}
 		// ignore packages that are already installed
 		if (is_installed(list->pkgname) == true) {
 			printf(BOLD"%s already installed.\n"RESET, list->pkgname);
@@ -308,15 +314,19 @@ int alpm_install(List *list) {
 
 		pkg_info = populate_pkg(list->pkgname);
 
-		printf(BGREEN"==>"BOLD" Checking dependencies...\n"RESET);
+		printf(BGREEN"==>"BOLD" Checking dependencies...\n\n"RESET);
 		res = install_depends(pkg_info->depends);
 		if (res != 0) {
-			printf(BRED"error:"RESET" failed to install dependencies");
+			printf(BRED"error:"RESET" failed to install dependencies\n");
+			clear_pkg_srcinfo(pkg_info);
+			continue;
 		}
 		// print installing missin build dependencies (remove these later.)
 		res = install_depends(pkg_info->makedepends);
 		if (res != 0) {
-			printf(BRED"error:"RESET" failed to install build dependencies");
+			printf(BRED"error:"RESET" failed to install build dependencies\n");
+			clear_pkg_srcinfo(pkg_info);
+			continue;
 		}
 
 		// build and add the package zst
@@ -343,7 +353,15 @@ int alpm_install(List *list) {
 		}
 		clear_pkg_srcinfo(pkg_info);
 
-		printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
+		// print package list
+		add_list = alpm_trans_get_add(local);
+		printf(BOLD"\nPackages (%d): "RESET, alpm_list_count(add_list));
+		while (add_list != NULL) {
+			printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(add_list->data), alpm_pkg_get_version(add_list->data));
+			add_list = alpm_list_next(add_list);
+		}
+
+		printf(BBLUE"\n\n::"BOLD"Proceed with installation? [Y/n] "RESET);
 		ans = prompt();	
 		gain_root();
 
@@ -362,7 +380,7 @@ int alpm_install(List *list) {
 			printf(BRED"error:"RESET" trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
 		}
 		if (res == 0) {
-			printf(BGREEN"Success.\n"RESET);
+			printf(BGREEN"==>"BOLD" Success\n"RESET);
 		}
 		alpm_trans_release(local);
 		drop_root();
@@ -374,7 +392,6 @@ int alpm_install(List *list) {
 int install_depends(Depends *deps) {
 
 	alpm_handle_t *local;
-	alpm_db_t *local_db, *repo_db;
 	alpm_list_t *repo_db_list, *db_temp, *add_list, *error_list;
 	alpm_pkg_t *pkg;
 	Depends *temp_deps;
@@ -420,13 +437,17 @@ int install_depends(Depends *deps) {
 		alpm_release(local);
 		return 0;
 	}
+
+	// print package list
 	add_list = alpm_trans_get_add(local);
+	printf(BOLD"\nPackages (%d): "RESET, alpm_list_count(add_list));
 	while (add_list != NULL) {
+		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(add_list->data), alpm_pkg_get_version(add_list->data));
 		add_list = alpm_list_next(add_list);
 	}
 
 	// dont gain root before prompt.
-	printf(BBLUE"::"BOLD"Proceed with installation? [Y/n] "RESET);
+	printf(BBLUE"\n\n::"BOLD"Proceed with installation? [Y/n] "RESET);
 	ans = prompt();
 	gain_root();
 	if (ans == false) {
@@ -446,7 +467,7 @@ int install_depends(Depends *deps) {
 		printf(BRED"error:"RESET" trans_commit: %s\n", alpm_strerror(alpm_errno(local)));
 	}
 	if (res == 0) {
-		printf(BGREEN"Success.\n"RESET);
+		printf(BGREEN"==>"BOLD" Success\n"RESET);
 	}
 	alpm_trans_release(local);
 	drop_root();

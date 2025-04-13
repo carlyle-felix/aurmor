@@ -35,6 +35,7 @@ bool is_dir(const char *path);
 bool file_exists(char *path);
 bool prompt(void);
 void remove_dir(char *path);
+void change_owner(char *path);
 List *get_dir_list(void);
 char *change_dir(const char *dir);
 void gain_root(void);
