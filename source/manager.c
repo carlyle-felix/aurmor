@@ -162,11 +162,12 @@ void rm_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		
 		// check if theres only one package in the required list
 		// if this is true, there are no other packages that requires it.
+		
 		if (alpm_list_count(req_list) == 1 && strcmp(req_list->data, alpm_pkg_get_name(pkg)) == 0) {
 			if (alpm_pkg_get_reason(dep_pkg) == ALPM_PKG_REASON_DEPEND) {
 				alpm_remove_pkg(local, dep_pkg);
+				rm_depends(local, dep_pkg);
 			}
-			rm_depends(local, dep_pkg);
 		}
 
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
@@ -488,7 +489,7 @@ int rm_makedepends(Depends *deps) {
 	
 	alpm_handle_t *local;
 	alpm_db_t *local_db;
-	alpm_list_t *repo_db_list, *list, *error_list;
+	alpm_list_t *repo_db_list, *list, *req_list, *error_list;
 	alpm_pkg_t *pkg;
 	int res;
 
@@ -500,7 +501,7 @@ int rm_makedepends(Depends *deps) {
 	local_db = alpm_get_localdb(local);
 
 	gain_root();
-	res = alpm_trans_init(local, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
 		printf(BRED"error:"RESET" trans_init: %s\n", alpm_strerror(alpm_errno(local)));
 	}
@@ -509,6 +510,12 @@ int rm_makedepends(Depends *deps) {
 	for (; deps != NULL; deps = deps->next) {
 		pkg = alpm_db_get_pkg(local_db, deps->data);
 		rm_depends(local, pkg);
+		req_list = alpm_pkg_compute_requiredby(pkg);
+		if (alpm_pkg_get_reason(pkg) == ALPM_PKG_REASON_DEPEND && alpm_list_count(req_list) == 0) {
+			alpm_remove_pkg(local, pkg);
+		}
+		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
+		alpm_list_free(req_list);
 	}
 
 	list = alpm_trans_get_remove(local);
