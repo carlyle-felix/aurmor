@@ -163,7 +163,9 @@ void rm_depends(alpm_handle_t *local, alpm_pkg_t *pkg) {
 		// check if theres only one package in the required list
 		// if this is true, there are no other packages that requires it.
 		if (alpm_list_count(req_list) == 1 && strcmp(req_list->data, alpm_pkg_get_name(pkg)) == 0) {
-			alpm_remove_pkg(local, dep_pkg);
+			if (alpm_pkg_get_reason(dep_pkg) == ALPM_PKG_REASON_DEPEND) {
+				alpm_remove_pkg(local, dep_pkg);
+			}
 			rm_depends(local, dep_pkg);
 		}
 
@@ -322,7 +324,6 @@ int alpm_install(List *list) {
 			clear_pkg_srcinfo(pkg_info);
 			continue;
 		}
-		// print installing missing makedeps (remove these later.)
 		res = install_depends(pkg_info->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
@@ -331,10 +332,12 @@ int alpm_install(List *list) {
 		}
 
 		// build and add the package zst
+		gain_root();
 		res = build(list->pkgname);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to build package: %s", list->pkgname);
 		}
+		drop_root();
 
 		// remove makedepends
 		res = rm_makedepends(pkg_info->makedepends);
@@ -405,7 +408,6 @@ int install_depends(Depends *deps) {
 	bool ans = true, missing_dep = false;
 	int res;
 
-	// don't bother if list is empty
 	if (deps == NULL) {
 		return 0;
 	}
@@ -413,7 +415,7 @@ int install_depends(Depends *deps) {
 	repo_db_list = alpm_repos(&local);
 
 	gain_root();
-	res = alpm_trans_init(local, ALPM_TRANS_FLAG_NODEPVERSION);
+	res = alpm_trans_init(local, ALPM_TRANS_FLAG_ALLDEPS | ALPM_TRANS_FLAG_NODEPVERSION);
 	if (res != 0) {
 		printf(BRED"error:"RESET" trans_init: %s\n", alpm_strerror(alpm_errno(local)));
 	}
@@ -423,7 +425,6 @@ int install_depends(Depends *deps) {
 	for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
 		for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
 			pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
-			
 			if (pkg != NULL) {
 				if (is_installed(temp_deps->data) == false) {
 					missing_dep = true;
@@ -491,6 +492,10 @@ int rm_makedepends(Depends *deps) {
 	alpm_pkg_t *pkg;
 	int res;
 
+	if (deps == NULL) {
+		return 0;
+	}
+	
 	repo_db_list = alpm_repos(&local);
 	local_db = alpm_get_localdb(local);
 
@@ -620,6 +625,11 @@ Srcinfo *populate_pkg(char *pkgname) {
 					key_item[i] = *temp_buffer++;
 				}
 				key_item[i] = '\0';
+				if (*temp_buffer == '>') {
+					while (*temp_buffer != '\n') {
+						temp_buffer++;
+					}
+				}
 				if (key_item[0] == '\0') {
 					continue;
 				}
@@ -640,11 +650,12 @@ Srcinfo *populate_pkg(char *pkgname) {
 					case 3: 
 						str_alloc(&pkg->pkgrel, strlen(key_item) + 1);
 						strcpy(pkg->pkgrel, key_item);
+						break;
 					case 4:
 						pkg->makedepends = add_data(pkg->makedepends, key_item);
 						break;
 					case 5: 
-						pkg->depends = add_data(pkg->makedepends, key_item);
+						pkg->depends = add_data(pkg->depends, key_item);
 						break;
 					case 6:
 						pkg->optdepends = add_data(pkg->optdepends, key_item);
@@ -796,7 +807,6 @@ Depends *add_data(Depends *list, const char *data) {
 
 	return list;
 }
-
 
 void clear_depends(Depends *list) {
 

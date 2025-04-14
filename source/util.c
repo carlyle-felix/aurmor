@@ -262,15 +262,12 @@ int build(char *pkgname) {
 	int res;
 	struct passwd *pw;
 
-	gain_root();
 	pid = fork();
 	if (pid < 0) {
 		printf("error: failed to create new process.\n");
 		exit(EXIT_FAILURE);
 	} else if (pid == 0) {
 		pw = getpwnam(getlogin());
-		printf("user: %s\n", getlogin());
-		
 		res = setuid(pw->pw_uid);
 		if (res == 0) {
 			printf("build root dropped, euid: %d\n", getuid());
@@ -282,7 +279,7 @@ int build(char *pkgname) {
 			printf("system(makepkg) failed\n");
 		}
 		change_dir("WD");
-		
+
 		exit(0);
 	} else {
 		waitpid(pid, &res, 0);
@@ -291,4 +288,5 @@ int build(char *pkgname) {
         }
 		return 0;
 	}
+
 }
