@@ -9,7 +9,7 @@
 #include "../include/memory.h"
 #include "../include/util.h"
 #include "../include/manager.h"
-
+#include "../include/pkgdata.h"
 // Add packages in correct order
 List *add_pkgname(List *list, const char *pkgname) {
 

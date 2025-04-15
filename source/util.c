@@ -44,7 +44,7 @@ char *get_buffer(const char *cmd) {
 	return temp;
 }
 
-// compute how many bytes should be allocated to strings.
+// copy a string into a block of memory.
 void get_str(char **p, const char *str, const char *str_var) {
 	
 	if (str_var != NULL) {
@@ -101,7 +101,7 @@ bool is_dir(const char *path) {
 // remove directories recursively.
 void remove_dir(char *path) {
 
-	traverse_dir(path, "rm", 0, 0);
+	traverse_dir(path, "rm", ROOT, ROOT);
 	rmdir(path);
 }
 
@@ -111,6 +111,7 @@ void change_owner(char *path) {
 
 	uid = geteuid();
 	gid = getegid();
+
 	gain_root();
 	traverse_dir(path, "chown", uid, gid);
 	chown(path, uid, gid);

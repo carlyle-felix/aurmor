@@ -23,11 +23,8 @@ typedef struct srcinfo {
     Depends *optdepends;
 } Srcinfo;
 
-Srcinfo *populate_pkg(char *pkgname);
-void clear_pkg_srcinfo(Srcinfo *pkg);
-
-List *foreign_list(void);
 int alpm_uninstall(List *pkglist);
 int alpm_install(List *list);
+alpm_list_t *handle_init(alpm_handle_t **handle);
 
 #endif 

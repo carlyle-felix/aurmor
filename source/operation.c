@@ -9,6 +9,7 @@
 #include "../include/list.h"
 #include "../include/rpc.h"
 #include "../include/manager.h"
+#include "../include/pkgdata.h"
 
 bool epoch_update(List *pkg, char *pkgver);
 

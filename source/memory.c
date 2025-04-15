@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "../include/memory.h"
+#include "../include/manager.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
 #include "../include/util.h"
@@ -73,4 +74,77 @@ Json_buffer *json_buffer_malloc(void) {
     temp->size = 0;
 
 	return temp;
+}
+
+/*
+* free func for alpm_list_fn_free
+*/
+void list_free(char *data) {
+	
+	if (data == NULL){
+		return;
+	}
+	free(data);
+}
+
+Srcinfo *pkg_srcinfo_malloc(void) {
+
+	Srcinfo *pkg = malloc(sizeof(Srcinfo));
+	if (pkg == NULL) {
+		printf(BRED"error:"RESET" failed to allocate memory for srcinfo list.\n");
+		exit(EXIT_FAILURE);
+	}
+	pkg->pkgname = NULL;
+	pkg->epoch = NULL;
+	pkg->pkgver = NULL;
+	pkg->pkgrel = NULL;
+	pkg->zst_path = NULL;
+	pkg->makedepends = NULL;
+	pkg->depends = NULL;
+	pkg->optdepends = NULL;
+
+	return pkg;
+}
+
+void clear_pkg_srcinfo(Srcinfo *pkg) {
+
+	free(pkg->pkgname);
+	free(pkg->epoch);
+	free(pkg->pkgver);
+	free(pkg->pkgrel);
+	free(pkg->zst_path);
+	clear_depends(pkg->makedepends);
+	clear_depends(pkg->depends);
+	clear_depends(pkg->optdepends);
+	free(pkg);
+	
+}
+
+Depends *depends_malloc(void) {
+
+	Depends *temp;
+
+	temp = malloc(sizeof(Depends));
+	if (temp == NULL) {
+		printf(BRED"error:"RESET" failed to allocate storage for data_list\n");
+		exit(EXIT_FAILURE);
+	}
+	temp->data = NULL;
+	temp->next = NULL;
+
+	return temp;
+}
+
+
+
+void clear_depends(Depends *list) {
+
+	Depends *temp_list;
+
+	while (list != NULL) {
+		temp_list = list;
+		list = list->next;
+		free(temp_list->data);
+		free(temp_list);
+	}
 }

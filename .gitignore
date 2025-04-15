@@ -6,5 +6,6 @@ list.o
 operation.o
 rpc.o
 manager.o
+pkgdata.o
 vgcore.*
 .vscode
