@@ -76,7 +76,6 @@ bool prompt(void) {
 bool file_exists(char *path) {
 	
 	FILE *f;
-	int result;
 
 	f = fopen(path, "r");
 	if (f != NULL) {
@@ -122,8 +121,6 @@ void traverse_dir(char *path, char *func, int uid, int gid) {
 
 	DIR *dir;
 	struct dirent *p;
-	struct stat buffer;
-	int path_len, res;
 	char temp_path[MAX_BUFFER];
 
 	dir = opendir(path);
@@ -132,7 +129,7 @@ void traverse_dir(char *path, char *func, int uid, int gid) {
 			remove(path);
 			return;
 		}
-		printf(BRED"error:"RESET"Failed to open %s directory.\n");
+		printf(BRED"error:"RESET"Failed to open %s directory.\n", path);
 		exit(EXIT_FAILURE);
 	}
 
@@ -170,7 +167,7 @@ List *get_dir_list(void) {
 
 	dir = opendir(".");
 	if (dir == NULL) {
-		printf(BRED"error:"RESET"Failed to open %s directory.\n");
+		printf(BRED"error:"RESET"Failed to open aurx cache directory.\n");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -195,7 +192,6 @@ List *get_dir_list(void) {
 char *change_dir(const char *dir) {
 
 	static char *home = NULL, wd[MAX_BUFFER], cwd[MAX_BUFFER];
-	register int i;
 
 	if (home == NULL) {
 		home = getenv("HOME");

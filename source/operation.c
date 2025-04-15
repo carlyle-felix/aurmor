@@ -12,7 +12,6 @@
 #include "../include/pkgdata.h"
 
 bool epoch_update(List *pkg, char *pkgver);
-
 void check_update(List *pkglist);
 void fetch_update(char *pkgname);
 bool less_prompt(const char *pkgname);
@@ -99,8 +98,7 @@ void target_clone(char *url) {
 
 void update(void) {
 	
-	char c, *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
-	register int i;
+	char *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
 	List *pkglist, *rpc_pkg, *temp;
 	bool found_debug = false;
 
@@ -184,7 +182,7 @@ void force_update(char *pkgname) {
 	
 
 	if (pkg == NULL) {
-		printf(BRED"error:"RESET" %s is not installed.");
+		printf(BRED"error:"RESET" %s is not installed.", pkgname);
 		exit(EXIT_FAILURE);
 	}
 	clear_list(pkglist);
@@ -215,7 +213,7 @@ void fetch_update(char *pkgname) {
 void clean(void) {
 
     char *str = NULL;
-    List *dir, *pacman, *rpc_pkg, *temp1, *temp2;
+    List *dir, *pacman, *temp1, *temp2;
 
     
     dir = get_dir_list();

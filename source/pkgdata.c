@@ -15,7 +15,7 @@ Srcinfo *populate_pkg(char *pkgname) {
 	Srcinfo *pkg = pkg_srcinfo_malloc();
 	int key_len;
 	register int i, key;
-	char *buffer, *temp_buffer, *str, key_item[MAX_BUFFER];
+	char *buffer, *temp_buffer, key_item[MAX_BUFFER];
 	char *keys[] = {"pkgname", "epoch", "pkgver", "pkgrel", 
 					"makedepends", "depends", "optdepends"};
 

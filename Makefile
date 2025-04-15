@@ -1,4 +1,5 @@
-CFLAGS 		= -Wall -Wextra -Wpedantic -g
+CFLAGS 		= -Wall -Wextra -Wpedantic -g -fsanitize=address
+LDFLAGS 	= -lcurl -ljson-c -lalpm -lpacutils -fsanitize=address
 INCL		= ./include
 SRC			= ./source
 BIN			= aurx
@@ -10,7 +11,7 @@ aurx: aurx.o util.o operation.o memory.o list.o rpc.o manager.o \
 		pkgdata.o
 	gcc -o aurx $(SRC)/aurx.c $(SRC)/util.c $(SRC)/operation.c \
 		$(SRC)/memory.c $(SRC)/list.c $(SRC)/rpc.c $(SRC)/manager.c \
-		$(SRC)/pkgdata.c -lcurl -ljson-c -lalpm -lpacutils
+		$(SRC)/pkgdata.c $(CFLAGS) $(LDFLAGS)
 
 aurx.o: $(SRC)/aurx.c $(INCL)/operation.h $(INCL)/memory.h \
 		$(INCL)/rpc.h $(INCL)/list.h $(INCL)/util.h $(INCL)/manager.h
@@ -43,7 +44,7 @@ manager.o: $(SRC)/manager.c $(INCL)/manager.h $(INCL)/list.h $(INCL)/util.h \
 pkgdata.o: $(SRC)/pkgdata.c $(INCL)/pkgdata.h $(INCL)/memory.h $(INCL)/manager.h \
 		$(INCL)/util.h $(INCL)/list.h
 	gcc -c $(SRC)/pkgdata.c
-	
+
 
 .PHONY: install clean uninstall
 install:

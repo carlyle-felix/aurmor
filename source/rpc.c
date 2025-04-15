@@ -14,7 +14,6 @@ size_t write_meta(char *data, size_t size, size_t nmemb, FILE *p);
 List *get_rpc_data(char *url) {
 
     Json_buffer *buffer;
-    char *response;
     List *temp;
 
     buffer = json_buffer_malloc();
@@ -104,7 +103,7 @@ size_t write_meta(char *data, size_t size, size_t nmemb, FILE *p) {
 List *json(char *json_data) {
 
     register int i, n_results;
-    json_object *root, *results, *name, *pop, *version, *pkg, *desc;
+    json_object *root, *results, *name, *pop, *version, *pkg;
     List *temp;
     
     root = json_tokener_parse(json_data);

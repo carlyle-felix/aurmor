@@ -97,7 +97,7 @@ void rm_depends(alpm_handle_t *handle, alpm_pkg_t *pkg) {
 	// search localdb for pkgname and use it to get a list of
 	// depenencies for package and traverse the list.
 	dep_list = alpm_pkg_get_depends(pkg);
-	for (dep_list; dep_list != NULL; dep_list = alpm_list_next(dep_list)) {
+	for (; dep_list != NULL; dep_list = alpm_list_next(dep_list)) {
 		dep = dep_list->data;
 
 		// find the dependency in the localdb
@@ -123,12 +123,12 @@ void rm_depends(alpm_handle_t *handle, alpm_pkg_t *pkg) {
 int alpm_install(List *pkglist) {
 
 	alpm_handle_t *handle;
-	alpm_list_t *add_list, *repo_db_list;
+	alpm_list_t *add_list;
 	alpm_pkg_t *pkg;
 	Srcinfo *pkg_info;
 	int res;
 
-	repo_db_list = handle_init(&handle);
+	handle_init(&handle);
 
 	// depends and makedepends must be installed before package.
 	for (;pkglist != NULL; pkglist = pkglist->next) {
@@ -189,7 +189,7 @@ int alpm_install(List *pkglist) {
 
 		// print package list
 		add_list = alpm_trans_get_add(handle);
-		printf(BOLD"\nPackages (%d): "RESET, alpm_list_count(add_list));
+		printf(BOLD"\nPackages (%ld): "RESET, alpm_list_count(add_list));
 		while (add_list != NULL) {
 			printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(add_list->data), alpm_pkg_get_version(add_list->data));
 			add_list = alpm_list_next(add_list);
@@ -213,8 +213,8 @@ int alpm_install(List *pkglist) {
 
 	if (pkglist != NULL) {
 		clear_pkg_srcinfo(pkg_info);
-		return -1;
-	}
+	}return -1;
+	return -1;
 }
 
 int alpm_uninstall(List *pkglist) {
@@ -222,17 +222,17 @@ int alpm_uninstall(List *pkglist) {
 	alpm_handle_t *handle;
 	alpm_db_t *local_db;
 	alpm_pkg_t *pkg;
-	alpm_list_t *local_list, *db_list;
+	alpm_list_t *local_list;
 	Depends *post_rm = NULL;
 	const char *pkgname;
 	int res;
 
-	db_list = handle_init(&handle);
+	handle_init(&handle);
 	local_db = alpm_get_localdb(handle);
 	res = trans_init(handle, ALPM_TRANS_FLAG_CASCADE | ALPM_TRANS_FLAG_NODEPVERSION);
 
 	printf("Checking dependencies...\n\n");
-	for (pkglist; pkglist != NULL && res == 0; pkglist = pkglist->next) {
+	for (; pkglist != NULL && res == 0; pkglist = pkglist->next) {
 		if (is_installed(pkglist->pkgname) == false) {
 			printf(BRED"error:"RESET" target not found: %s.\n", pkglist->pkgname);
 			break;
@@ -263,7 +263,7 @@ int alpm_uninstall(List *pkglist) {
 	}
 	
 	local_list = alpm_trans_get_remove(handle);
-	printf(BOLD"Packages (%d): "RESET, alpm_list_count(local_list));
+	printf(BOLD"Packages (%ld): "RESET, alpm_list_count(local_list));
 	for (; local_list != NULL; local_list = alpm_list_next(local_list)) {
 		pkgname = alpm_pkg_get_name(local_list->data);
 		printf("%s"GREY"-%s  "RESET, pkgname, alpm_pkg_get_version(local_list->data));
@@ -358,7 +358,7 @@ int install_depends(Depends *deps) {
 
 	// print package list
 	add_list = alpm_trans_get_add(handle);
-	printf(BOLD"\nPackages (%d): "RESET, alpm_list_count(add_list));
+	printf(BOLD"\nPackages (%ld): "RESET, alpm_list_count(add_list));
 	while (add_list != NULL) {
 		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(add_list->data), alpm_pkg_get_version(add_list->data));
 		add_list = alpm_list_next(add_list);
@@ -387,7 +387,7 @@ int rm_makedepends(Depends *deps) {
 	
 	alpm_handle_t *handle;
 	alpm_db_t *local_db;
-	alpm_list_t *repo_db_list, *list, *req_list;
+	alpm_list_t *list, *req_list;
 	alpm_pkg_t *pkg;
 	int res;
 
@@ -395,7 +395,7 @@ int rm_makedepends(Depends *deps) {
 		return 0;
 	}
 	
-	repo_db_list = handle_init(&handle);
+	handle_init(&handle);
 	local_db = alpm_get_localdb(handle);
 	res = trans_init(handle, ALPM_TRANS_FLAG_NODEPVERSION);
 	
@@ -411,7 +411,7 @@ int rm_makedepends(Depends *deps) {
 	}
 
 	list = alpm_trans_get_remove(handle);
-	printf(BOLD"Packages (%d): "RESET, alpm_list_count(list));
+	printf(BOLD"Packages (%ld): "RESET, alpm_list_count(list));
 	for (; list != NULL; list = alpm_list_next(list)) {
 		printf("%s"GREY"-%s  "RESET, alpm_pkg_get_name(list->data), alpm_pkg_get_version(list->data));
 	}

@@ -22,7 +22,7 @@ void str_alloc(char **ptr, int size) {
 
 		temp = realloc(*ptr, size);
 		if (temp == NULL) {
-			printf(BRED"error:"RESET" \e[0;1mFailed to reallocate memory of string.\n");
+			printf(BRED"error:"RESET" Failed to reallocate memory of string.\n");
 			exit(EXIT_FAILURE);
 		}
 		*ptr = temp;
@@ -30,7 +30,7 @@ void str_alloc(char **ptr, int size) {
 }
 
 List *list_malloc(void) {
-
+	
 	List *temp = malloc(sizeof(List));
 	if (temp == NULL) {
 		printf(BRED"error:"RESET" Failed to allocate memory for new node.\n");
