@@ -20,6 +20,10 @@ Srcinfo *populate_pkg(char *pkgname) {
 					"makedepends", "depends", "optdepends"};
 
 	buffer = read_srcinfo(pkgname);
+	if (buffer == NULL) {
+		printf(BRED"error"RESET"failed read open .SRCINFO.\n");
+		return NULL;
+	}
 
 	// traverse list of keys
 	for (key = 0; key < 7; key++) {
@@ -121,16 +125,17 @@ char *read_srcinfo(char *pkgname) {
 	
 	change_dir(pkgname);
 
-	str_alloc(&buffer, max);
 	for (;;) {
+		str_alloc(&buffer, max);
 		srcinfo = fopen(".SRCINFO", "r");
 		if (srcinfo == NULL) {
-			printf(BRED"error:"RESET" failed to open %s/.SRCINFO", pkgname);
+			printf(BRED"error:"RESET" failed to open %s/.SRCINFO\n", pkgname);
+			free(buffer);
+			return NULL;
 		}
 		read = fread(buffer, sizeof(char), max, srcinfo);
 		if (read == max) {
 			max = read * 2;
-			str_alloc(&buffer, max);
 		} else {
 			fclose(srcinfo);
 			break;
@@ -138,7 +143,10 @@ char *read_srcinfo(char *pkgname) {
 		fclose(srcinfo);
 	}
 	buffer[read] = '\0';
-
+	if (buffer[0] == '\0') {
+		return NULL;
+	}
+	
 	return buffer;
 }
 
@@ -230,6 +238,7 @@ bool is_foreign(char *pkgname) {
 		}
 	}
 	clear_list(pkglist);
+
 	return foreign;
 }
 

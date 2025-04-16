@@ -11,50 +11,17 @@
 #include "../include/manager.h"
 #include "../include/pkgdata.h"
 
+// prototypes
+int aur_clone(char *pkgname);
 bool epoch_update(List *pkg, char *pkgver);
-void check_update(List *pkglist);
+List *check_update(List *pkglist);
 void fetch_update(char *pkgname);
 bool less_prompt(const char *pkgname);
 
-void install(List *pkglist) {
-    
-	List *temp_list;
-
-    for (temp_list = pkglist; temp_list != NULL; temp_list = temp_list->next) {
-		aur_clone(temp_list->pkgname);
-		change_owner(temp_list->pkgname);
-		if (less_prompt(temp_list->pkgname) == true) {
-			temp_list->install = true;
-		}
-	}
-	alpm_install(pkglist);
-}
-
-bool less_prompt(const char *pkgname) {
-
-	change_dir(pkgname);
-	if (file_exists("PKGBUILD") != true) {
-		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
-		return false;	// pkgbuild not found, this package should be ignored later.
-	}
-
-    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
-	// if user chooses not to read pkgbuild, assume that package should be installed.
-	if (prompt() == false) {
-		return true;
-	}
-	
-	system("less PKGBUILD");
-
-	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
-	return prompt();
-
-	change_dir("WD");
-}
-
-void aur_clone(char *pkgname) {
+int aur_clone(char *pkgname) {
 
     char *str = NULL;
+	int res;
 
 	if (is_dir(pkgname) == true) {
 		printf("Removing %s directory before clone...\n", pkgname);
@@ -62,8 +29,10 @@ void aur_clone(char *pkgname) {
 	}
 	
 	get_str(&str, AUR_CLONE, pkgname); 
-	system(str);
+	res = system(str);
 	free(str); 
+
+	return res;
 }
 
 void target_clone(char *url) {
@@ -96,18 +65,78 @@ void target_clone(char *url) {
 	less_prompt(pkgname);
 }
 
+void fetch_update(char *pkgname) {
+
+	char *str = NULL;
+
+	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
+	if (is_dir(pkgname) == false) {
+		get_str(&str, AUR_CLONE_NULL, pkgname);
+		system(str);
+	} else {
+		change_dir(pkgname);
+		get_str(&str, GIT_PULL_NULL, pkgname);
+		system(str);
+		change_dir("WD");
+	}
+	change_owner(pkgname);
+
+	free(str);
+}
+
+void install(List *pkglist) {
+    
+	List *temp_list;
+	int res;
+
+    for (temp_list = pkglist; temp_list != NULL; temp_list = temp_list->next) {
+		res = aur_clone(temp_list->pkgname);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to clone target package.\n");
+			continue;
+		}
+		change_owner(temp_list->pkgname);
+		if (less_prompt(temp_list->pkgname) == true) {
+			temp_list->install = true;
+		}
+	}
+	alpm_install(pkglist);
+}
+
+bool less_prompt(const char *pkgname) {
+
+	change_dir(pkgname);
+	if (file_exists("PKGBUILD") != true) {
+		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
+		return false;	// pkgbuild not found, this package should be ignored later.
+	}
+
+    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
+	// if user chooses not to read pkgbuild, assume that package should be installed.
+	if (prompt() == false) {
+		return true;
+	}
+	
+	system("less PKGBUILD");
+
+	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
+	return prompt();
+
+	change_dir("WD");
+}
+
 void update(void) {
 	
-	char *str = NULL, *update_list = NULL, *debug = NULL, *debug_temp;
-	List *pkglist, *rpc_pkg, *temp;
+	char *str = NULL, *update_str = NULL, *debug = NULL, *debug_temp;
+	List *pkglist, *update_list, *rpc_pkg, *temp_list;
 	bool found_debug = false;
 
-	str_alloc(&update_list, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_list)
+	str_alloc(&update_str, sizeof(char)); 	// must malloc here in order to realloc later on with strlen(update_str)
 
 	pkglist = foreign_list();
 
 	printf(BBLUE"::"BOLD" Looking for updates...\n"RESET);
-	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
+	for (temp_list = pkglist; pkglist != NULL; pkglist = pkglist->next) {
 
 		// disregard -debug;
 		get_str(&debug, "%s", pkglist->pkgname);
@@ -129,48 +158,55 @@ void update(void) {
 			pkglist->update = true;
 			str_alloc(&str, (strlen(pkglist->pkgname) + strlen(pkglist->pkgver) + strlen(rpc_pkg->pkgver) + 69)); // get the counting correct.
 			sprintf(str, " %-30s"GREY"%-20s"RESET"-> "BGREEN"%s\n"RESET, pkglist->pkgname, pkglist->pkgver, rpc_pkg->pkgver);
-			str_alloc(&update_list, (strlen(update_list) + strlen(str) + 1));
-			strcat(update_list, str);
+			str_alloc(&update_str, (strlen(update_str) + strlen(str) + 1));
+			strcat(update_str, str);
 		}	
 		clear_list(rpc_pkg);
 	}
 	free(str);
 	free(debug);
 
-	pkglist = temp;
-	if (update_list[0] == '\0') {
+	pkglist = temp_list;
+	if (update_str[0] == '\0') {
 		printf(" Nothing to do.\n");
-		free(update_list);
+		free(update_str);
 		clear_list(pkglist);
 		exit(EXIT_SUCCESS);
 	} else {
-		printf(BBLUE"::"BOLD" Updates are available for:"RESET"\n\n%s\n", update_list);
-		free(update_list);
+		printf(BBLUE"::"BOLD" Updates are available for:"RESET"\n\n%s\n", update_str);
+		free(update_str);
 	}
-
+ 
 	printf(BBLUE"::"BOLD" Proceed with installation? [Y/n] "RESET);
 	if (prompt() == false) {
 		clear_list(pkglist);
 		return;
 	}
 	
-	check_update(pkglist);
-	for (temp = pkglist; pkglist != NULL; pkglist = pkglist->next) {
-		if (pkglist->update == true) {
-			less_prompt(pkglist->pkgname);
+	update_list = check_update(pkglist);
+	clear_list(pkglist);
+	for (temp_list = update_list; temp_list != NULL; temp_list = temp_list->next) {
+		if (less_prompt(update_list->pkgname) == true) {
+			temp_list->install = true;
 		}
 	}
-	clear_list(temp);
+	alpm_install(update_list);
+	clear_list(update_list);
 }
 
-void check_update(List *pkglist) {
+List *check_update(List *pkglist) {
+
+	List *update_list = list_malloc();
 
 	while (pkglist != NULL) {
 		if (pkglist->update == true) {
 			fetch_update(pkglist->pkgname);
+			update_list = add_pkgname(update_list, pkglist->pkgname);
 		}
 		pkglist = pkglist->next;
 	}
+
+	return update_list;
 }
 
 void force_update(char *pkgname) {
@@ -189,25 +225,6 @@ void force_update(char *pkgname) {
 	
 	fetch_update(pkgname);
 	less_prompt(pkgname);
-}
-
-void fetch_update(char *pkgname) {
-
-	char *str = NULL;
-
-	printf(BBLUE"=>"BOLD" Fetching update for %s...\n"RESET, pkgname);
-	if (is_dir(pkgname) == false) {
-		get_str(&str, AUR_CLONE_NULL, pkgname);
-		system(str);
-	} else {
-		change_dir(pkgname);
-		get_str(&str, GIT_PULL_NULL, pkgname);
-		system(str);
-		change_dir("WD");
-	}
-
-	
-	free(str);
 }
 
 void clean(void) {
@@ -258,7 +275,6 @@ void print_search(char *pkgname) {
 		}
 		printf("\n");
 	}
-
 	free(str);
     clear_list(temp);
 }
@@ -276,7 +292,6 @@ void print_installed(void) {
 	for (temp = installed; installed != NULL; installed = installed->next) {
 		printf(BOLD"%s "BGREEN"%s\n"RESET, installed->pkgname, installed->pkgver);
 	}
-	
 	clear_list(temp);
 }
 

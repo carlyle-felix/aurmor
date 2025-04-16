@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         printf(" -u\t\t\t\t\tupdate and upgrade.\n");
 		printf(" -U [package(s)]\t\t\tforce update package(s).\n");
 		printf(" -i [package(s)]\t\t\tinstall package(s).\n");
-		printf(" -x [git clone URL]\t\t\tinstall specified target from a git repo");
+		printf(" -x [git clone URL]\t\t\tinstall specified target from a git repo.\n");
 		printf(" -c\t\t\t\t\tclean ~/.cache/aurx dir.\n");
 		printf(" -q\t\t\t\t\tlist installed packages.\n");
 		printf(" -r [package(s)]\t\t\tuninstall package(s).\n");

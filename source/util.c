@@ -16,32 +16,39 @@
 
 void traverse_dir(char *path, char *func, int uid, int gid); // make it use va_args?
 
-// pipe output of commands to a buffer and return the buffer.
+/* 
+* 	No longer in use! might replace system() with this function.
+* 	pipe output of commands to a buffer and return the buffer.
+*/
 char *get_buffer(const char *cmd) {
 	
-	char *temp_buffer = NULL, *temp = NULL;
+	char *buffer = NULL;
+	int read, max = MAX_BUFFER;
 	FILE *p;
-	
-	str_alloc(&temp_buffer, MAX_BUFFER);
 
-	p = popen(cmd, "r");
-	if (p == NULL) {
-		printf(BRED"ERROR:"BOLD" Failed in buffer().\n"RESET);
-		exit(EXIT_FAILURE);
+	for (;;) {
+		str_alloc(&buffer, max);
+		p = popen(cmd, "r");
+		if (p == NULL) {
+			printf(BRED"error:"RESET" failed in buffer().\n");
+			free(buffer);
+			return NULL;
+		}
+		read = fread(buffer, sizeof(char), max, p);
+		if (read == max) {
+			max *= 2;
+		} else {
+			pclose(p);
+			break;
+		}
 	}
-	fgets(temp_buffer, MAX_BUFFER, p);
-	pclose(p);
-
-	if (strlen(temp_buffer) == 0) {
-		free(temp_buffer);
+	buffer[read] = '\0';
+	if (buffer[0] == '\0') {
+		free(buffer);
 		return NULL;
 	}
 
-	str_alloc(&temp, (strlen(temp_buffer) + 1));
-	strcpy(temp, temp_buffer);
-	free(temp_buffer);
-
-	return temp;
+	return buffer;
 }
 
 // copy a string into a block of memory.
@@ -285,5 +292,4 @@ int build(char *pkgname) {
         }
 		return 0;
 	}
-
 }
