@@ -9,6 +9,6 @@ void clean(void);
 void print_search(char *pkgname);
 void print_installed(void);
 void update(void);
-void force_update(char *pkgname);
+void force_update(List *pkglist);
 
 #endif

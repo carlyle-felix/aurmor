@@ -209,30 +209,28 @@ List *check_update(List *pkglist) {
 	return update_list;
 }
 
-void force_update(char *pkgname) {
+void force_update(List *pkglist) {
 
-	List *pkglist, *pkg;
+	List *temp_list;
 
-	pkglist = foreign_list();
-	pkg = find_pkg(pkglist, pkgname);
-	
-
-	if (pkg == NULL) {
-		printf(BRED"error:"RESET" %s is not installed.", pkgname);
-		exit(EXIT_FAILURE);
+	for (temp_list = pkglist; temp_list != NULL; temp_list = temp_list->next) {
+		if (is_foreign(temp_list->pkgname) != true) {
+			printf(BRED"error: "RESET" %s is not installed.\n", temp_list->pkgname);
+			break;
+		}
 	}
-	clear_list(pkglist);
-	
-	fetch_update(pkgname);
-	less_prompt(pkgname);
+
+	for (; temp_list == NULL && pkglist != NULL; pkglist = pkglist->next) {
+		fetch_update(pkglist->pkgname);
+		less_prompt(pkglist->pkgname);
+	}
 }
 
 void clean(void) {
 
     char *str = NULL;
     List *dir, *pacman, *temp1, *temp2;
-
-    
+ 
     dir = get_dir_list();
 	if (dir == NULL) {
 		printf("Nothing to do.\n");

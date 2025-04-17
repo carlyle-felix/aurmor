@@ -227,12 +227,12 @@ List *foreign_list(void) {
 */
 bool is_foreign(char *pkgname) {
 
-	List *pkglist, *temp;
+	List *pkglist, *temp_list;
 	bool foreign = false;
 	
 	pkglist = foreign_list();
-	for (temp = pkglist; temp != NULL; temp = temp->next) {
-		if (strcmp(temp->pkgname, pkgname) == 0) {
+	for (temp_list = pkglist; temp_list != NULL; temp_list = temp_list->next) {
+		if (strcmp(temp_list->pkgname, pkgname) == 0) {
 			foreign = true;
 			break;
 		}

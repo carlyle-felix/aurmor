@@ -42,7 +42,13 @@ int main(int argc, char *argv[]) {
 			printf(BRED"error:"RESET" root access required to perform this operation.\n");
 		} else if (argc > 2) {
 			for (i = 2; i < argc; i++) {
-				force_update(argv[i]);
+				List *pkglist = list_malloc();
+			
+				for (i = 2; i < argc; i++) {
+					pkglist = add_pkgname(pkglist, argv[i]);
+				}
+				force_update(pkglist);
+				clear_list(pkglist);
 			}
 		} else {update();
 			printf("Please specify package(s), use -h for help.\n");
@@ -51,14 +57,13 @@ int main(int argc, char *argv[]) {
 		if (uid != 0) {
 			printf(BRED"error:"RESET" root access required to perform this operation.\n");
 		} else if (argc > 2) {
-			List *list;
+			List *pkglist = list_malloc();
 			
-			list = list_malloc();
 			for (i = 2; i < argc; i++) {
-				list = add_pkgname(list, argv[i]);
+				pkglist = add_pkgname(pkglist, argv[i]);
 			}
-			install(list);
-			clear_list(list);
+			install(pkglist);
+			clear_list(pkglist);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
 		}	
@@ -80,14 +85,13 @@ int main(int argc, char *argv[]) {
 		if (uid != 0) {
 			printf(BRED"error:"RESET" root access required to perform this operation.\n");
 		} else if (argc > 2) {
-			List *list;
-			
-			list = list_malloc();
+			List *pkglist = list_malloc();
+
 			for (i = 2; i < argc; i++) {
-				list = add_pkgname(list, argv[i]);
+				pkglist = add_pkgname(pkglist, argv[i]);
 			}
-			alpm_uninstall(list);
-			clear_list(list);
+			alpm_uninstall(pkglist);
+			clear_list(pkglist);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");
 		}
