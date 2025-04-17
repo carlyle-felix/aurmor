@@ -17,7 +17,6 @@
 void traverse_dir(char *path, char *func, int uid, int gid); // make it use va_args?
 
 /* 
-* 	No longer in use! might replace system() with this function.
 * 	pipe output of commands to a buffer and return the buffer.
 */
 char *get_buffer(const char *cmd) {
@@ -61,6 +60,28 @@ void get_str(char **p, const char *str, const char *str_var) {
 		str_alloc(p, strlen(str) + 1);
 		sprintf(*p, str);
 	}
+}
+
+bool less_prompt(const char *pkgname) {
+
+	change_dir(pkgname);
+	if (file_exists("PKGBUILD") != true) {
+		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
+		return false;	// pkgbuild not found, this package should be ignored later.
+	}
+
+    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
+	// if user chooses not to read pkgbuild, assume that package should be installed.
+	if (prompt() == false) {
+		return true;
+	}
+	
+	system("less PKGBUILD");
+
+	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
+	return prompt();
+
+	change_dir("WD");
 }
 
 bool prompt(void) {
@@ -264,6 +285,7 @@ int build(char *pkgname) {
 
 	int pid;
 	int res;
+	char *buffer, *error;
 	struct passwd *pw;
 
 	pid = fork();
@@ -278,18 +300,22 @@ int build(char *pkgname) {
 		}
 		
 		change_dir(pkgname);
-		res = system(MAKEPKG);
-		if (res != 0) {
-			printf("system(makepkg) failed\n");
+		buffer = get_buffer(MAKEPKG);
+		if (buffer == NULL) {
+			printf("failed at makepkg.\n");
+		} else if ((error = strstr(buffer, "==> ERROR")) != NULL) {
+			printf("%s", error);
+			free(buffer);
+			exit(EXIT_FAILURE);
 		}
-		change_dir("WD");
 
+		free(buffer);
 		exit(0);
 	} else {
 		waitpid(pid, &res, 0);
-		if (WIFEXITED(res) == false) {
+		if (WIFEXITED(res) && WEXITSTATUS(res) == EXIT_FAILURE) {
 			return -1;
-        }
+		}
 		return 0;
 	}
 }

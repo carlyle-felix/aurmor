@@ -16,7 +16,6 @@ int aur_clone(char *pkgname);
 bool epoch_update(List *pkg, char *pkgver);
 List *check_update(List *pkglist);
 void fetch_update(char *pkgname);
-bool less_prompt(const char *pkgname);
 
 int aur_clone(char *pkgname) {
 
@@ -103,28 +102,6 @@ void install(List *pkglist) {
 	alpm_install(pkglist);
 }
 
-bool less_prompt(const char *pkgname) {
-
-	change_dir(pkgname);
-	if (file_exists("PKGBUILD") != true) {
-		printf(BRED"error:"RESET" PKGBUILD for %s not found\n"RESET, pkgname);
-		return false;	// pkgbuild not found, this package should be ignored later.
-	}
-
-    printf(BBLUE"::"BOLD" View %s PKGBUILD in less? [Y/n] "RESET, pkgname);
-	// if user chooses not to read pkgbuild, assume that package should be installed.
-	if (prompt() == false) {
-		return true;
-	}
-	
-	system("less PKGBUILD");
-
-	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
-	return prompt();
-
-	change_dir("WD");
-}
-
 void update(void) {
 	
 	char *str = NULL, *update_str = NULL, *debug = NULL, *debug_temp;
@@ -192,6 +169,32 @@ void update(void) {
 	}
 	alpm_install(update_list);
 	clear_list(update_list);
+}
+
+/* 
+ * check if an epoch has been added to a PKGBUILD that wasnt present in
+ * the installed version. without this, if the "pkgver" is 
+ * higher than the "epoch" (1), the epoch update will be ignored.
+ */
+bool epoch_update(List *pkg, char *pkgver) {
+
+	char *installed_pkgver, *update_pkgver;
+	
+	installed_pkgver = pkg->pkgver;
+	update_pkgver = pkgver;
+
+	while (*installed_pkgver != ':' && *installed_pkgver != '\0') {
+		installed_pkgver++;
+	}
+	while (*update_pkgver != ':' && *update_pkgver != '\0') {
+		update_pkgver++;
+	}
+
+	if (*installed_pkgver == '\0' && *update_pkgver == ':') {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 List *check_update(List *pkglist) {
@@ -291,31 +294,4 @@ void print_installed(void) {
 		printf(BOLD"%s "BGREEN"%s\n"RESET, installed->pkgname, installed->pkgver);
 	}
 	clear_list(temp);
-}
-
-
-/* 
- * check if an epoch has been added to a PKGBUILD that wasnt present in
- * the installed version. without this, if the "pkgver" is 
- * higher than the "epoch" (1), the epoch update will be ignored.
- */
-bool epoch_update(List *pkg, char *pkgver) {
-
-	char *installed_pkgver, *update_pkgver;
-	
-	installed_pkgver = pkg->pkgver;
-	update_pkgver = pkgver;
-
-	while (*installed_pkgver != ':' && *installed_pkgver != '\0') {
-		installed_pkgver++;
-	}
-	while (*update_pkgver != ':' && *update_pkgver != '\0') {
-		update_pkgver++;
-	}
-
-	if (*installed_pkgver == '\0' && *update_pkgver == ':') {
-		return true;
-	} else {
-		return false;
-	}
 }

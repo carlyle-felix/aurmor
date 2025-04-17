@@ -34,6 +34,7 @@ void get_str(char **str, const char *p, const char *str_var);
 bool is_dir(const char *path);
 bool file_exists(char *path);
 bool prompt(void);
+bool less_prompt(const char *pkgname);
 void remove_dir(char *path);
 void change_owner(char *path);
 List *get_dir_list(void);
