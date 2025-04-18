@@ -11,7 +11,9 @@
 #define AUR_SEARCH "https://aur.archlinux.org/rpc/v5/search/%s?by=name"
 #define AUR_PKG "https://aur.archlinux.org/rpc/v5/info?arg[]=%s"
 #define LESS_PKGBUILD "less PKGBUILD"
-#define MAKEPKG "makepkg -f OPTIONS=-debug"
+#define MAKEPKG "makepkg"
+#define NO_DEBUG "OPTIONS=-debug"
+#define FORCE "-f"
 #define META ".packages-meta-v1.json.gz"    // not being used yet
 #define META_LINK "https://aur.archlinux.org/packages-meta-v1.json.gz"  // not being used yet
 

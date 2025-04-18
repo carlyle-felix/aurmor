@@ -3,9 +3,26 @@
 
 #include <stdbool.h>
 
-typedef struct srcinfo Srcinfo;
-typedef struct depends Depends;
+
 typedef struct package List;
+
+typedef struct depends {
+    char *data;
+    struct depends *next;
+} Depends;
+
+typedef struct srcinfo {
+    char *pkgname;
+    char *epoch;
+    char *pkgver;
+    char *pkgrel;
+    char *arch;
+    char *zst_path;
+    Depends *makedepends;
+    Depends *depends;
+    Depends *optdepends;
+} Srcinfo;
+
 
 char *read_srcinfo(char *pkgname);
 char *zst_path(Srcinfo *pkg);

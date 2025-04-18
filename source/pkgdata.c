@@ -16,7 +16,7 @@ Srcinfo *populate_pkg(char *pkgname) {
 	int key_len;
 	register int i, key;
 	char *buffer, *temp_buffer, key_item[MAX_BUFFER];
-	char *keys[] = {"pkgname", "epoch", "pkgver", "pkgrel", 
+	char *keys[] = {"pkgname", "epoch", "pkgver", "pkgrel", "arch", 
 					"makedepends", "depends", "optdepends"};
 
 	buffer = read_srcinfo(pkgname);
@@ -58,7 +58,7 @@ Srcinfo *populate_pkg(char *pkgname) {
 				while (*temp_buffer == ' ' || *temp_buffer == '=') {
 					temp_buffer++;
 				}
-				for (i = 0; *temp_buffer != '\n' && *temp_buffer != '>'; i++) {
+				for (i = 0; *temp_buffer != '\n' && *temp_buffer != '>' && *temp_buffer != '<' && *temp_buffer != '='; i++) {
 					key_item[i] = *temp_buffer++;
 				}
 				key_item[i] = '\0';
@@ -88,13 +88,17 @@ Srcinfo *populate_pkg(char *pkgname) {
 						str_alloc(&pkg->pkgrel, strlen(key_item) + 1);
 						strcpy(pkg->pkgrel, key_item);
 						break;
-					case 4:
+					case 4: 
+						str_alloc(&pkg->arch, strlen(key_item) + 1);
+						strcpy(pkg->arch, key_item);
+						break;
+					case 5:
 						pkg->makedepends = add_data(pkg->makedepends, key_item);
 						break;
-					case 5: 
+					case 6: 
 						pkg->depends = add_data(pkg->depends, key_item);
 						break;
-					case 6:
+					case 7:
 						pkg->optdepends = add_data(pkg->optdepends, key_item);
 						break;
 					default:
@@ -160,17 +164,17 @@ char *zst_path(Srcinfo *pkg) {
 	cwd = change_dir(pkg->pkgname);
 
 	if (pkg->epoch == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + 24);
-		sprintf(path, "%s/%s-%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->pkgrel);
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + strlen(pkg->arch) + 18);
+		sprintf(path, "%s/%s-%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->pkgrel, pkg->arch);
 	} else if (pkg->pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + 24);
-		sprintf(path, "%s/%s-%s:%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver);
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->arch) + 18);
+		sprintf(path, "%s/%s-%s:%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->arch);
 	} else if (pkg->epoch == NULL && pkg->pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + 23);
-		sprintf(path, "%s/%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver);
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->arch) + 17);
+		sprintf(path, "%s/%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->arch);
 	} else {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + 25);
-		sprintf(path, "%s/%s-%s:%s-%s-x86_64.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->pkgrel);
+		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + strlen(pkg->arch) + 19);
+		sprintf(path, "%s/%s-%s:%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->pkgrel, pkg->arch);
 	}
 
 	return path;

@@ -29,7 +29,7 @@ list.o: $(SRC)/list.c $(INCL)/list.h $(INCL)/memory.h $(INCL)/util.h \
 		$(INCL)/manager.h $(INCL)/pkgdata.h
 	gcc -c $(SRC)/list.c
 
-memory.o: $(SRC)/memory.c $(INCL)/memory.h  $(INCL)/manager.h $(INCL)/list.h \
+memory.o: $(SRC)/memory.c $(INCL)/memory.h  $(INCL)/pkgdata.h $(INCL)/list.h \
 		$(INCL)/rpc.h $(INCL)/util.h
 	gcc -c $(SRC)/memory.c
 

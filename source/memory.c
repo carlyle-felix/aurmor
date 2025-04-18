@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "../include/memory.h"
-#include "../include/manager.h"
+#include "../include/pkgdata.h"
 #include "../include/list.h"
 #include "../include/rpc.h"
 #include "../include/util.h"
@@ -98,6 +98,7 @@ Srcinfo *pkg_srcinfo_malloc(void) {
 	pkg->epoch = NULL;
 	pkg->pkgver = NULL;
 	pkg->pkgrel = NULL;
+	pkg->arch = NULL;
 	pkg->zst_path = NULL;
 	pkg->makedepends = NULL;
 	pkg->depends = NULL;
@@ -112,6 +113,7 @@ void clear_pkg_srcinfo(Srcinfo *pkg) {
 	free(pkg->epoch);
 	free(pkg->pkgver);
 	free(pkg->pkgrel);
+	free(pkg->arch);
 	free(pkg->zst_path);
 	clear_depends(pkg->makedepends);
 	clear_depends(pkg->depends);

@@ -283,10 +283,9 @@ void drop_root(void) {
 
 int build(char *pkgname) {
 
-	int pid;
-	int res;
-	char *buffer, *error;
+	int pid, res;
 	struct passwd *pw;
+	char *args[] = {MAKEPKG, FORCE, NO_DEBUG};
 
 	pid = fork();
 	if (pid < 0) {
@@ -300,22 +299,21 @@ int build(char *pkgname) {
 		}
 		
 		change_dir(pkgname);
-		buffer = get_buffer(MAKEPKG);
-		if (buffer == NULL) {
-			printf("failed at makepkg.\n");
-		} else if ((error = strstr(buffer, "==> ERROR")) != NULL) {
-			printf("%s", error);
-			free(buffer);
-			exit(EXIT_FAILURE);
+
+		res = execvp(MAKEPKG, args);
+		if (res != 0) {
+			printf("system(makepkg) failed\n");
 		}
 
-		free(buffer);
-		exit(0);
+		exit(EXIT_FAILURE);
 	} else {
 		waitpid(pid, &res, 0);
-		if (WIFEXITED(res) && WEXITSTATUS(res) == EXIT_FAILURE) {
+		if (WIFEXITED(res) == true) {
+			return -0;
+		} else if (WIFSIGNALED(res) == true) {
+			return -1;
+		} else {
 			return -1;
 		}
-		return 0;
 	}
 }

@@ -5,23 +5,9 @@
 #include <alpm_list.h>
 #include <pacutils.h>
 
+typedef struct srcinfo Srcinfo;
+typedef struct depends Depends;
 typedef struct package List;
-
-typedef struct depends {
-    char *data;
-    struct depends *next;
-} Depends;
-
-typedef struct srcinfo {
-    char *pkgname;
-    char *epoch;
-    char *pkgver;
-    char *pkgrel;
-    char *zst_path;
-    Depends *makedepends;
-    Depends *depends;
-    Depends *optdepends;
-} Srcinfo;
 
 int alpm_uninstall(List *pkglist);
 int alpm_install(List *list);
