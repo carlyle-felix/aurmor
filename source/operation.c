@@ -22,6 +22,8 @@ int aur_clone(char *pkgname) {
     char *str = NULL;
 	int res;
 
+	change_dir("WD");
+
 	if (is_dir(pkgname) == true) {
 		printf(BCYAN"info:"RESET" Removing %s directory before clone...\n", pkgname);
 		remove_dir(pkgname);
@@ -40,6 +42,8 @@ void target_clone(char *url) {
     register int i;
 	int res;
 	List *target;
+
+	change_dir("WD");
 
 	temp = url;
 	while (*temp != '\0') {
@@ -72,7 +76,7 @@ void target_clone(char *url) {
 		target = list_malloc();
 		target = add_pkgname(target, pkgname);
 		target->install = true;
-		alpm_install(target);
+		alpm_install(target, ALPM_PKG_REASON_EXPLICIT);
 		clear_list(target);
 	}
 }
@@ -96,7 +100,7 @@ void fetch_update(char *pkgname) {
 	free(str);
 }
 
-void install(List *pkglist) {
+void install(List *pkglist, alpm_pkgreason_t reason) {
     
 	List *temp_list;
 	int res;
@@ -112,7 +116,7 @@ void install(List *pkglist) {
 			temp_list->install = true;
 		}
 	}
-	alpm_install(pkglist);
+	alpm_install(pkglist, reason);
 }
 
 void update(void) {
@@ -180,7 +184,7 @@ void update(void) {
 			temp_list->install = true;
 		}
 	}
-	alpm_install(update_list);
+	alpm_install(update_list, ALPM_PKG_REASON_EXPLICIT);
 	clear_list(update_list);
 }
 

@@ -7,6 +7,8 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 #include "../include/pkgdata.h"
+#include "../include/rpc.h"
+#include "../include/operation.h"
 
 // prototypes
 int trans_init(alpm_handle_t *handle, alpm_transflag_t flags);
@@ -14,7 +16,8 @@ int trans_complete(alpm_handle_t *handle);
 void rm_depends(alpm_handle_t *handle, alpm_pkg_t *pkg);
 void clean_up(Depends *rm_list);
 int install_depends(Depends *deps);
-int resolve_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *pkg);
+int resolve_aur_deps(Depends *deps);
+int resolve_repo_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *pkg);
 int rm_makedepends(Depends *deps);
 
 // return list of repos in pacman.conf
@@ -94,7 +97,7 @@ int trans_abort(alpm_handle_t *handle, int code) {
  * 	check if any packages besides the one being removed requires one of its deps
  * 	before removing the dep, if required the dep is still needed return true.
  */
-int alpm_install(List *pkglist) {
+int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 
 	alpm_handle_t *handle;
 	alpm_list_t *add_list;
@@ -124,12 +127,12 @@ int alpm_install(List *pkglist) {
 		res = install_depends(pkg_info->depends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install dependencies\n");
-			break;
+			continue;
 		}
 		res = install_depends(pkg_info->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
-			break;
+			continue;
 		}
 
 		// build and add the package zst
@@ -149,7 +152,7 @@ int alpm_install(List *pkglist) {
 		}
 
 		// this should be done after deps are resolved.
-		res = trans_init(handle, ALPM_TRANS_FLAG_NODEPVERSION);
+		res = trans_init(handle, ALPM_TRANS_FLAG_NODEPVERSION | reason);
 		if (res != 0) {
 			break;
 		}
@@ -162,7 +165,6 @@ int alpm_install(List *pkglist) {
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to add package.\n");
 		}		
-		clear_pkg_srcinfo(pkg_info);
 
 		// print package list
 		add_list = alpm_trans_get_add(handle);
@@ -181,6 +183,7 @@ int alpm_install(List *pkglist) {
 		if (res != 0) {
 			break;
 		}
+		clear_pkg_srcinfo(pkg_info);
 	}	
 
 	if (pkglist != NULL) {
@@ -268,10 +271,16 @@ int install_depends(Depends *deps) {
 		return 0;
 	}
 
+	res = resolve_aur_deps(deps);
+	if (res == -1) {
+		printf(BRED"error:"RESET" unable to resolve AUR dependencies.\n");
+		return -1;
+	}
+
 	repo_db_list = handle_init(&handle);
 	res = trans_init(handle, ALPM_TRANS_FLAG_ALLDEPS);
 
-	// pass deps one by one to resolve_deps
+	// pass deps one by one to resolve_repo_deps
 	for (temp_deps = deps; temp_deps != NULL && res == 0; temp_deps = temp_deps->next) {
 		for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
 			pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
@@ -286,6 +295,7 @@ int install_depends(Depends *deps) {
 				}
 				db_temp = reset;
 			}
+			
 			if (pkg != NULL && is_installed(temp_deps->data) == false) {
 				missing_dep = true;
 				res = alpm_add_pkg(handle, pkg);
@@ -293,7 +303,7 @@ int install_depends(Depends *deps) {
 					printf(BRED"error:"RESET" alpm_add_pkg (install): %s\n", alpm_strerror(alpm_errno(handle)));
 					break;
 				}
-				res = resolve_deps(handle, repo_db_list, pkg);
+				res = resolve_repo_deps(handle, repo_db_list, pkg);
 				if (res != 0) {
 					printf(BRED"error:"RESET" unable to resolve dependencies.\n");
 					break;
@@ -321,9 +331,9 @@ int install_depends(Depends *deps) {
 	// dont gain root before prompt.
 	printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);
 	if (prompt() == false) {
-		return trans_abort(handle, 0);
+		return trans_abort(handle, -1);
 	}
-	
+
 	res = trans_complete(handle);
 	if (res != 0) {
 		return -1;
@@ -334,9 +344,65 @@ int install_depends(Depends *deps) {
 }
 
 /*
+*	resolve aur dependencies
+*/
+int resolve_aur_deps(Depends *deps) {
+
+	List *rpc_list = NULL, *temp_list;
+	char *str;
+	int count = 0;
+
+	change_dir("WD");
+
+	for (; deps != NULL; deps = deps->next) {
+		if (is_repo_package(deps->data) == true || is_dir(deps->data) == true) {
+			continue;
+		}
+		get_str(&str, AUR_SEARCH, deps->data);
+		
+		temp_list = get_rpc_data(str);
+		if (temp_list == NULL) {
+			continue;
+		}	
+		temp_list->install = true;
+
+		if (find_pkg(rpc_list, temp_list->pkgname) == NULL && is_installed(temp_list->pkgname) == false) {
+			temp_list->next = rpc_list;
+			rpc_list = temp_list;
+			count++;
+		}	
+	}	
+	free(str);
+
+	if (count == 0) {
+		printf(" No AUR dependencies found...\n");
+		return 0;
+	}
+
+	printf(BCYAN"==>"BOLD" AUR dependencies found:\n"RESET);
+
+	printf(BOLD"\nAUR Packages (%d): "RESET, count);
+	for (temp_list = rpc_list; temp_list != NULL; temp_list = temp_list->next) {
+		printf("%s"GREY"-%s  "RESET, temp_list->pkgname, temp_list->pkgver);
+	}
+
+	// dont gain root before prompt.
+	printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);
+	if (prompt() == false) {
+		clear_list(rpc_list);
+		return -1;
+	}
+
+	install(rpc_list, ALPM_PKG_REASON_DEPEND);
+	clear_list(rpc_list);
+
+	return 0;
+}
+
+/*
 *	add dependencies to transaction
 */
-int resolve_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *pkg) {
+int resolve_repo_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *pkg) {
 
 	alpm_list_t *db_temp, *req_deps;
 	alpm_pkg_t *dep_pkg;
@@ -357,7 +423,7 @@ int resolve_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *p
 				}
 
 				alpm_pkg_set_reason(dep_pkg, ALPM_PKG_REASON_DEPEND);
-				resolve_deps(handle, repo_db_list, dep_pkg);
+				resolve_repo_deps(handle, repo_db_list, dep_pkg);
 			}
 		}
 	}

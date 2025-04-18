@@ -38,7 +38,7 @@ rpc.o: $(SRC)/rpc.c $(INCL)/rpc.h $(INCL)/memory.h $(INCL)/list.h \
 	gcc -c $(SRC)/rpc.c
 
 manager.o: $(SRC)/manager.c $(INCL)/manager.h $(INCL)/list.h $(INCL)/util.h \
-		$(INCL)/memory.h $(INCL)/pkgdata.h
+		$(INCL)/memory.h $(INCL)/pkgdata.h $(INCL)/rpc.h $(INCL)/operation.h
 	gcc -c $(SRC)/manager.c
 
 pkgdata.o: $(SRC)/pkgdata.c $(INCL)/pkgdata.h $(INCL)/memory.h $(INCL)/manager.h \

@@ -31,5 +31,6 @@ bool is_foreign(char *pkgname);
 bool is_installed(char *pkgname);
 Srcinfo *populate_pkg(char *pkgname);
 List *foreign_list(void);
+bool is_repo_package(char *pkgname);
 
 #endif

@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 			for (i = 2; i < argc; i++) {
 				pkglist = add_pkgname(pkglist, argv[i]);
 			}
-			install(pkglist);
+			install(pkglist, ALPM_PKG_REASON_EXPLICIT);
 			clear_list(pkglist);
 		} else {
 			printf("Please specify package(s), use -h for help.\n");

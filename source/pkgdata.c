@@ -263,3 +263,25 @@ bool is_installed(char *pkgname) {
 
 	return installed;
 }
+
+bool is_repo_package(char *pkgname) {
+
+	alpm_handle_t *handle;
+	alpm_list_t *repo_db_list;
+	alpm_pkg_t *pkg;
+	bool found = false;
+
+	repo_db_list = handle_init(&handle);
+
+	for (; repo_db_list != NULL; repo_db_list = alpm_list_next(repo_db_list)) {
+		pkg = alpm_db_get_pkg(repo_db_list->data, pkgname);
+		if (pkg != NULL) {
+			found = true;
+			break;
+		}
+	}
+	
+	alpm_release(handle);
+
+	return found;
+}

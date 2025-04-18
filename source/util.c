@@ -80,8 +80,6 @@ bool less_prompt(const char *pkgname) {
 
 	printf(BBLUE"::"BOLD" Continue to install %s? [Y/n] "RESET, pkgname);
 	return prompt();
-
-	change_dir("WD");
 }
 
 bool prompt(void) {
