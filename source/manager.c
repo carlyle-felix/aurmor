@@ -108,16 +108,12 @@ int alpm_install(List *pkglist) {
 		// ignore packages user rejected
 		if (pkglist->install == false) {
 			continue;
-		}
-
-		/*	COMMENTED OUT FOR NOW
-		// ignore packages that are already installed
-		if (is_installed(pkglist->pkgname) == true) {
-			printf(BOLD"%s already installed.\n"RESET, pkglist->pkgname);
+		} 
+		if (is_installed(pkglist->pkgname) == true && pkglist->update == false) {
+			printf(BCYAN"info:"RESET" %s is already installed.\n"RESET, pkglist->pkgname);
 			continue;
 		}
-		*/
-
+		
 		pkg_info = populate_pkg(pkglist->pkgname);
 		if (pkg_info == NULL) {
 			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
