@@ -43,7 +43,6 @@ int trans_init(alpm_handle_t *handle, alpm_transflag_t flags) {
 	gain_root();
 	res = alpm_trans_init(handle, flags);
 	if (res != 0) {
-		printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		printf(BRED"error:"RESET" alpm_trans_init: %s\n", alpm_strerror(alpm_errno(handle)));
 	}
 	drop_root();
@@ -121,7 +120,7 @@ int alpm_install(List *pkglist) {
 
 		pkg_info = populate_pkg(pkglist->pkgname);
 		if (pkg_info == NULL) {
-			printf(BYELLOW"warn"RESET"Skipping %s...", pkglist->pkgname);
+			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
 			continue;
 		}
 
@@ -150,7 +149,7 @@ int alpm_install(List *pkglist) {
 		// remove makedepends
 		res = rm_makedepends(pkg_info->makedepends);
 		if (res != 0) {
-			printf("Keeping makedepends.\n");
+			printf(BGREEN"==>"BOLD"Keeping makedepends.\n"RESET);
 		}
 
 		// this should be done after deps are resolved.
@@ -167,6 +166,7 @@ int alpm_install(List *pkglist) {
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to add package.\n");
 		}		
+		clear_pkg_srcinfo(pkg_info);
 
 		// print package list
 		add_list = alpm_trans_get_add(handle);
@@ -176,17 +176,15 @@ int alpm_install(List *pkglist) {
 			add_list = alpm_list_next(add_list);
 		}
 
-		printf(BBLUE"\n\n::"BOLD"Proceed with installation? [Y/n] "RESET);	
+		printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);	
 		if (prompt() == false) {
-			trans_abort(handle, 0);
+			return trans_abort(handle, 0);
 		}
 
 		res = trans_complete(handle);
 		if (res != 0) {
 			break;
 		}
-
-		clear_pkg_srcinfo(pkg_info);
 	}	
 
 	if (pkglist != NULL) {
@@ -325,7 +323,7 @@ int install_depends(Depends *deps) {
 	}
 
 	// dont gain root before prompt.
-	printf(BBLUE"\n\n::"BOLD"Proceed with installation? [Y/n] "RESET);
+	printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);
 	if (prompt() == false) {
 		return trans_abort(handle, 0);
 	}
@@ -358,7 +356,7 @@ int resolve_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *p
 			if (dep_pkg != NULL && is_installed(dep->name) == false) {
 				res = alpm_add_pkg(handle, dep_pkg);
 				if (res != 0) {
-					printf("error: alpm_add_pkg: %s\n", alpm_strerror(alpm_errno(handle)));
+					printf(BRED"error: "RESET"alpm_add_pkg: %s\n", alpm_strerror(alpm_errno(handle)));
 					return -1;
 				}
 
@@ -427,7 +425,7 @@ int rm_makedepends(Depends *deps) {
 		return -1;
 	}
 
-	printf(BGREEN"=>"BOLD" Success\n"RESET);
+	printf(BGREEN"=>"BOLD" Makedepends removed...\n"RESET);
 	return 0;
 }
 

@@ -21,7 +21,7 @@ Srcinfo *populate_pkg(char *pkgname) {
 
 	buffer = read_srcinfo(pkgname);
 	if (buffer == NULL) {
-		printf(BRED"error"RESET"failed read open .SRCINFO.\n");
+		printf(BRED"error"RESET" failed read open .SRCINFO.\n");
 		return NULL;
 	}
 

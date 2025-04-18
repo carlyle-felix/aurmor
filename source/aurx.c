@@ -33,13 +33,13 @@ int main(int argc, char *argv[]) {
 		printf(" -s [package]\t\t\t\tsearch package on AUR.\n");
 	} else if (strcmp(argv[1], "-u") == 0) {
 		if (uid != 0) {
-			printf(BRED"error:"RESET" root access required to perform this operation.\n");
+			printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		} else {
 			update();
 		}
 	}  else if (strcmp(argv[1], "-U") == 0) {		// Doesn't order updates alphabetically (would be nice).
 		if (uid != 0) {
-			printf(BRED"error:"RESET" root access required to perform this operation.\n");
+			printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		} else if (argc > 2) {
 			for (i = 2; i < argc; i++) {
 				List *pkglist = list_malloc();
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 		}
 	} else if (strcmp(argv[1], "-i") == 0) {
 		if (uid != 0) {
-			printf(BRED"error:"RESET" root access required to perform this operation.\n");
+			printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		} else if (argc > 2) {
 			List *pkglist = list_malloc();
 			
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 		}	
 	} else if (strcmp(argv[1], "-x") == 0) {
 		if (uid != 0) {
-			printf(BRED"error:"RESET" root access required to perform this operation.\n");
+			printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		} else if (argc == 3) {
 			target_clone(argv[2]);
 		} else if (argc > 3) {
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		print_installed();
 	} else if (strcmp(argv[1], "-r") == 0) {
 		if (uid != 0) {
-			printf(BRED"error:"RESET" root access required to perform this operation.\n");
+			printf(BOLD"Elevated privilage required to perform this operation ("BRED"root"BOLD").\n"RESET);
 		} else if (argc > 2) {
 			List *pkglist = list_malloc();
 

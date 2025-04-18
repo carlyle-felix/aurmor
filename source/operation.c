@@ -23,7 +23,7 @@ int aur_clone(char *pkgname) {
 	int res;
 
 	if (is_dir(pkgname) == true) {
-		printf("Removing %s directory before clone...\n", pkgname);
+		printf(BCYAN"info:"RESET" Removing %s directory before clone...\n", pkgname);
 		remove_dir(pkgname);
 	}
 	
@@ -38,6 +38,8 @@ void target_clone(char *url) {
 
     char *str = NULL, pkgname[NAME_LEN] = {'\0'}, *temp;
     register int i;
+	int res;
+	List *target;
 
 	temp = url;
 	while (*temp != '\0') {
@@ -53,15 +55,26 @@ void target_clone(char *url) {
     }
 
 	if (is_dir(pkgname) == true) {
-		printf("Removing %s directory before clone...\n", pkgname);
+		printf(BCYAN"info:"RESET" Removing %s directory before clone...\n", pkgname);
 		remove_dir(pkgname);
 	}
 	
 	get_str(&str, GIT_CLONE, url);
-    system(str);
+    res = system(str);
+	if (res != 0) {
+		printf(BRED"error:"RESET" failed to clone target package.\n");
+		return;
+	}
+	change_owner(pkgname);
     free(str);
 	
-	less_prompt(pkgname);
+	if (less_prompt(pkgname) == true) {
+		target = list_malloc();
+		target = add_pkgname(target, pkgname);
+		target->install = true;
+		alpm_install(target);
+		clear_list(target);
+	}
 }
 
 void fetch_update(char *pkgname) {
@@ -145,7 +158,7 @@ void update(void) {
 
 	pkglist = temp_list;
 	if (update_str[0] == '\0') {
-		printf(" Nothing to do.\n");
+		printf("\n Nothing to do.\n");
 		free(update_str);
 		clear_list(pkglist);
 		exit(EXIT_SUCCESS);
@@ -236,12 +249,12 @@ void clean(void) {
  
     dir = get_dir_list();
 	if (dir == NULL) {
-		printf("Nothing to do.\n");
+		printf("\n Nothing to do.\n");
 		return;
 	}
 
 	pacman = foreign_list();
-	printf("Cleaning aurx cache dir...\n");
+	printf(BGREEN"==>"BOLD"Cleaning aurx cache dir...\n"RESET);
     for (temp1 = pacman, temp2 = dir; dir != NULL; dir = dir->next) {
         remove_dir(dir->pkgname);
 		if (pacman != NULL) {
@@ -262,7 +275,7 @@ void print_search(char *pkgname) {
     rpc_pkglist = get_rpc_data(str);
 
 	if (rpc_pkglist == NULL) {
-		printf("No results found for: %s.\n", pkgname);
+		printf("\n No results found for: %s.\n", pkgname);
 		free(str);
     	clear_list(rpc_pkglist);
 		exit(EXIT_SUCCESS);
@@ -286,7 +299,7 @@ void print_installed(void) {
 
 	installed = foreign_list();
 	if (installed == NULL) {
-		printf("No installed AUR packages found.\n");
+		printf("\n No installed AUR packages found.\n");
 		exit(EXIT_SUCCESS);
 	}
 
