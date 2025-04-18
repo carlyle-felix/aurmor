@@ -465,12 +465,6 @@ void rm_depends(alpm_handle_t *handle, alpm_pkg_t *pkg) {
 				}
 				rm_depends(handle, dep_pkg);
 			}
-		} else if (alpm_list_count(req_list) == 0) {
-			res = alpm_remove_pkg(handle, dep_pkg);
-			if (res != 0) {
-				printf(BYELLOW"warn:"RESET" unable to remove package: %s\n", alpm_pkg_get_name(dep_pkg));
-			}
-			rm_depends(handle, dep_pkg);
 		}
 
 		alpm_list_free_inner(req_list, (alpm_list_fn_free) list_free);
