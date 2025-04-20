@@ -9,6 +9,8 @@
 
 Pkgbase *populate_pkgbase(char *buffer);
 Pkginfo *populate_pkginfo(char *buffer);
+Pkginfo *add_name(Pkginfo *pkg, const char *str);
+Pkginfo *find_name(Pkginfo *pkg, const char *pkgname);
 
 /*
 *	populate package structs.
@@ -19,7 +21,7 @@ Pkgbase *populate_pkg(char *pkgname) {
 	char *buffer = read_srcinfo(pkgname);
 
 	pkgbase = populate_pkgbase(buffer);
-//	pkgbase->pkg = populate_pkginfo(buffer);
+	pkgbase->pkg = populate_pkginfo(buffer);
 
 	free(buffer);
 	return pkgbase;
@@ -35,6 +37,9 @@ Pkgbase *populate_pkg(char *pkgname) {
 *	pkgbase->makedepends = NULL;
 *	pkgbase->pkg = NULL;
 */
+
+
+
 Pkgbase *populate_pkgbase(char *buffer) {
 
 	Pkgbase *pkgbase = pkgbase_malloc();
@@ -43,7 +48,7 @@ Pkgbase *populate_pkgbase(char *buffer) {
 	register int i, key_num; 
 	int key_len;
 
-	for (key_num = 0; key_num <= 5; key_num++) {
+	for (key_num = 0; key_num < 6; key_num++) {
 		temp_buffer = buffer;
 		key_len = strlen(key[key_num]);
 		while (*temp_buffer != '\0') {
@@ -103,14 +108,119 @@ Pkgbase *populate_pkgbase(char *buffer) {
 *	pkg->depends = NULL;
 *	pkg->optdepends = NULL;
 *	pkg->next = NULL;
-
+*/
 Pkginfo *populate_pkginfo(char *buffer) {
 
-	Pkginfo *pkginfo = pkginfo_malloc();
-	const char *pkg_key[] = {"pkgname", "arch", "depends", "optdepends"};
+	Pkginfo *pkginfo, *temp_pkg = NULL;
+	const char *key[] = {"pkgname", "arch", "depends", "optdepends"};
+	char *temp_buffer, *split_buffer = NULL, str[MAX_BUFFER];
+	register int i, key_num; 
+	int key_len;
 
+	// remove everything before the first occurrence of "pkgname" from the buffer.
+	temp_buffer = buffer;
+	key_len = strlen(key[0]);
+	for (;;) {
+		while (*temp_buffer != key[0][0]) {
+			temp_buffer++;
+		}
+
+		if (*temp_buffer == key[0][0]) {
+			for (i = 0; *temp_buffer == key[0][i]; i++) {
+				if (*temp_buffer != key[0][i]) {
+					break;
+				}
+				temp_buffer++;
+			}
+		}
+
+		if (i == key_len) {
+			while (i > 0) {
+				i--;
+				temp_buffer--;
+			}
+			break;
+		}
+	}
+	str_alloc(&split_buffer, strlen(temp_buffer) + 1);
+	strcpy(split_buffer, temp_buffer);
+
+	for (key_num = 0; key_num < 4; key_num++) {
+		temp_buffer = split_buffer;
+		key_len = strlen(key[key_num]);
+		while (*temp_buffer != '\0') {
+		
+			while (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
+				temp_buffer++;
+				// after pkgnames are added to the list, check which package should be assigned to temp_pkg 
+				if (key_num > 0 && *temp_buffer == key[0][0]) {
+					for (i = 0; *temp_buffer == key[0][i]; i++) {
+						if (*temp_buffer != key[0][i]) {
+							while (i > 0) {
+								i--;
+								temp_buffer--;
+							}
+							break;
+						}
+						temp_buffer++;
+					}
+
+					if (i == 7) {
+						while ((*temp_buffer == ' ' || *temp_buffer == '=') && *temp_buffer != '\0') {
+							temp_buffer++;
+						}
+						for (i = 0; *temp_buffer != '>' && *temp_buffer != '<' && *temp_buffer != '=' && *temp_buffer != '\n' && *temp_buffer != '\0'; i++) {
+							str[i] = *temp_buffer++;
+						}
+						str[i] = '\0';
+						
+						temp_pkg = find_name(pkginfo, str);
+						printf("temp_pkg->pkgname: %s		str: %s\n\n", temp_pkg->pkgname, str);
+					}
+				}
+			}
+	
+			if (*temp_buffer == key[key_num][0]) {
+				for (i = 0; *temp_buffer == key[key_num][i]; i++) {
+					if (*temp_buffer != key[key_num][i]) {
+						break;
+					}
+					temp_buffer++;
+				}
+			}
+
+			if (i == key_len) {
+				while ((*temp_buffer == ' ' || *temp_buffer == '=') && *temp_buffer != '\0') {
+					temp_buffer++;
+				}
+				for (i = 0; *temp_buffer != '>' && *temp_buffer != '<' && *temp_buffer != '=' && *temp_buffer != '\n' && *temp_buffer != '\0'; i++) {
+					str[i] = *temp_buffer++;
+				}
+				str[i] = '\0';
+
+				switch(key_num) {
+					case 0:		temp_pkg = add_name(temp_pkg, str);
+								break;
+					case 1:		str_alloc(&temp_pkg->arch, strlen(str) + 1);
+								strcpy(temp_pkg->arch, str);
+								break;
+					case 2:		temp_pkg->depends = add_data(temp_pkg->depends, str);
+								break;
+					case 3:		temp_pkg->optdepends = add_data(temp_pkg->optdepends, str);
+								break;
+					default:	break;
+				}
+			}
+		}
+		if (key_num == 0) {
+			pkginfo = temp_pkg;
+		}
+	}
+	free(split_buffer);
+
+	return pkginfo;
 }
-*/
+
 char *read_srcinfo(char *pkgname) {
 
 	FILE *srcinfo; 
@@ -172,11 +282,37 @@ char *zst_path(Pkginfo *pkg) {
 }
 */
 
+// please do something about add_pkgname in List.c., can this list be used there too?
+Pkginfo *find_name(Pkginfo *pkg, const char *pkgname) {
+
+	Pkginfo *temp = pkg;
+	while (temp != NULL) {
+		if (strcmp(temp->pkgname, pkgname) == 0) {
+			break;
+		}
+		temp = temp->next;
+	}
+
+	return temp;
+}
+
+// please do something about add_pkgname in List.c.
+Pkginfo *add_name(Pkginfo *pkg, const char *str) {
+
+	Pkginfo *temp = pkginfo_malloc();
+
+	str_alloc(&temp->pkgname, strlen(str) + 1);
+	strcpy(temp->pkgname, str);
+	temp->next = pkg;
+	pkg = temp;
+
+	return temp;
+}
+
 Depends *add_data(Depends *list, const char *data) {
 	
-	Depends *temp;
+	Depends *temp = depends_malloc();
 
-	temp = depends_malloc();
 	str_alloc(&temp->data, strlen(data) + 1);
 	strcpy(temp->data, data);
 	temp->next = list;
