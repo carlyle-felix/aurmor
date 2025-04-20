@@ -1,5 +1,5 @@
-CFLAGS 		= -Wall -Wextra -Wpedantic -g -fsanitize=address
-LDFLAGS 	= -lcurl -ljson-c -lalpm -lpacutils -fsanitize=address
+CFLAGS 		= -Wall -Wextra -Wpedantic -g
+LDFLAGS 	= -lcurl -ljson-c -lalpm -lpacutils
 INCL		= ./include
 SRC			= ./source
 BIN			= aurx

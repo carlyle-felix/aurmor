@@ -99,7 +99,7 @@ int alpm_install(List *pkglist) {
 	alpm_handle_t *handle;
 	alpm_list_t *add_list;
 	alpm_pkg_t *pkg;
-	Srcinfo *pkg_info;
+	Pkginfo *pkg_info;
 	int res;
 
 	handle_init(&handle);
@@ -114,7 +114,7 @@ int alpm_install(List *pkglist) {
 			continue;
 		}
 		
-		pkg_info = populate_pkg(pkglist->pkgname);
+		//pkg_info = populate_pkg(pkglist->pkgname);
 		if (pkg_info == NULL) {
 			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
 			continue;
@@ -126,7 +126,7 @@ int alpm_install(List *pkglist) {
 			printf(BRED"error:"RESET" failed to install dependencies\n");
 			break;
 		}
-		res = install_depends(pkg_info->makedepends);
+		//res = install_depends(pkg_info->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
 			break;
@@ -143,7 +143,7 @@ int alpm_install(List *pkglist) {
 		drop_root();
 
 		// remove makedepends
-		res = rm_makedepends(pkg_info->makedepends);
+		//res = rm_makedepends(pkg_info->makedepends);
 		if (res != 0) {
 			printf(BGREEN"==>"BOLD"Keeping makedepends.\n"RESET);
 		}
@@ -162,7 +162,7 @@ int alpm_install(List *pkglist) {
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to add package.\n");
 		}		
-		clear_pkg_srcinfo(pkg_info);
+		clear_pkginfo(pkg_info);
 
 		// print package list
 		add_list = alpm_trans_get_add(handle);
@@ -184,7 +184,7 @@ int alpm_install(List *pkglist) {
 	}	
 
 	if (pkglist != NULL) {
-		clear_pkg_srcinfo(pkg_info);
+		clear_pkginfo(pkg_info);
 		return -1;
 	}
 	return 0;

@@ -87,39 +87,68 @@ void list_free(char *data) {
 	free(data);
 }
 
-Srcinfo *pkg_srcinfo_malloc(void) {
+Pkgbase *pkgbase_malloc(void) {
 
-	Srcinfo *pkg = malloc(sizeof(Srcinfo));
+	Pkgbase *pkgbase = malloc(sizeof(Pkgbase));
+	if (pkgbase == NULL) {
+		printf(BRED"error:"RESET" failed to allocate memory for Pkgbase.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	pkgbase->pkgbase = NULL;
+	pkgbase->arch = NULL;
+	pkgbase->epoch = NULL;
+	pkgbase->pkgver = NULL;
+	pkgbase->pkgrel = NULL;
+	pkgbase->makedepends = NULL;
+	pkgbase->pkg = NULL;
+
+	return pkgbase;
+}
+
+Pkginfo *pkginfo_malloc(void) {
+
+	Pkginfo *pkg = malloc(sizeof(Pkginfo));
 	if (pkg == NULL) {
-		printf(BRED"error:"RESET" failed to allocate memory for srcinfo list.\n");
+		printf(BRED"error:"RESET" failed to allocate memory for Pkginfo.\n");
 		exit(EXIT_FAILURE);
 	}
 	pkg->pkgname = NULL;
-	pkg->epoch = NULL;
-	pkg->pkgver = NULL;
-	pkg->pkgrel = NULL;
 	pkg->arch = NULL;
 	pkg->zst_path = NULL;
-	pkg->makedepends = NULL;
 	pkg->depends = NULL;
 	pkg->optdepends = NULL;
+	pkg->next = NULL;
 
 	return pkg;
 }
 
-void clear_pkg_srcinfo(Srcinfo *pkg) {
+void clear_pkgbase(Pkgbase *pkgbase) {
 
-	free(pkg->pkgname);
-	free(pkg->epoch);
-	free(pkg->pkgver);
-	free(pkg->pkgrel);
-	free(pkg->arch);
-	free(pkg->zst_path);
-	clear_depends(pkg->makedepends);
-	clear_depends(pkg->depends);
-	clear_depends(pkg->optdepends);
-	free(pkg);
-	
+	free(pkgbase->pkgbase);
+	free(pkgbase->arch);
+	free(pkgbase->epoch);
+	free(pkgbase->pkgver);
+	free(pkgbase->pkgrel);
+	clear_depends(pkgbase->makedepends);
+	clear_pkginfo(pkgbase->pkg);
+	free(pkgbase);
+}
+
+void clear_pkginfo(Pkginfo *pkg) {
+
+	Pkginfo *temp;
+
+	while (pkg != NULL) {
+		temp = pkg;
+		pkg = pkg->next;
+		free(temp->pkgname);
+		free(temp->arch);
+		free(temp->zst_path);
+		clear_depends(temp->depends);
+		clear_depends(temp->optdepends);
+		free(temp);
+	}
 }
 
 Depends *depends_malloc(void) {
@@ -136,8 +165,6 @@ Depends *depends_malloc(void) {
 
 	return temp;
 }
-
-
 
 void clear_depends(Depends *list) {
 

@@ -7,120 +7,110 @@
 #include "../include/util.h"
 #include "../include/list.h"
 
+Pkgbase *populate_pkgbase(char *buffer);
+Pkginfo *populate_pkginfo(char *buffer);
+
 /*
-*	populate package struct.
+*	populate package structs.
 */
-Srcinfo *populate_pkg(char *pkgname) {
+Pkgbase *populate_pkg(char *pkgname) {
+	
+	Pkgbase *pkgbase;
+	char *buffer = read_srcinfo(pkgname);
 
-	Srcinfo *pkg = pkg_srcinfo_malloc();
+	pkgbase = populate_pkgbase(buffer);
+//	pkgbase->pkg = populate_pkginfo(buffer);
+
+	free(buffer);
+	return pkgbase;
+}
+
+/*
+*	BASE
+*	pkgbase->pkgbase = NULL;
+*	pkgbase->arch = NULL;
+*	pkgbase->epoch = NULL;
+*	pkgbase->pkgver = NULL;
+*	pkgbase->pkgrel = NULL;
+*	pkgbase->makedepends = NULL;
+*	pkgbase->pkg = NULL;
+*/
+Pkgbase *populate_pkgbase(char *buffer) {
+
+	Pkgbase *pkgbase = pkgbase_malloc();
+	const char *key[] = {"pkgbase", "arch", "epoch", "pkgver", "pkgrel", "makedepends"};
+	char *temp_buffer, str[MAX_BUFFER];
+	register int i, key_num; 
 	int key_len;
-	register int i, key;
-	char *buffer, *temp_buffer, key_item[MAX_BUFFER];
-	char *keys[] = {"pkgname", "epoch", "pkgver", "pkgrel", "arch", 
-					"makedepends", "depends", "optdepends"};
 
-	buffer = read_srcinfo(pkgname);
-	if (buffer == NULL) {
-		printf(BRED"error"RESET" failed read open .SRCINFO.\n");
-		return NULL;
-	}
-
-	// traverse list of keys
-	for (key = 0; key < 7; key++) {
-		key_len = strlen(keys[key]);
-		for (temp_buffer = buffer; *temp_buffer != '\0'; temp_buffer++) {
-			// advance past the tab.
-			if (*temp_buffer == '\t') {
+	for (key_num = 0; key_num <= 5; key_num++) {
+		temp_buffer = buffer;
+		key_len = strlen(key[key_num]);
+		while (*temp_buffer != '\0') {
+			while (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
 				temp_buffer++;
 			}
-
-			// check the first letter, if no match, advance to newline char.
-			if (*temp_buffer != keys[key][0]) {
-				while (*temp_buffer != '\n') {
-					temp_buffer++;
-				}
-				continue;
-			}
-
-			for (i = 0; i < key_len; i++) {
-				if (*temp_buffer++ != keys[key][i]) {
-					// if no match, skip line, advance to newline char.
-					while (*temp_buffer != '\n') {
-						temp_buffer++;
-					}
-					i = 0;
-					break;
-				}
-			}
 			
-			if (i == (key_len)) {
-				key_item[0] = '\0';
-				while (*temp_buffer == ' ' || *temp_buffer == '=') {
+			if (*temp_buffer == key[key_num][0]) {
+				for (i = 0; *temp_buffer == key[key_num][i]; i++) {
+					if (*temp_buffer != key[key_num][i]) {
+						break;
+					}
 					temp_buffer++;
 				}
-				for (i = 0; *temp_buffer != '\n' && *temp_buffer != '>' && *temp_buffer != '<' && *temp_buffer != '='; i++) {
-					key_item[i] = *temp_buffer++;
+			}
+
+			if (i == key_len) {
+				while ((*temp_buffer == ' ' || *temp_buffer == '=') && *temp_buffer != '\0') {
+					temp_buffer++;
 				}
-				key_item[i] = '\0';
-				if (*temp_buffer == '>') {
-					while (*temp_buffer != '\n') {
-						temp_buffer++;
-					}
+				for (i = 0; *temp_buffer != '>' && *temp_buffer != '<' && *temp_buffer != '=' && *temp_buffer != '\n' && *temp_buffer != '\0'; i++) {
+					str[i] = *temp_buffer++;
 				}
-				if (key_item[0] == '\0') {
-					continue;
-				}
-				// put data in correct fields according to key.
-				switch (key) {
-					case 0:		
-						str_alloc(&pkg->pkgname, strlen(key_item) + 1);
-						strcpy(pkg->pkgname, key_item);
-						break;
-					case 1:
-						str_alloc(&pkg->epoch, strlen(key_item) + 1);
-						strcpy(pkg->epoch, key_item);
-						break;
-					case 2:
-						str_alloc(&pkg->pkgver, strlen(key_item) + 1);
-						strcpy(pkg->pkgver, key_item);
-						break;
-					case 3: 
-						str_alloc(&pkg->pkgrel, strlen(key_item) + 1);
-						strcpy(pkg->pkgrel, key_item);
-						break;
-					case 4: 
-						str_alloc(&pkg->arch, strlen(key_item) + 1);
-						strcpy(pkg->arch, key_item);
-						break;
-					case 5:
-						pkg->makedepends = add_data(pkg->makedepends, key_item);
-						break;
-					case 6: 
-						pkg->depends = add_data(pkg->depends, key_item);
-						break;
-					case 7:
-						pkg->optdepends = add_data(pkg->optdepends, key_item);
-						break;
-					default:
-						break;
+				str[i] = '\0';
+				switch (key_num) {
+					case 0:		str_alloc(&pkgbase->pkgbase, strlen(str) + 1);
+								strcpy(pkgbase->pkgbase, str);
+								break;
+					case 1:		str_alloc(&pkgbase->arch, strlen(str) + 1);
+								strcpy(pkgbase->arch, str);
+								break;
+					case 2:		str_alloc(&pkgbase->epoch, strlen(str) + 1);
+								strcpy(pkgbase->epoch, str);
+								break;
+					case 3:		str_alloc(&pkgbase->pkgver, strlen(str) + 1);
+								strcpy(pkgbase->pkgver, str);
+								break;
+					case 4:		str_alloc(&pkgbase->pkgrel, strlen(str) + 1);
+								strcpy(pkgbase->pkgrel, str);
+								break;
+					case 5:		pkgbase->makedepends = add_data(pkgbase->makedepends, str);
+								break;
+					default:	break;
 				}
 			}
 		}
 	}
-	pkg->zst_path = zst_path(pkg);
 
-	change_dir("WD");
-	free(buffer);
-
-	return pkg;
+	return pkgbase;
 }
 
 /*
- * returns a list of keys found.
- * pkgname: as found in .SRCINFO.
- * key: .SRCINFO field to search for.
- * TODO: deal with version requirements.
- */
+*	PACKAGE
+*	pkg->pkgname = NULL;
+*	pkg->arch = NULL;
+*	pkg->zst_path = NULL;
+*	pkg->depends = NULL;
+*	pkg->optdepends = NULL;
+*	pkg->next = NULL;
+
+Pkginfo *populate_pkginfo(char *buffer) {
+
+	Pkginfo *pkginfo = pkginfo_malloc();
+	const char *pkg_key[] = {"pkgname", "arch", "depends", "optdepends"};
+
+}
+*/
 char *read_srcinfo(char *pkgname) {
 
 	FILE *srcinfo; 
@@ -155,9 +145,10 @@ char *read_srcinfo(char *pkgname) {
 }
 
 /*
-*	return the absolute path of package zst 
+*	return the absolute path of package zst - FIX LATER
 */
-char *zst_path(Srcinfo *pkg) {
+/*
+char *zst_path(Pkginfo *pkg) {
 	
 	char *cwd, *path = NULL;
 
@@ -179,6 +170,7 @@ char *zst_path(Srcinfo *pkg) {
 
 	return path;
 }
+*/
 
 Depends *add_data(Depends *list, const char *data) {
 	

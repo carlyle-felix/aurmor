@@ -5,7 +5,7 @@
 #include <alpm_list.h>
 #include <pacutils.h>
 
-typedef struct srcinfo Srcinfo;
+typedef struct pkg Pkginfo;
 typedef struct depends Depends;
 typedef struct package List;
 
