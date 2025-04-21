@@ -99,7 +99,9 @@ int alpm_install(List *pkglist) {
 	alpm_handle_t *handle;
 	alpm_list_t *add_list;
 	alpm_pkg_t *pkg;
-	Pkginfo *pkg_info;
+	Pkgbase *pkgbase;
+	Pkginfo *pkginfo;
+
 	int res;
 
 	handle_init(&handle);
@@ -114,19 +116,21 @@ int alpm_install(List *pkglist) {
 			continue;
 		}
 		
-		//pkg_info = populate_pkg(pkglist->pkgname);
-		if (pkg_info == NULL) {
+		pkgbase = populate_pkg(pkglist->pkgname);
+		pkginfo = pkgbase->pkg;
+
+		if (pkgbase == NULL || pkginfo == NULL) {
 			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
 			continue;
 		}
 
 		printf(BGREEN"==>"BOLD" Checking dependencies...\n\n"RESET);
-		res = install_depends(pkg_info->depends);
+		res = install_depends(pkginfo->depends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install dependencies\n");
 			break;
 		}
-		//res = install_depends(pkg_info->makedepends);
+		res = install_depends(pkgbase->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
 			break;
@@ -134,7 +138,7 @@ int alpm_install(List *pkglist) {
 
 		// build and add the package zst
 		gain_root();
-		res = build(pkglist->pkgname);
+		res = build(pkginfo->pkgname);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to build package: %s\n", pkglist->pkgname);
 			drop_root();
@@ -143,7 +147,7 @@ int alpm_install(List *pkglist) {
 		drop_root();
 
 		// remove makedepends
-		//res = rm_makedepends(pkg_info->makedepends);
+		res = rm_makedepends(pkgbase->makedepends);
 		if (res != 0) {
 			printf(BGREEN"==>"BOLD"Keeping makedepends.\n"RESET);
 		}
@@ -154,7 +158,7 @@ int alpm_install(List *pkglist) {
 			break;
 		}
 		
-		res = alpm_pkg_load(handle, pkg_info->zst_path, 1, 0, &pkg);
+		res = alpm_pkg_load(handle, pkginfo->zst_path, 1, 0, &pkg);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to add local package: %s.\n", alpm_strerror(alpm_errno(handle)));
 		}
@@ -162,7 +166,7 @@ int alpm_install(List *pkglist) {
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to add package.\n");
 		}		
-		clear_pkginfo(pkg_info);
+		clear_pkgbase(pkgbase);
 
 		// print package list
 		add_list = alpm_trans_get_add(handle);
@@ -184,7 +188,7 @@ int alpm_install(List *pkglist) {
 	}	
 
 	if (pkglist != NULL) {
-		clear_pkginfo(pkg_info);
+		clear_pkgbase(pkgbase);
 		return -1;
 	}
 	return 0;

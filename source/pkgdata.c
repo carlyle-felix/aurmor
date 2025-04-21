@@ -11,6 +11,8 @@ Pkgbase *populate_pkgbase(char *buffer);
 Pkginfo *populate_pkginfo(char *buffer);
 Pkginfo *add_name(Pkginfo *pkg, const char *str);
 Pkginfo *find_name(Pkginfo *pkg, const char *pkgname);
+char *zst_path(Pkgbase *pkgbase);
+bool is_split(char *buffer);
 
 /*
 *	populate package structs.
@@ -22,23 +24,15 @@ Pkgbase *populate_pkg(char *pkgname) {
 
 	pkgbase = populate_pkgbase(buffer);
 	pkgbase->pkg = populate_pkginfo(buffer);
-
+	pkgbase->pkg->zst_path = zst_path(pkgbase);
 	free(buffer);
+
+	if (pkgbase == NULL || pkgbase->pkg == NULL) {
+		printf(BRED"error:"RESET" failed to populate package data.\n");
+		return NULL;
+	}
 	return pkgbase;
 }
-
-/*
-*	BASE
-*	pkgbase->pkgbase = NULL;
-*	pkgbase->arch = NULL;
-*	pkgbase->epoch = NULL;
-*	pkgbase->pkgver = NULL;
-*	pkgbase->pkgrel = NULL;
-*	pkgbase->makedepends = NULL;
-*	pkgbase->pkg = NULL;
-*/
-
-
 
 Pkgbase *populate_pkgbase(char *buffer) {
 
@@ -52,8 +46,14 @@ Pkgbase *populate_pkgbase(char *buffer) {
 		temp_buffer = buffer;
 		key_len = strlen(key[key_num]);
 		while (*temp_buffer != '\0') {
-			while (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
+			if (*temp_buffer == '\t') {
 				temp_buffer++;
+			}
+
+			if (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
+				while (*temp_buffer != '\n' && *temp_buffer != '\0') {
+					temp_buffer++;
+				}
 			}
 			
 			if (*temp_buffer == key[key_num][0]) {
@@ -73,12 +73,19 @@ Pkgbase *populate_pkgbase(char *buffer) {
 					str[i] = *temp_buffer++;
 				}
 				str[i] = '\0';
+
+				if (str[0] == '\0') {
+					continue;
+				}
+				
 				switch (key_num) {
 					case 0:		str_alloc(&pkgbase->pkgbase, strlen(str) + 1);
 								strcpy(pkgbase->pkgbase, str);
 								break;
-					case 1:		str_alloc(&pkgbase->arch, strlen(str) + 1);
-								strcpy(pkgbase->arch, str);
+					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "all") == 0) {
+									str_alloc(&pkgbase->arch, strlen(str) + 1);
+									strcpy(pkgbase->arch, str);
+								} 
 								break;
 					case 2:		str_alloc(&pkgbase->epoch, strlen(str) + 1);
 								strcpy(pkgbase->epoch, str);
@@ -94,21 +101,13 @@ Pkgbase *populate_pkgbase(char *buffer) {
 					default:	break;
 				}
 			}
+			temp_buffer++;
 		}
 	}
 
 	return pkgbase;
 }
 
-/*
-*	PACKAGE
-*	pkg->pkgname = NULL;
-*	pkg->arch = NULL;
-*	pkg->zst_path = NULL;
-*	pkg->depends = NULL;
-*	pkg->optdepends = NULL;
-*	pkg->next = NULL;
-*/
 Pkginfo *populate_pkginfo(char *buffer) {
 
 	Pkginfo *pkginfo, *temp_pkg = NULL;
@@ -116,42 +115,50 @@ Pkginfo *populate_pkginfo(char *buffer) {
 	char *temp_buffer, *split_buffer = NULL, str[MAX_BUFFER];
 	register int i, key_num; 
 	int key_len;
+	bool split = is_split(buffer);
 
-	// remove everything before the first occurrence of "pkgname" from the buffer.
-	temp_buffer = buffer;
-	key_len = strlen(key[0]);
-	for (;;) {
-		while (*temp_buffer != key[0][0]) {
-			temp_buffer++;
-		}
-
-		if (*temp_buffer == key[0][0]) {
-			for (i = 0; *temp_buffer == key[0][i]; i++) {
-				if (*temp_buffer != key[0][i]) {
-					break;
-				}
+	if (split == true) {
+		// remove everything before the first occurrence of "pkgname" from the buffer if its a split package.
+		temp_buffer = buffer;
+		key_len = strlen(key[0]);
+		for (;;) {
+			while (*temp_buffer != key[0][0]) {
 				temp_buffer++;
 			}
-		}
 
-		if (i == key_len) {
-			while (i > 0) {
-				i--;
-				temp_buffer--;
+			if (*temp_buffer == key[0][0]) {
+				for (i = 0; *temp_buffer == key[0][i]; i++) {
+					if (*temp_buffer != key[0][i]) {
+						break;
+					}
+					temp_buffer++;
+				}
 			}
-			break;
+
+			if (i == key_len) {
+				while (i > 0) {
+					i--;
+					temp_buffer--;
+				}
+				break;
+			}
 		}
+		str_alloc(&split_buffer, strlen(temp_buffer) + 1);
+		strcpy(split_buffer, temp_buffer);
+	} else {
+		split_buffer = buffer;
 	}
-	str_alloc(&split_buffer, strlen(temp_buffer) + 1);
-	strcpy(split_buffer, temp_buffer);
+	
 
 	for (key_num = 0; key_num < 4; key_num++) {
 		temp_buffer = split_buffer;
 		key_len = strlen(key[key_num]);
 		while (*temp_buffer != '\0') {
-		
-			while (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
+			if (*temp_buffer == '\t') {
 				temp_buffer++;
+			}
+
+			if (*temp_buffer != key[key_num][0] && *temp_buffer != '\0') {
 				// after pkgnames are added to the list, check which package should be assigned to temp_pkg 
 				if (key_num > 0 && *temp_buffer == key[0][0]) {
 					for (i = 0; *temp_buffer == key[0][i]; i++) {
@@ -175,14 +182,20 @@ Pkginfo *populate_pkginfo(char *buffer) {
 						str[i] = '\0';
 						
 						temp_pkg = find_name(pkginfo, str);
-						printf("temp_pkg->pkgname: %s		str: %s\n\n", temp_pkg->pkgname, str);
 					}
 				}
+				while (*temp_buffer != '\n' && *temp_buffer != '\0') {
+					temp_buffer++;
+				}
 			}
-	
+			
 			if (*temp_buffer == key[key_num][0]) {
 				for (i = 0; *temp_buffer == key[key_num][i]; i++) {
 					if (*temp_buffer != key[key_num][i]) {
+						printf("flush\n");
+						while (*temp_buffer++ != '\n' && *temp_buffer != '\0') {
+							temp_buffer++;
+						}
 						break;
 					}
 					temp_buffer++;
@@ -198,11 +211,17 @@ Pkginfo *populate_pkginfo(char *buffer) {
 				}
 				str[i] = '\0';
 
+				if (str[0] == '\0') {
+					continue;
+				}
+
 				switch(key_num) {
 					case 0:		temp_pkg = add_name(temp_pkg, str);
 								break;
-					case 1:		str_alloc(&temp_pkg->arch, strlen(str) + 1);
-								strcpy(temp_pkg->arch, str);
+					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "all") == 0) {
+									str_alloc(&temp_pkg->arch, strlen(str) + 1);
+									strcpy(temp_pkg->arch, str);
+								} 
 								break;
 					case 2:		temp_pkg->depends = add_data(temp_pkg->depends, str);
 								break;
@@ -211,16 +230,49 @@ Pkginfo *populate_pkginfo(char *buffer) {
 					default:	break;
 				}
 			}
+			temp_buffer++;
 		}
 		if (key_num == 0) {
 			pkginfo = temp_pkg;
 		}
 	}
-	free(split_buffer);
-
+	if (split == true) {
+		free(split_buffer);
+	}
+	
 	return pkginfo;
 }
 
+bool is_split(char *buffer) {
+
+	char *temp_buffer;
+	const char *key = "pkgname";
+	register int i;
+	int count = 0;
+
+	temp_buffer = buffer;
+	while (*temp_buffer != '\0') {
+		while (*temp_buffer != key[0] && *temp_buffer != key[0] && *temp_buffer != '\0') {
+			temp_buffer++;
+		}
+
+		if (*temp_buffer == key[0]) {
+			for (i = 0; *temp_buffer == key[i]; i++) {
+				if (*temp_buffer != key[i]) {
+					break;
+				}
+				temp_buffer++;
+			}
+		}
+
+		if (i == 7) {
+			count++;
+		}
+	}
+
+	return count > 1;
+
+}
 char *read_srcinfo(char *pkgname) {
 
 	FILE *srcinfo; 
@@ -255,32 +307,42 @@ char *read_srcinfo(char *pkgname) {
 }
 
 /*
-*	return the absolute path of package zst - FIX LATER
+*	return the absolute path of package zst
 */
-/*
-char *zst_path(Pkginfo *pkg) {
+char *zst_path(Pkgbase *pkgbase) {
 	
-	char *cwd, *path = NULL;
+	Pkginfo *pkginfo = pkgbase->pkg;
+	char *arch, *pkgname, *epoch, *pkgver, *pkgrel, *cwd, *path = NULL;
 
-	cwd = change_dir(pkg->pkgname);
+	arch = pkgbase->arch;
+	if (pkginfo->arch != NULL) {
+		arch = pkginfo->arch;
+	}
+	pkgname = pkginfo->pkgname;
+	epoch = pkgbase->epoch;
+	pkgver = pkgbase->pkgver;
+	pkgrel = pkgbase->pkgrel;
 
-	if (pkg->epoch == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + strlen(pkg->arch) + 18);
-		sprintf(path, "%s/%s-%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->pkgrel, pkg->arch);
-	} else if (pkg->pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->arch) + 18);
-		sprintf(path, "%s/%s-%s:%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->arch);
-	} else if (pkg->epoch == NULL && pkg->pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->pkgver) + strlen(pkg->arch) + 17);
-		sprintf(path, "%s/%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->pkgver, pkg->arch);
+
+	cwd = change_dir(pkgbase->pkgbase);
+
+	if (pkgbase->epoch == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 18);
+		sprintf(path, "%s/%s-%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, pkgrel, arch);
+	} else if (pkgrel == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(arch) + 18);
+		sprintf(path, "%s/%s-%s:%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, arch);
+	} else if (epoch == NULL && pkgrel == NULL) {
+		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(arch) + 17);
+		sprintf(path, "%s/%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, arch);
 	} else {
-		str_alloc(&path, strlen(cwd) + strlen(pkg->pkgname) + strlen(pkg->epoch) + strlen(pkg->pkgver) + strlen(pkg->pkgrel) + strlen(pkg->arch) + 19);
-		sprintf(path, "%s/%s-%s:%s-%s-%s.pkg.tar.zst", cwd, pkg->pkgname, pkg->epoch, pkg->pkgver, pkg->pkgrel, pkg->arch);
+		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 19);
+		sprintf(path, "%s/%s-%s:%s-%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, pkgrel, arch);
 	}
 
 	return path;
 }
-*/
+
 
 // please do something about add_pkgname in List.c., can this list be used there too?
 Pkginfo *find_name(Pkginfo *pkg, const char *pkgname) {
