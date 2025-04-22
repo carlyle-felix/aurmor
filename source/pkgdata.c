@@ -82,7 +82,7 @@ Pkgbase *populate_pkgbase(char *buffer) {
 					case 0:		str_alloc(&pkgbase->pkgbase, strlen(str) + 1);
 								strcpy(pkgbase->pkgbase, str);
 								break;
-					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "all") == 0) {
+					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "any") == 0) {
 									str_alloc(&pkgbase->arch, strlen(str) + 1);
 									strcpy(pkgbase->arch, str);
 								} 
@@ -218,7 +218,7 @@ Pkginfo *populate_pkginfo(char *buffer) {
 				switch(key_num) {
 					case 0:		temp_pkg = add_name(temp_pkg, str);
 								break;
-					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "all") == 0) {
+					case 1:		if (strcmp(str, "x86_64") == 0 || strcmp(str, "any") == 0) {
 									str_alloc(&temp_pkg->arch, strlen(str) + 1);
 									strcpy(temp_pkg->arch, str);
 								} 
