@@ -94,7 +94,7 @@ int trans_abort(alpm_handle_t *handle, int code) {
  * 	check if any packages besides the one being removed requires one of its deps
  * 	before removing the dep, if required the dep is still needed return true.
  */
-int alpm_install(List *pkglist) {
+int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 
 	alpm_handle_t *handle;
 	alpm_list_t *add_list;
@@ -123,37 +123,41 @@ int alpm_install(List *pkglist) {
 			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
 			continue;
 		}
+		
+		// check for aur dependencies here
 
+		// init deps tx then traverse pkginfo here?
+		printf(BGREEN"==>"BOLD" Checking build dependencies...\n\n"RESET);
+		res = install_depends(pkgbase->makedepends);
+		if (res != 0) {
+			printf(BRED"error:"RESET" failed to install build dependencies\n");
+			break;
+		}
+		
 		printf(BGREEN"==>"BOLD" Checking dependencies...\n\n"RESET);
 		res = install_depends(pkginfo->depends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install dependencies\n");
 			break;
 		}
-		res = install_depends(pkgbase->makedepends);
-		if (res != 0) {
-			printf(BRED"error:"RESET" failed to install build dependencies\n");
-			break;
-		}
 
-		// build and add the package zst
+		change_dir(pkgbase->pkgbase);
 		gain_root();
-		res = build(pkginfo->pkgname);
+		res = build();
 		if (res != 0) {
-			printf(BRED"error:"RESET" failed to build package: %s\n", pkglist->pkgname);
+			printf(BRED"error:"RESET" failed to build package: %s\n", pkgbase->pkgbase);
 			drop_root();
 			break;
 		}
 		drop_root();
-
+	
 		// remove makedepends
 		res = rm_makedepends(pkgbase->makedepends);
 		if (res != 0) {
-			printf(BGREEN"==>"BOLD"Keeping makedepends.\n"RESET);
+			printf(BGREEN"==>"BOLD"Keeping make dependencies.\n"RESET);
 		}
 
-		// this should be done after deps are resolved.
-		res = trans_init(handle, ALPM_TRANS_FLAG_NODEPVERSION);
+		res = trans_init(handle, ALPM_TRANS_FLAG_NODEPVERSION | reason);
 		if (res != 0) {
 			break;
 		}

@@ -281,7 +281,7 @@ void drop_root(void) {
 	printf("root dropped, euid: %d\n", geteuid());
 }
 
-int build(char *pkgname) {
+int build(void) {
 
 	int pid, res;
 	struct passwd *pw;
@@ -297,8 +297,6 @@ int build(char *pkgname) {
 		if (res == 0) {
 			printf("build root dropped, euid: %d\n", getuid());
 		}
-		
-		change_dir(pkgname);
 
 		res = execvp(MAKEPKG, args);
 		if (res != 0) {

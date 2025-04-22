@@ -10,7 +10,7 @@ typedef struct depends Depends;
 typedef struct package List;
 
 int alpm_uninstall(List *pkglist);
-int alpm_install(List *list);
+int alpm_install(List *list,  alpm_pkgreason_t reason);
 alpm_list_t *handle_init(alpm_handle_t **handle);
 
 #endif 

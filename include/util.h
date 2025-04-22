@@ -43,6 +43,6 @@ List *get_dir_list(void);
 char *change_dir(const char *dir);
 void gain_root(void);
 void drop_root(void);
-int build(char *pkgname);
+int build();
 
 #endif
