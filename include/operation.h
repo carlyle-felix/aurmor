@@ -6,7 +6,7 @@
 typedef struct package List;
 
 void target_clone(char *url);
-void install(List *pkglist,  alpm_pkgreason_t reason);
+int install(List *pkglist,  alpm_pkgreason_t reason);
 void clean(void);
 void print_search(char *pkgname);
 void print_installed(void);

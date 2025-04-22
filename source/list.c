@@ -10,7 +10,7 @@
 #include "../include/util.h"
 #include "../include/manager.h"
 #include "../include/pkgdata.h"
-// Add packages in correct order
+// Add packages in correct order ***malloc list before calling.
 List *add_pkgname(List *list, const char *pkgname) {
 
     List *temp;

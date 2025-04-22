@@ -24,6 +24,7 @@ Pkgbase *populate_pkg(char *pkgname) {
 
 	pkgbase = populate_pkgbase(buffer);
 	pkgbase->pkg = populate_pkginfo(buffer);
+	// fix this.
 	pkgbase->pkg->zst_path = zst_path(pkgbase);
 	free(buffer);
 

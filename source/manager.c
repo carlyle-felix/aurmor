@@ -7,12 +7,15 @@
 #include "../include/util.h"
 #include "../include/memory.h"
 #include "../include/pkgdata.h"
+#include "../include/operation.h"
+#include "../include/rpc.h"
 
 // prototypes
 int trans_init(alpm_handle_t *handle, alpm_transflag_t flags);
 int trans_complete(alpm_handle_t *handle);
 void rm_depends(alpm_handle_t *handle, alpm_pkg_t *pkg);
 void clean_up(Depends *rm_list);
+int aur_depends(Depends *deps);
 int install_depends(Depends *deps);
 int resolve_deps(alpm_handle_t *handle, alpm_list_t *repo_db_list, alpm_pkg_t *pkg);
 int rm_makedepends(Depends *deps);
@@ -100,7 +103,7 @@ int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 	alpm_list_t *add_list;
 	alpm_pkg_t *pkg;
 	Pkgbase *pkgbase;
-	Pkginfo *pkginfo;
+	Pkginfo *pkginfo, *pkginfo_temp;
 
 	int res;
 
@@ -118,27 +121,31 @@ int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 		
 		pkgbase = populate_pkg(pkglist->pkgname);
 		pkginfo = pkgbase->pkg;
-
 		if (pkgbase == NULL || pkginfo == NULL) {
 			printf(BYELLOW"warn"RESET" Skipping %s...", pkglist->pkgname);
 			continue;
 		}
 		
-		// check for aur dependencies here
-
-		// init deps tx then traverse pkginfo here?
 		printf(BGREEN"==>"BOLD" Checking build dependencies...\n\n"RESET);
 		res = install_depends(pkgbase->makedepends);
 		if (res != 0) {
 			printf(BRED"error:"RESET" failed to install build dependencies\n");
 			break;
 		}
-		
+
 		printf(BGREEN"==>"BOLD" Checking dependencies...\n\n"RESET);
-		res = install_depends(pkginfo->depends);
-		if (res != 0) {
+		for (pkginfo_temp = pkginfo; pkginfo_temp != NULL; pkginfo_temp = pkginfo_temp->next) {
+			res = aur_depends(pkginfo_temp->depends);
+			if (res != 0) {
+				break;
+			}
+			res = install_depends(pkginfo_temp->depends);
+			if (res != 0) {
+				break;
+			}
+		}
+		if (pkginfo_temp != NULL) {
 			printf(BRED"error:"RESET" failed to install dependencies\n");
-			break;
 		}
 
 		change_dir(pkgbase->pkgbase);
@@ -162,14 +169,17 @@ int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 			break;
 		}
 		
-		res = alpm_pkg_load(handle, pkginfo->zst_path, 1, 0, &pkg);
-		if (res != 0) {
-			printf(BRED"error:"RESET" failed to add local package: %s.\n", alpm_strerror(alpm_errno(handle)));
+		for (pkginfo_temp = pkginfo; pkginfo_temp != NULL; pkginfo_temp = pkginfo_temp->next) {
+			res = alpm_pkg_load(handle, pkginfo_temp->zst_path, 1, 0, &pkg);
+			if (res != 0) {
+				printf(BRED"error:"RESET" failed to add local package: %s.\n", alpm_strerror(alpm_errno(handle)));
+			}
+			res = alpm_add_pkg(handle, pkg);
+			if (res != 0) {
+				printf(BRED"error:"RESET" failed to add package:\n");
+				printf(BOLD"%s\n", pkginfo_temp->zst_path);
+			}		
 		}
-		res = alpm_add_pkg(handle, pkg);
-		if (res != 0) {
-			printf(BRED"error:"RESET" failed to add package.\n");
-		}		
 		clear_pkgbase(pkgbase);
 
 		// print package list
@@ -180,9 +190,11 @@ int alpm_install(List *pkglist, alpm_pkgreason_t reason) {
 			add_list = alpm_list_next(add_list);
 		}
 
-		printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);	
-		if (prompt() == false) {
-			return trans_abort(handle, 0);
+		if (reason == ALPM_PKG_REASON_EXPLICIT) {
+			printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);	
+			if (prompt() == false) {
+				return trans_abort(handle, 0);
+			}
 		}
 
 		res = trans_complete(handle);
@@ -262,6 +274,85 @@ int alpm_uninstall(List *pkglist) {
 	printf(BGREEN"=>"BOLD" Success\n"RESET);
 	return 0;
 }
+
+int aur_depends(Depends *deps) {
+
+	alpm_handle_t *handle;
+	alpm_list_t *repo_db_list, *db_temp, *reset, *db_pkglist;
+	Depends *temp_deps;
+	alpm_pkg_t *pkg;
+	List *aur_list, *temp;
+	char *str;
+	int res, count = 0;
+
+	if (deps == NULL) {
+		return 0;
+	}
+
+	repo_db_list = handle_init(&handle);
+	aur_list = list_malloc();
+
+	for (temp_deps = deps; temp_deps != NULL; temp_deps = temp_deps->next) {
+		for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+			pkg = alpm_db_get_pkg(db_temp->data, temp_deps->data);
+			if (pkg == NULL) {
+				reset = db_temp;
+				for (db_temp = repo_db_list; db_temp != NULL; db_temp = alpm_list_next(db_temp)) {
+					db_pkglist = alpm_db_get_pkgcache(db_temp->data);
+					pkg = alpm_find_satisfier(db_pkglist, temp_deps->data);
+					if (pkg != NULL) {
+						break;
+					}
+				}
+				db_temp = reset;
+			}
+			if (pkg == NULL) {
+				get_str(&str, AUR_PKG, temp_deps->data);
+				temp = get_rpc_data(str);
+				if (temp == NULL) {
+					printf(BRED"error:"RESET" unable to locate %s\n", temp_deps->data);
+					free(str);
+					continue;
+				}
+				aur_list = add_pkgname(aur_list, temp_deps->data);
+				count++;
+				break;
+			}
+		}
+	}
+	free(str);
+
+	if (aur_list->pkgname == NULL) {
+		clear_list(aur_list);
+		return 0;
+	}
+
+	printf(BCYAN"info:"RESET"AUR dependencies found...\n");
+	printf(BOLD"Packages (%d): ", count);
+	for (temp = aur_list; temp != NULL; temp = temp->next) {
+		printf("%s ", temp->pkgname);
+	}
+	printf(BBLUE"\n\n::"BOLD" Proceed with installation? [Y/n] "RESET);
+	if (prompt() == false) {
+		return -1;
+	}
+
+	res = install(aur_list, ALPM_PKG_REASON_DEPEND);
+	clear_list(aur_list);
+	if (res == 0) {
+		printf(BGREEN"==>"BOLD" AUR dependencies resolved\n"RESET);
+		return 0;
+	} else {
+		printf(BRED"error:"RESET" unable to install AUR dependencies\n");
+		return -1;
+	} 
+}
+
+/*
+*	check if dep exists in repo:
+*	return NULL if not. 
+*	return the 
+*/ 
 
 int install_depends(Depends *deps) {
 

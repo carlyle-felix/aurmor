@@ -96,7 +96,7 @@ void fetch_update(char *pkgname) {
 	free(str);
 }
 
-void install(List *pkglist,  alpm_pkgreason_t reason) {
+int install(List *pkglist,  alpm_pkgreason_t reason) {
     
 	List *temp_list;
 	int res;
@@ -108,11 +108,19 @@ void install(List *pkglist,  alpm_pkgreason_t reason) {
 			continue;
 		}
 		change_owner(temp_list->pkgname);
-		if (less_prompt(temp_list->pkgname) == true) {
-			temp_list->install = true;
+
+		if (reason != ALPM_PKG_REASON_DEPEND) {					// better solution later.
+			if (less_prompt(temp_list->pkgname) == true) {
+				temp_list->install = true;
+			}
 		}
+		
 	}
-	alpm_install(pkglist, reason);
+	res = alpm_install(pkglist, reason);
+	if (res != 0) {
+		return -1;
+	}
+	return 0;
 }
 
 void update(void) {
