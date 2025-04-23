@@ -11,7 +11,7 @@ Pkgbase *populate_pkgbase(char *buffer);
 Pkginfo *populate_pkginfo(char *buffer);
 Pkginfo *add_name(Pkginfo *pkg, const char *str);
 Pkginfo *find_name(Pkginfo *pkg, const char *pkgname);
-char *zst_path(Pkgbase *pkgbase);
+Pkginfo *zst_path(Pkgbase *pkgbase);
 bool is_split(char *buffer);
 
 /*
@@ -25,7 +25,7 @@ Pkgbase *populate_pkg(char *pkgname) {
 	pkgbase = populate_pkgbase(buffer);
 	pkgbase->pkg = populate_pkginfo(buffer);
 	// fix this.
-	pkgbase->pkg->zst_path = zst_path(pkgbase);
+	pkgbase->pkg = zst_path(pkgbase);
 	free(buffer);
 
 	if (pkgbase == NULL || pkgbase->pkg == NULL) {
@@ -310,16 +310,11 @@ char *read_srcinfo(char *pkgname) {
 /*
 *	return the absolute path of package zst
 */
-char *zst_path(Pkgbase *pkgbase) {
+Pkginfo *zst_path(Pkgbase *pkgbase) {
 	
 	Pkginfo *pkginfo = pkgbase->pkg;
-	char *arch, *pkgname, *epoch, *pkgver, *pkgrel, *cwd, *path = NULL;
+	char *arch, *pkgname, *epoch, *pkgver, *pkgrel, *cwd;
 
-	arch = pkgbase->arch;
-	if (pkginfo->arch != NULL) {
-		arch = pkginfo->arch;
-	}
-	pkgname = pkginfo->pkgname;
 	epoch = pkgbase->epoch;
 	pkgver = pkgbase->pkgver;
 	pkgrel = pkgbase->pkgrel;
@@ -327,21 +322,32 @@ char *zst_path(Pkgbase *pkgbase) {
 
 	cwd = change_dir(pkgbase->pkgbase);
 
-	if (pkgbase->epoch == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 18);
-		sprintf(path, "%s/%s-%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, pkgrel, arch);
-	} else if (pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(arch) + 18);
-		sprintf(path, "%s/%s-%s:%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, arch);
-	} else if (epoch == NULL && pkgrel == NULL) {
-		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(arch) + 17);
-		sprintf(path, "%s/%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, arch);
-	} else {
-		str_alloc(&path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 19);
-		sprintf(path, "%s/%s-%s:%s-%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, pkgrel, arch);
-	}
+	while (pkginfo != NULL) {
 
-	return path;
+		arch = pkgbase->arch;
+		if (pkginfo->arch != NULL) {
+			arch = pkginfo->arch;
+		}
+		pkgname = pkginfo->pkgname;
+	
+		if (pkgbase->epoch == NULL) {
+			str_alloc(&pkginfo->zst_path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 18);
+			sprintf(pkginfo->zst_path, "%s/%s-%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, pkgrel, arch);
+		} else if (pkgrel == NULL) {
+			str_alloc(&pkginfo->zst_path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(arch) + 18);
+			sprintf(pkginfo->zst_path, "%s/%s-%s:%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, arch);
+		} else if (epoch == NULL && pkgrel == NULL) {
+			str_alloc(&pkginfo->zst_path, strlen(cwd) + strlen(pkgname) + strlen(pkgver) + strlen(arch) + 17);
+			sprintf(pkginfo->zst_path, "%s/%s-%s-%s.pkg.tar.zst", cwd, pkgname, pkgver, arch);
+		} else {
+			str_alloc(&pkginfo->zst_path, strlen(cwd) + strlen(pkgname) + strlen(epoch) + strlen(pkgver) + strlen(pkgrel) + strlen(arch) + 19);
+			sprintf(pkginfo->zst_path, "%s/%s-%s:%s-%s-%s.pkg.tar.zst", cwd, pkgname, epoch, pkgver, pkgrel, arch);
+		}
+		pkginfo = pkginfo->next;
+	}
+	
+
+	return pkgbase->pkg;
 }
 
 
