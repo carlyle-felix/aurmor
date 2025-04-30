@@ -14,41 +14,7 @@
 #include "../include/memory.h"
 #include "../include/list.h"
 
-void traverse_dir(char *path, char *func, int uid, int gid); // make it use va_args?
-
-/* 
-* 	pipe output of commands to a buffer and return the buffer.
-*/
-char *get_buffer(const char *cmd) {
-	
-	char *buffer = NULL;
-	int read, max = MAX_BUFFER;
-	FILE *p;
-
-	for (;;) {
-		str_alloc(&buffer, max);
-		p = popen(cmd, "r");
-		if (p == NULL) {
-			printf(BRED"error:"RESET" failed in buffer().\n");
-			free(buffer);
-			return NULL;
-		}
-		read = fread(buffer, sizeof(char), max, p);
-		if (read == max) {
-			max *= 2;
-		} else {
-			pclose(p);
-			break;
-		}
-	}
-	buffer[read] = '\0';
-	if (buffer[0] == '\0') {
-		free(buffer);
-		return NULL;
-	}
-
-	return buffer;
-}
+void traverse_dir(char *path, char *func, int uid, int gid);
 
 // copy a string into a block of memory.
 void get_str(char **p, const char *str, const char *str_var) {

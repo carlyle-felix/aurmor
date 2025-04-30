@@ -31,7 +31,6 @@
 
 typedef struct package List;
 
-char *get_buffer(const char *cmd);
 void get_str(char **str, const char *p, const char *str_var);
 bool is_dir(const char *path);
 bool file_exists(char *path);
